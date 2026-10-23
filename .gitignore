@@ -1,0 +1,61 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+!.env.test.example
+
+# Node
+node_modules/
+.pnpm-store/
+.turbo/
+.next/
+out/
+dist/
+coverage/
+*.tsbuildinfo
+*.log
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyright/
+*.egg-info/
+.uv/
+
+# Database and generated data
+*.db
+*.sqlite
+*.sqlite3
+data/generated/
+evals/results/*.json
+!evals/results/.gitkeep
+
+# Reports and uploads
+storage/
+uploads/
+reports/generated/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+!.vscode/extensions.json
+
+# Private reference material
+preli-submission-ss/
+
+# Playwright
+playwright-report/
+test-results/
+blob-report/
+.playwright/
+
+# Build artifacts
+apps/web/public/sw.js
+apps/web/public/workbox-*.js

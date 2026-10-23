@@ -1,0 +1,259 @@
+# Chowkidar — Decision Log & Persistent Context
+
+**Last updated:** 2026-10-23  
+**Status:** Active  
+**Owner:** JU_StackMind  
+**Purpose:** Single source of truth for decisions, constraints, assumptions, and session history. Read this before starting any new work session.
+
+---
+
+## 1. Project identity
+
+| Field | Value |
+|---|---|
+| Event | International AI Builders Congress 2026 |
+| Track | Idea to Unicorn — Preliminary Submission |
+| Deadline | 2026-10-31, 11:59 PM GMT+6 |
+| Domain | JusticeSphere AI |
+| Challenge | Risk Sentinel |
+| Product | **Chowkidar** (final name) |
+| One-liner | An agentic risk sentinel that monitors regulatory and supplier risk signals, maps them to a company's obligations, and turns them into approved remediation plans with an audit trail. |
+| Team | JU_StackMind |
+| Team strengths | AI/full-stack engineering, data engineering |
+| Legal/compliance advisor | **None** — must design around this |
+| Per-domain submission counts | **Not available** — organizers will not reveal |
+| Initial builder | **AI agent (OpenCode)** builds the base from the master prompt; team modifies/improves later |
+| Commit history | Clean, logical, human-followable commits required |
+| Stack decisions | **User approval required for every stack choice** |
+
+---
+
+## 2. Decisions
+
+| Date | Decision | Rationale | Status |
+|---|---|---|---|
+| 2026-10-23 | Choose **JusticeSphere AI → Risk Sentinel** | Likely lower saturation than Health/Fin/Learn/Commerce; Risk Sentinel likely least crowded challenge in the domain; official brief is specific and demoable | Accepted |
+| 2026-10-23 | Narrow Risk Sentinel to **regulatory + supplier risk for export supply chains** | Generic GRC dashboard is weak; this wedge matches the official "specific ask" 1:1 and has a strong Bangladesh beachhead | Accepted |
+| 2026-10-23 | Product name **Chowkidar** | Watchman/guard; fits monitoring; user selected it | Accepted (final) |
+| 2026-10-23 | Position as **compliance risk intelligence**, not legal advice | Team has no legal advisor; avoids unauthorized-practice and hallucination risk; keeps human in control | Accepted |
+| 2026-10-23 | Use **evidence-first architecture** | Every obligation/risk must cite a primary source; no evidence → "insufficient evidence" | Accepted |
+| 2026-10-23 | **Human-in-the-loop for every action** | Required by Risk Sentinel brief; mitigates no-advisor risk; builds audit trail | Accepted |
+| 2026-10-23 | Use **source-grounded evaluation** instead of legal expertise | Gold labels from official texts; measure extraction/citation/mapping accuracy, not legal opinion | Accepted |
+| 2026-10-23 | Build in **8 days**, submit early | Deadline Oct 31; portal load risk; buffer day | Accepted |
+| 2026-10-23 | Maintain persistent docs as external memory | Context window is limited; avoid losing decisions between sessions | Accepted |
+| 2026-10-23 | **One-prompt rule applies to the whole build** | Confirmed by user; master prompt must generate/initialize the entire base in one pass | Accepted |
+| 2026-10-23 | **AI agent builds the base alone** | User confirmed team will modify/improve later; no role assignment needed yet | Accepted |
+| 2026-10-23 | **Clean, human-followable commit history** | User requirement; logical commits, Conventional Commits, each commit coherent | Accepted |
+| 2026-10-23 | **Ask user before every stack decision** | User requirement; no assumptions about language, package manager, framework, libraries, DB, deploy | Accepted |
+
+### 2.1 Approved stack decisions (batches 1–3)
+
+| Area | Decision | Notes |
+|---|---|---|
+| Language | **TypeScript** | Frontend and shared contracts |
+| Package manager | **pnpm** | Installed (v12.15.0) |
+| Repo structure | **Monorepo** | `apps/web`, `apps/api`, `packages/*` |
+| Frontend | **Next.js App Router** | React, SSR, Vercel |
+| Backend | **FastAPI** | Python, async, OpenAPI |
+| API style | **REST + OpenAPI** | MCP-friendly, debuggable |
+| Primary DB | **Postgres** | Supabase-hosted likely |
+| DB layer | **SQLAlchemy + Alembic** | Explicit migrations |
+| Auth | **Supabase Auth** | Managed auth, RBAC |
+| Deployment | **Vercel + Render + Supabase** | Backend target: Render |
+| Python deps | **uv** | Install first |
+| Python version | **3.14** | Current environment |
+| Node version | **26** | Current environment |
+| Styling | **Tailwind CSS** | Utility-first |
+| UI components | **shadcn/ui** | Radix + Tailwind |
+| Data fetching | **TanStack Query** | Caching, mutations |
+| Forms | **React Hook Form + Zod** | Typed validation |
+| Charts | **Recharts** | Dashboards |
+| Graph view | **React Flow** | Supplier/obligation graph |
+| LLM access | **Groq + Google AI Studio** | Free tiers; keys only in `.env` |
+| Model routing | **LiteLLM** | Fallbacks, retries, cost tracking |
+| Agent framework | **LangGraph** | Stateful multi-agent + HITL |
+| RAG framework | **LlamaIndex** | Ingestion, hybrid retrieval, citations |
+| Vector store | **pgvector** | Inside Postgres |
+| Graph DB | **Neo4j Aura** | Cypher, graph RAG |
+| Embeddings | **BGE-M3 local** | Multilingual, data sovereignty |
+| Reranker | **BGE-reranker-v2-m3 local** | Citation precision |
+| Local runtime | **Ollama** | Local models and embeddings |
+| Evals | **RAGAS + custom golden set** | Source-grounded evaluation |
+| Observability | **Phoenix (Arize)** | Local-first tracing |
+| Orchestration | **n8n** | Connector scheduling; core agents in FastAPI |
+| MCP server | **FastMCP** | Tools/resources for other agents |
+| Doc parsing | **Docling** | Local PDF/table/layout parsing |
+| Fine-tuning | **None; document LoRA plan** | Synthetic dataset + readiness plan |
+| CI | **GitHub Actions** | Lint, typecheck, tests, build |
+| Testing | **Vitest + Playwright + pytest** | Unit/API + one E2E approval flow |
+| Local services | **Docker Compose** | Postgres/pgvector, Neo4j, Ollama, n8n |
+| License | **MIT** | Permissive, judge-friendly |
+| Error tracking | **Sentry** | Free tier; disabled locally |
+| Analytics | **PostHog, anonymized** | No PII; env-flag disable |
+| Secrets | **.env + dotenv** | GitHub Actions secrets in CI |
+| Git workflow | **Conventional Commits + main-only** | Matches commit conventions |
+| Monorepo tooling | **pnpm workspaces + Turborepo** | Cached tasks and clean pipelines |
+| API client | **openapi-typescript + openapi-fetch** | Typed from FastAPI OpenAPI |
+| Client state | **TanStack Query + Zustand** | Server cache + small UI state |
+| Lint/format | **ESLint + Prettier + Ruff** | TS and Python |
+| Type checking | **TypeScript strict + Pyright** | Fast, Pydantic-friendly |
+| Pre-commit | **pre-commit + lint-staged** | Python and TS changed files |
+| Icons/fonts/theme | **Lucide + Inter/Space Grotesk + dark** | Modern dashboard baseline |
+| Languages | **English + Bengali UI toggle** | Scope to be defined; legal text stays source-language with translation disclaimer |
+| Background jobs | **FastAPI BackgroundTasks + LangGraph** | No extra queue for MVP |
+| PDF export | **Playwright HTML-to-PDF** | Reuses Playwright; Chromium on server |
+| Data streams | **Bangladesh Bank + EU regulatory** | Primary two; UFLPA/sanctions as supporting third for the demo scenario |
+| Demo scenario | **EU CSDDD + UFLPA, RMG exporter** | Bangladeshi RMG exporter, EU buyer, US importer, multi-tier suppliers |
+| Data mode | **Fixture-first + live mode** | Deterministic demo by default; live connectors behind a flag |
+| Risk scoring | **Deterministic weights + LLM explanation** | Auditable score; LLM drafts rationale and citations |
+| Report formats | **PDF + JSON + Markdown** | Audit-ready plus machine-readable |
+| File storage | **Supabase Storage** | Signed URLs; local adapter for dev |
+| Guardrails | **Custom verifier + policy checks** | Citation validation, schema checks, no-legal-advice classifier |
+| PII handling | **Regex + allowlist** | Redact emails/phones/IDs; Presidio documented as upgrade |
+| RBAC | **4 roles + single-step approval** | Admin, Analyst, Approver, Viewer; optional second approver for high risk |
+| Auth flow | **Email/password + seeded demo accounts** | One-click demo login only when `DEMO_MODE=true` |
+| Audit log | **Append-only table + hash chain** | Tamper-evident approval trail |
+| Search | **Postgres FTS + pgvector hybrid** | Reciprocal rank fusion |
+| Model mix | **Gemini Flash + Groq Llama + Gemini Pro verifier** | LiteLLM routing; local Ollama fallback |
+| Embeddings runtime | **Python FlagEmbedding** | BGE-M3 + BGE-reranker-v2-m3; torch installed |
+| i18n | **next-intl** | Cookie-based locale, no URL prefix required |
+| Bengali scope | **UI chrome + labels only** | Legal source text stays original; translation disclaimer |
+| Notifications | **In-app only** | Bell, approval queue, activity feed |
+| Build start | **Local-first now** | Docker Compose; cloud wiring later |
+| n8n hosting | **Local Docker + FastAPI cron fallback** | Reliable deployed app; n8n for demo/video |
+| Deployment region | **Singapore** | Closest to Bangladesh; Supabase/Render support |
+
+**Stack freeze:** 2026-10-23. No implementation choice changes without user approval.
+
+**Free-tier fallback:** Groq and Google AI Studio have rate limits. The pipeline must degrade to local Ollama models or a deterministic mock mode without breaking the demo.
+
+**Remaining external action:** Create Supabase, Neo4j Aura, Render, Vercel, Sentry, and PostHog accounts when ready to deploy. The base builds locally without them.
+
+### 2.2 Secrets handling
+
+- API keys are stored **only** in `.env` (gitignored), never in docs, commits, screenshots, or client bundles.
+- `.env.example` contains placeholders only.
+- AI keys are server-side only; never expose them via `NEXT_PUBLIC_*`.
+- The keys shared during planning should be rotated before public submission.
+- The demo must work without live keys via mock/fixture mode.
+
+---
+
+## 3. Constraints and implications
+
+### 3.1 No legal/compliance advisor
+
+**Implication:** We cannot credibly sell "AI legal advice" or make legal conclusions. Judges may probe domain depth.
+
+**Mitigation:**
+- Product is a **compliance risk intelligence and remediation workflow**, not a lawyer.
+- AI extracts obligations, maps them to internal artifacts, scores risk, and drafts actions — a human approves.
+- Every claim must quote a primary source (article/section, URL, effective date).
+- A **Verifier Agent** checks citations and flags unsupported claims.
+- Conservative language: "potential obligation," "requires review," "risk signal," "recommended action."
+- No "you are compliant," "this is legal," "this contract is enforceable," or automated filings.
+- Prominent disclaimer in UI, README, and demo.
+- Optional quality check: a law student/compliance professional as a 1-hour beta tester (not a dependency).
+- Eval set uses **explicit, unambiguous obligations** from official texts, not ambiguous legal interpretation.
+
+**Positioning line:**  
+> "We don't replace lawyers. We give compliance teams an evidence-linked view of what changed, what it touches, and what to do next — with human approval."
+
+### 3.2 No per-domain submission counts
+
+**Implication:** Saturation analysis is directional, not measured.
+
+**Mitigation:**
+- Treat JusticeSphere/Risk Sentinel as a high-expected-value bet, not a certainty.
+- Focus on execution quality and differentiation.
+- If the domain turns out to be crowded, the product still stands on its own merit.
+- Do not over-invest in "saturation research"; invest in the demo and evidence.
+
+### 3.3 Eight-day deadline
+
+**Implication:** Scope must be brutally narrow.
+
+**Mitigation:**
+- One persona, one risk domain, two external data streams, one approval workflow.
+- Must-have vs nice-to-have vs non-goals are explicit in `PRODUCT_SPEC.md`.
+- Cut list is pre-approved in `BUILD_PLAN.md`.
+- Submit by 6 PM on Oct 31, not 11:59 PM.
+
+### 3.4 One-prompt rule — confirmed, applies to the whole build
+
+**Implication:** The entire base must be generated/initialized from **one master prompt**, followed only by explicit confirmation triggers. No iterative human prompting during the build.
+
+**Mitigation:**
+- Finalize `prompts/MASTER_PROMPT.md` before execution.
+- Execute it as a **single build pass** with the AI agent; commits are logical checkpoints of that pass, not separate prompts.
+- Keep a build log (`docs/BUILD_LOG.md`) recording the prompt version, tool/model, confirmation triggers, and any manual changes.
+- Do not misrepresent the build level; the form asks "How much did AI do?"
+- The team's later modifications are post-base improvements, clearly separated from the initial build.
+
+---
+
+## 4. Assumptions
+
+- The official Risk Sentinel brief and 5 × 20 final rubric are current.
+- The preliminary auto-scoring rewards AI-native stack completeness; exact point values may be outdated.
+- Public data sources (Federal Register, EUR-Lex, GDELT, OpenSanctions/UFLPA) are accessible for the demo.
+- A live demo and 2–3 minute video are required and feasible.
+- The AI agent can build the base in one pass; the team will modify/improve afterward.
+- Synthetic internal data is acceptable if clearly labeled.
+- The portal accepts a GitHub repo, live URL, YouTube video, Figma link, and up to 3 other links.
+- Stack choices will be approved by the user before implementation.
+
+---
+
+## 5. Open questions
+
+| Question | Why it matters | Owner | Status |
+|---|---|---|---|
+| Stack decisions (language, package manager, frameworks, DB, auth, AI stack, deploy) | User wants to approve every choice | User | Open — ask in batches |
+| Which live data sources work reliably from Bangladesh | Demo reliability | Team | Open |
+| Do we have any pilot user / compliance contact? | Validation and story | Team | Open |
+| Can a law student review the demo for 1 hour? | Quality check, not dependency | Team | Optional |
+
+---
+
+## 6. Context management protocol
+
+To avoid losing details between sessions:
+
+1. **Read order at session start:** `README.md` → `DECISIONS.md` → `PRODUCT_SPEC.md` → `BUILD_PLAN.md`.
+2. **Update after every meaningful decision:** append to `DECISIONS.md` with date, decision, rationale.
+3. **Keep strategy and execution separate:** `STRATEGY.md` for the case; `PRODUCT_SPEC.md` for the product; `BUILD_PLAN.md` for execution.
+4. **Store research and data source notes in `docs/`** rather than chat.
+5. **Every doc has `Last updated` and `Status`.**
+6. **Append a session log entry** at the end of each work session: what changed, what's next, blockers.
+7. **Do not duplicate large content across docs.** Cross-reference instead.
+8. **Before submission, freeze docs and tag a version.**
+
+---
+
+## 7. Session log
+
+### 2026-10-23 — Session 1
+- Retrieved MCP knowledge base (`cloudcamp://knowledge-base`) and public event data.
+- Confirmed 572 teams / 3,108 participants / 50 challenges; per-domain counts private.
+- Evaluated JusticeSphere → Risk Sentinel; chose it with a narrowed wedge.
+- User confirmed team strengths (AI/full-stack, data engineering), no legal advisor, no per-domain counts.
+- Created `STRATEGY.md`, `DECISIONS.md`, `PRODUCT_SPEC.md`, `BUILD_PLAN.md`, `prompts/MASTER_PROMPT.md`, `README.md`, `docs/DATA_SOURCES.md`, `docs/BUILD_LOG.md`.
+- Next: confirm team roles/hours, one-prompt rule, product name; start scaffold.
+
+### 2026-10-23 — Session 2
+- User confirmed: final name **Chowkidar**, team **JU_StackMind**, one-prompt rule applies to the **whole build**, AI agent builds the base alone, team modifies later.
+- User added two requirements: **clean, human-followable commit history** and **ask before every stack decision**.
+- Renamed project docs from Argus to Chowkidar.
+- No product code yet; waiting on stack decisions.
+- Next: ask stack questions in batches, finalize master prompt v1.0, initialize git, build base in one pass with logical commits.
+
+### Template for future sessions
+```
+### YYYY-MM-DD — Session N
+- What changed:
+- Decisions:
+- Files updated:
+- Blockers:
+- Next:
+```
