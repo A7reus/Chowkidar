@@ -1,0 +1,1254 @@
+"""Generate the deterministic demo fixture.
+
+The fixture is synthetic. Legal excerpts are short quotations from public
+sources and are included to demonstrate citation-grounded extraction; they are
+not legal advice. Run: python scripts/generate_demo_fixture.py
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+OUT = ROOT / "data" / "fixtures" / "demo.json"
+
+CSDDD_URL = "https://eur-lex.europa.eu/eli/dir/2024/1760/oj/eng"
+FLR_URL = "https://eur-lex.europa.eu/eli/reg/2024/3015/oj/eng"
+UFLPA_LIST_URL = "https://www.dhs.gov/uflpa-entity-list"
+UFLPA_NEWS_URL = "https://www.state.gov/releases/office-of-the-spokesman/2026/07/additions-to-the-uyghur-forced-labor-prevention-act-entity-list"
+BB_URL = "https://www.bb.org.bd/mediaroom/circulars/circulars.php"
+BB_GUIDE_URL = "https://www.bangladeshtradeportal.gov.bd/kcfinder/upload/files/Legal_1754542983.pdf"
+GDELT_URL = "https://api.gdeltproject.org/api/v2/doc/doc?query=chattogram%20port%20strike"
+
+CSDDD_RAW = """Directive (EU) 2024/1760 of the European Parliament and of the Council of 13 June 2024 on corporate sustainability due diligence.
+
+Article 5 — Due diligence
+
+1. Member States shall ensure that companies conduct risk-based human rights and environmental due diligence as laid down in Articles 7 to 16 ("due diligence") by carrying out the following actions:
+(a) integrating due diligence into their policies and risk management systems in accordance with Article 7;
+(b) identifying and assessing actual or potential adverse impacts in accordance with Article 8 and Article 9, where necessary;
+(c) preventing and mitigating potential adverse impacts, and bringing actual adverse impacts to an end and minimising their extent in accordance with Article 10 and Article 11;
+(d) establishing and maintaining a grievance mechanism in accordance with Article 14;
+(e) monitoring the effectiveness of due diligence in accordance with Article 15;
+(f) communicating on due diligence in accordance with Article 16.
+
+This excerpt is reproduced for the Chowkidar prototype. Consult the official text for the authoritative version."""
+
+CSDDD_QUOTE = "Member States shall ensure that companies conduct risk-based human rights and environmental due diligence as laid down in Articles 7 to 16"
+
+BB_RAW = """Bangladesh Bank — Foreign Exchange Policy Department
+FEPD-1 Circular No. 26
+Date: 30 July 2026
+
+Subject: Reporting and repatriation of export proceeds.
+
+Authorized dealers and exporters are reminded that export proceeds must be repatriated within the period specified by Bangladesh Bank. The exporter undertakes to repatriate full proceeds of the export within the period specified by Bangladesh Bank in terms of the Foreign Exchange Regulation Act, 1947.
+
+Where proceeds are not repatriated within the prescribed period, the authorized dealer must report the outstanding amount and the reasons for delay to Bangladesh Bank. Enhanced monitoring applies to overdue export bills and cases of non-realization. Exporters should maintain a reconciliation of shipment, invoice, and repatriation records.
+
+This is a demo excerpt based on public Bangladesh Bank export-trade guidance. Verify against the official circular and the Foreign Exchange Regulation Act, 1947."""
+
+BB_QUOTE = "export proceeds must be repatriated within the period specified by Bangladesh Bank"
+
+UFLPA_RAW = """Uyghur Forced Labor Prevention Act — Entity List update
+
+On July 31, 2026, the United States added 43 companies based in China to the Uyghur Forced Labor Prevention Act (UFLPA) Entity List. The newly listed entities are connected to the production and sale of goods made in Xinjiang or with the forced labor of Uyghurs and other groups specified in the UFLPA, and include cotton and garments. These additions bring the total number of entities on the UFLPA Entity List to 187.
+
+CBP applies a rebuttable presumption that goods produced by listed entities are prohibited from entering the United States. Importers should maintain traceability documentation and respond to CBP requests.
+
+This excerpt is a short quotation from public U.S. government material for the Chowkidar prototype."""
+
+UFLPA_QUOTE = "The newly listed entities are connected to the production and sale of goods made in Xinjiang or with the forced labor of Uyghurs and other groups specified in the UFLPA, and include cotton and garments."
+
+FLR_RAW = """Regulation (EU) 2024/3015 of the European Parliament and of the Council of 27 November 2024 on prohibiting products made with forced labour on the Union market.
+
+The Regulation prohibits economic operators from placing products made with forced labour on the Union market, making them available on the Union market, or exporting them from the Union market. It applies from 14 December 2027. Competent authorities may request information from economic operators about suspected forced labour.
+
+This excerpt is a short quotation from the official text for the Chowkidar prototype."""
+
+FLR_QUOTE = "The Regulation prohibits economic operators from placing products made with forced labour on the Union market, making them available on the Union market, or exporting them from the Union market."
+
+PORT_RAW = """Synthetic GDELT-style news item for the Chowkidar demo.
+
+Port workers at Chattogram announced a 48-hour strike beginning Tuesday, according to local media, raising concerns about delayed export shipments and demurrage costs. Two Padma Apparel shipments are currently scheduled to depart during the strike window.
+
+This is a synthetic signal, not a real news report. It demonstrates how a news stream can feed the same risk workflow as a regulator."""
+
+PORT_QUOTE = "Port workers at Chattogram announced a 48-hour strike beginning Tuesday, according to local media, raising concerns about delayed export shipments and demurrage costs."
+
+MATCH_RAW = """Synthetic UFLPA match analysis for the Chowkidar demo.
+
+The UFLPA Entity List includes Xinjiang Huafu Textile Co., Ltd. A supplier disclosure lists "Huafu Textile Group" as an indirect owner of SinoFab Chemicals Co. The name match is not a confirmed finding; enhanced due diligence and human review are required before any business decision.
+
+This is a synthetic match analysis based on the public UFLPA Entity List. It is not a determination that any person or entity has violated the UFLPA."""
+
+MATCH_QUOTE = "The name match is not a confirmed finding; enhanced due diligence and human review are required before any business decision."
+
+FIRE_RAW = """Synthetic GDELT-style news item for the Chowkidar demo.
+
+A fire was reported at a Gazipur garment factory on Saturday evening. No casualties have been confirmed. The factory's buyer has requested an incident report and a fire-safety re-inspection before the next shipment.
+
+This is a synthetic signal, not a real news report."""
+
+FIRE_QUOTE = "A fire was reported at a Gazipur garment factory on Saturday evening. No casualties have been confirmed."
+
+CHEM_RAW = """Synthetic UFLPA traceability request for the Chowkidar demo.
+
+CBP has requested batch-level chemical origin documentation for dye inputs used in a US-bound order. SinoFab Chemicals Co. has provided annual declarations but not lot-level origin records. The missing records create a traceability gap that requires review.
+
+This is a synthetic signal based on public UFLPA traceability guidance."""
+
+CHEM_QUOTE = "SinoFab Chemicals Co. has provided annual declarations but not lot-level origin records."
+
+LABOUR_RAW = """Synthetic GDELT-style news item for the Chowkidar demo.
+
+Labour inspectors visited several Gazipur factories this week ahead of the autumn buyer-audit season. Factory managers were asked to update grievance logs and electrical safety records.
+
+This is a synthetic signal, not a real news report."""
+
+LABOUR_QUOTE = "Labour inspectors visited several Gazipur factories this week ahead of the autumn buyer-audit season."
+
+FLOOD_RAW = """Synthetic GDELT-style news item for the Chowkidar demo.
+
+Heavy rain and flooding have slowed truck movements on the Dhaka–Chattogram freight corridor. Logistics providers are advising exporters to allow an additional 24 to 48 hours for inland transport.
+
+This is a synthetic signal, not a real news report."""
+
+FLOOD_QUOTE = "Heavy rain and flooding have slowed truck movements on the Dhaka–Chattogram freight corridor."
+
+PENALTIES_RAW = """Synthetic regulatory summary for the Chowkidar demo.
+
+EU member states are preparing supervisory authorities and penalty regimes for the Corporate Sustainability Due Diligence Directive. Buyers are expected to tighten supplier due-diligence clauses and request evidence of risk-based human rights and environmental due diligence.
+
+Member States shall ensure that companies conduct risk-based human rights and environmental due diligence as laid down in Articles 7 to 16.
+
+This is a synthetic summary; consult the official directive for the authoritative text."""
+
+PENALTIES_QUOTE = "Member States shall ensure that companies conduct risk-based human rights and environmental due diligence as laid down in Articles 7 to 16."
+
+INCENTIVE_RAW = """Synthetic Bangladesh Bank-style circular summary for the Chowkidar demo.
+
+Export incentive and cash assistance rates for specified sectors are extended for July–December 2026. Finance teams should update claims and retain supporting export documentation.
+
+This is a synthetic summary based on public export-incentive guidance. Verify against the official Bangladesh Bank circular."""
+
+INCENTIVE_QUOTE = "Export incentive and cash assistance rates for specified sectors are extended for July–December 2026."
+
+
+def main() -> None:
+    demo = {
+        "meta": {
+            "name": "Chowkidar demo fixture",
+            "version": "1.0",
+            "synthetic": True,
+            "note": "Padma Apparel Ltd. and its suppliers are fictional. Public-source quotations are included for citation demonstration only.",
+        },
+        "company": {
+            "key": "padma",
+            "name": "Padma Apparel Ltd.",
+            "country": "Bangladesh",
+            "sector": "Ready-made garments",
+            "profile": {
+                "employees": 2000,
+                "factories": 3,
+                "export_markets": ["EU", "US"],
+                "location": "Gazipur, Bangladesh",
+                "demo": True,
+                "note": "Fictional exporter created for the Chowkidar prototype.",
+            },
+        },
+        "users": [
+            {"key": "admin", "email": "admin@chowkidar.demo", "name": "Ayesha Rahman", "role": "admin"},
+            {"key": "analyst", "email": "analyst@chowkidar.demo", "name": "Rafiq Hasan", "role": "analyst"},
+            {"key": "approver", "email": "approver@chowkidar.demo", "name": "Nusrat Jahan", "role": "approver"},
+            {"key": "viewer", "email": "viewer@chowkidar.demo", "name": "Imran Chowdhury", "role": "viewer"},
+        ],
+        "buyers": [
+            {
+                "key": "nordwear",
+                "name": "Nordwear EU",
+                "country": "Germany",
+                "requirements_summary": "CSDDD-aligned due diligence, supplier code of conduct, grievance mechanism, and climate transition planning evidence.",
+            },
+            {
+                "key": "liberty",
+                "name": "Liberty Threads",
+                "country": "United States",
+                "requirements_summary": "UFLPA traceability, cotton origin documentation, forced-labour screening, and supplier audit records.",
+            },
+        ],
+        "suppliers": [
+            {
+                "key": "dhaka_knit",
+                "name": "Dhaka Knit Composite Ltd.",
+                "country": "Bangladesh",
+                "tier": 1,
+                "category": "Knitting, dyeing & finishing",
+                "status": "active",
+                "risk_level": "high",
+                "profile": {"workers": 850, "factories": 2, "buyers": ["Nordwear EU"], "last_audit": "2026-03-12"},
+            },
+            {
+                "key": "chattogram_spinning",
+                "name": "Chattogram Spinning Mills",
+                "country": "Bangladesh",
+                "tier": 2,
+                "category": "Yarn spinning",
+                "status": "active",
+                "risk_level": "medium",
+                "profile": {"workers": 420, "factories": 1},
+            },
+            {
+                "key": "sinofab",
+                "name": "SinoFab Chemicals Co.",
+                "country": "China",
+                "tier": 2,
+                "category": "Dyes & chemical auxiliaries",
+                "status": "active",
+                "risk_level": "high",
+                "profile": {
+                    "workers": 300,
+                    "potential_match": "Xinjiang Huafu Textile Co., Ltd.",
+                    "match_score": 0.78,
+                    "review_required": True,
+                    "note": "Potential name match only; no adverse finding has been made.",
+                },
+            },
+            {
+                "key": "hanoi_trim",
+                "name": "Hanoi Trim Co.",
+                "country": "Vietnam",
+                "tier": 2,
+                "category": "Trims & zippers",
+                "status": "active",
+                "risk_level": "low",
+                "profile": {"workers": 180},
+            },
+            {
+                "key": "sunrise_cotton",
+                "name": "Sunrise Cotton Growers",
+                "country": "India",
+                "tier": 3,
+                "category": "Cotton ginning",
+                "status": "active",
+                "risk_level": "medium",
+                "profile": {"workers": 260, "lots_tracked": 12, "missing_lot_docs": 2},
+            },
+            {
+                "key": "padma_finishing",
+                "name": "Padma Finishing Unit",
+                "country": "Bangladesh",
+                "tier": 1,
+                "category": "Washing & finishing",
+                "status": "active",
+                "risk_level": "medium",
+                "profile": {"workers": 310},
+            },
+            {
+                "key": "delta_packaging",
+                "name": "Delta Packaging",
+                "country": "Bangladesh",
+                "tier": 2,
+                "category": "Packaging",
+                "status": "active",
+                "risk_level": "low",
+                "profile": {"workers": 95},
+            },
+            {
+                "key": "global_logistics",
+                "name": "Global Logistics Partner",
+                "country": "Singapore",
+                "tier": 1,
+                "category": "Logistics & freight",
+                "status": "active",
+                "risk_level": "medium",
+                "profile": {"workers": 120, "modes": ["sea", "air"]},
+            },
+        ],
+        "policies": [
+            {
+                "key": "supplier_code",
+                "name": "Supplier Code of Conduct",
+                "policy_type": "code",
+                "version": "3.2",
+                "owner": "Compliance",
+                "status": "active",
+                "summary": "Covers labour, safety, environment, and grievance expectations. Last updated before the CSDDD transposition window; does not require risk-based human rights due diligence across tier-2 suppliers.",
+            },
+            {
+                "key": "msa_nordwear",
+                "name": "Nordwear EU Master Supply Agreement",
+                "policy_type": "contract",
+                "version": "2.1",
+                "owner": "Commercial",
+                "status": "active",
+                "summary": "Buyer may request due-diligence evidence and terminate for uncured material breach.",
+            },
+            {
+                "key": "msa_liberty",
+                "name": "Liberty Threads Supply Agreement",
+                "policy_type": "contract",
+                "version": "1.4",
+                "owner": "Commercial",
+                "status": "active",
+                "summary": "Includes UFLPA representations and a right to require cotton origin documentation.",
+            },
+            {
+                "key": "hrdd_policy",
+                "name": "Human Rights Due Diligence Policy",
+                "policy_type": "policy",
+                "version": "1.0",
+                "owner": "Compliance",
+                "status": "active",
+                "summary": "Commitment to the UN Guiding Principles. Supplier risk mapping is not yet automated.",
+            },
+            {
+                "key": "export_sop",
+                "name": "Export Proceeds SOP",
+                "policy_type": "policy",
+                "version": "4.0",
+                "owner": "Finance",
+                "status": "active",
+                "summary": "Monthly reconciliation and reporting calendar. No automated overdue-proceeds alert.",
+            },
+            {
+                "key": "chemical_policy",
+                "name": "Chemical Management Policy",
+                "policy_type": "policy",
+                "version": "2.3",
+                "owner": "EHS",
+                "status": "active",
+                "summary": "Restricted substances list; supplier declarations required annually.",
+            },
+            {
+                "key": "cotton_trace",
+                "name": "Cotton Traceability Procedure",
+                "policy_type": "policy",
+                "version": "1.1",
+                "owner": "Sourcing",
+                "status": "active",
+                "summary": "Tier-3 origin documentation is required, but indirect purchases still have gaps.",
+            },
+            {
+                "key": "grievance",
+                "name": "Worker Grievance Mechanism",
+                "policy_type": "policy",
+                "version": "2.0",
+                "owner": "HR",
+                "status": "active",
+                "summary": "Anonymous hotline and quarterly trend review.",
+            },
+            {
+                "key": "bb_calendar",
+                "name": "Bangladesh Bank Reporting Calendar",
+                "policy_type": "policy",
+                "version": "1.2",
+                "owner": "Finance",
+                "status": "active",
+                "summary": "Monthly and quarterly deadlines with named owners.",
+            },
+            {
+                "key": "factory_audit",
+                "name": "Dhaka Knit Factory Audit 2025",
+                "policy_type": "audit",
+                "version": "1.0",
+                "owner": "Compliance",
+                "status": "active",
+                "summary": "Fire-safety and electrical findings; corrective action plan partially closed.",
+            },
+        ],
+        "sources": [
+            {
+                "key": "bd_bank",
+                "name": "Bangladesh Bank — Circulars",
+                "stream_key": "bd_bank",
+                "source_type": "regulatory",
+                "jurisdiction": "BD",
+                "url": BB_URL,
+                "cadence": "every 6 hours",
+                "status": "healthy",
+                "last_synced_hours_ago": 2,
+            },
+            {
+                "key": "eu_eurlex",
+                "name": "EUR-Lex — EU regulatory",
+                "stream_key": "eu_eurlex",
+                "source_type": "regulatory",
+                "jurisdiction": "EU",
+                "url": "https://eur-lex.europa.eu/",
+                "cadence": "daily",
+                "status": "healthy",
+                "last_synced_hours_ago": 20,
+            },
+            {
+                "key": "us_uflpa",
+                "name": "DHS — UFLPA Entity List",
+                "stream_key": "us_uflpa",
+                "source_type": "sanctions",
+                "jurisdiction": "US",
+                "url": UFLPA_LIST_URL,
+                "cadence": "daily",
+                "status": "healthy",
+                "last_synced_hours_ago": 20,
+            },
+            {
+                "key": "gdelt",
+                "name": "GDELT — Global news",
+                "stream_key": "gdelt",
+                "source_type": "news",
+                "jurisdiction": "GLOBAL",
+                "url": GDELT_URL,
+                "cadence": "hourly",
+                "status": "degraded",
+                "last_synced_hours_ago": 6,
+                "last_error": "Rate limit; using cached results",
+            },
+        ],
+        "signals": [
+            {
+                "key": "bb_export_proceeds",
+                "source_key": "bd_bank",
+                "external_id": "bb-fepd-2026-26",
+                "title": "Bangladesh Bank tightens export-proceeds reporting",
+                "summary": "Exporters must repatriate proceeds within the prescribed period and report overdue amounts; enhanced monitoring applies to non-realization cases.",
+                "raw_text": BB_RAW,
+                "url": BB_GUIDE_URL,
+                "jurisdiction": "BD",
+                "signal_type": "regulatory",
+                "severity": "high",
+                "published_at": "2026-07-30T00:00:00+06:00",
+                "ingested_days_ago": 1,
+                "status": "processed",
+                "metadata": {"stream": "Bangladesh Bank", "demo": True, "quote": BB_QUOTE},
+            },
+            {
+                "key": "eu_csddd",
+                "source_key": "eu_eurlex",
+                "external_id": "eu-csddd-2024-1760",
+                "title": "EU CSDDD transposition deadline: due diligence now in scope",
+                "summary": "Directive (EU) 2024/1760 requires risk-based human rights and environmental due diligence; member states face a 26 July 2026 transposition deadline.",
+                "raw_text": CSDDD_RAW,
+                "url": CSDDD_URL,
+                "jurisdiction": "EU",
+                "signal_type": "regulatory",
+                "severity": "high",
+                "published_at": "2026-07-26T00:00:00+02:00",
+                "ingested_days_ago": 2,
+                "status": "processed",
+                "metadata": {"stream": "EU regulatory", "demo": True, "quote": CSDDD_QUOTE},
+            },
+            {
+                "key": "uflpa_cotton",
+                "source_key": "us_uflpa",
+                "external_id": "dhs-uflpa-2026-07-31",
+                "title": "DHS expands UFLPA Entity List to 187 entities, including cotton and apparel",
+                "summary": "43 companies were added. CBP applies a rebuttable presumption; cotton and garment supply chains face enhanced traceability scrutiny.",
+                "raw_text": UFLPA_RAW,
+                "url": UFLPA_NEWS_URL,
+                "jurisdiction": "US",
+                "signal_type": "sanctions",
+                "severity": "critical",
+                "published_at": "2026-07-31T00:00:00-04:00",
+                "ingested_days_ago": 1,
+                "status": "processed",
+                "metadata": {"stream": "UFLPA / sanctions", "demo": True, "quote": UFLPA_QUOTE},
+            },
+            {
+                "key": "eu_forced_labour",
+                "source_key": "eu_eurlex",
+                "external_id": "eu-flr-2024-3015",
+                "title": "EU forced-labour ban: implementation guidance ahead of 2027 application",
+                "summary": "Regulation (EU) 2024/3015 prohibits placing products made with forced labour on the EU market; authorities may request supply-chain evidence.",
+                "raw_text": FLR_RAW,
+                "url": FLR_URL,
+                "jurisdiction": "EU",
+                "signal_type": "regulatory",
+                "severity": "high",
+                "published_at": "2026-06-26T00:00:00+02:00",
+                "ingested_days_ago": 3,
+                "status": "processed",
+                "metadata": {"stream": "EU regulatory", "demo": True, "quote": FLR_QUOTE},
+            },
+            {
+                "key": "gdelt_port_strike",
+                "source_key": "gdelt",
+                "external_id": "gdelt-2026-10-20-port",
+                "title": "Chattogram port workers announce 48-hour strike",
+                "summary": "A 48-hour strike may delay two export shipments and increase demurrage costs.",
+                "raw_text": PORT_RAW,
+                "url": GDELT_URL,
+                "jurisdiction": "BD",
+                "signal_type": "news",
+                "severity": "medium",
+                "published_at": "2026-10-20T08:00:00+06:00",
+                "ingested_days_ago": 0,
+                "status": "processed",
+                "metadata": {"stream": "GDELT news", "demo": True, "quote": PORT_QUOTE},
+            },
+            {
+                "key": "uflpa_entity_match",
+                "source_key": "us_uflpa",
+                "external_id": "dhs-uflpa-2026-entity-match",
+                "title": "Potential UFLPA name match in chemical supplier ownership chain",
+                "summary": "A disclosed indirect owner name matches a listed textile entity. This is a potential match, not a confirmed finding; human review is required.",
+                "raw_text": MATCH_RAW,
+                "url": UFLPA_LIST_URL,
+                "jurisdiction": "US",
+                "signal_type": "sanctions",
+                "severity": "critical",
+                "published_at": "2026-08-03T00:00:00-04:00",
+                "ingested_days_ago": 2,
+                "status": "processed",
+                "supplier_key": "sinofab",
+                "metadata": {"stream": "UFLPA / sanctions", "demo": True, "quote": MATCH_QUOTE, "match_score": 0.78},
+            },
+            {
+                "key": "gdelt_factory_fire",
+                "source_key": "gdelt",
+                "external_id": "gdelt-2026-10-18-fire",
+                "title": "Fire reported at a Gazipur garment factory",
+                "summary": "No casualties confirmed. The buyer requested an incident report and a fire-safety re-inspection before the next shipment.",
+                "raw_text": FIRE_RAW,
+                "url": GDELT_URL,
+                "jurisdiction": "BD",
+                "signal_type": "news",
+                "severity": "high",
+                "published_at": "2026-10-18T19:30:00+06:00",
+                "ingested_days_ago": 0,
+                "status": "processed",
+                "supplier_key": "dhaka_knit",
+                "metadata": {"stream": "GDELT news", "demo": True, "quote": FIRE_QUOTE},
+            },
+            {
+                "key": "uflpa_chemical_trace",
+                "source_key": "us_uflpa",
+                "external_id": "cbp-2026-09-28-chemical-trace",
+                "title": "CBP requests batch-level chemical traceability for dye inputs",
+                "summary": "Annual declarations are not enough; lot-level origin records are missing for a US-bound order.",
+                "raw_text": CHEM_RAW,
+                "url": UFLPA_LIST_URL,
+                "jurisdiction": "US",
+                "signal_type": "sanctions",
+                "severity": "high",
+                "published_at": "2026-09-28T00:00:00-04:00",
+                "ingested_days_ago": 4,
+                "status": "processed",
+                "supplier_key": "sinofab",
+                "metadata": {"stream": "UFLPA / sanctions", "demo": True, "quote": CHEM_QUOTE},
+            },
+            {
+                "key": "gdelt_labour_inspection",
+                "source_key": "gdelt",
+                "external_id": "gdelt-2026-10-10-labour",
+                "title": "Labour inspectors visit Gazipur factories ahead of buyer audits",
+                "summary": "Factories were asked to update grievance logs and electrical safety records.",
+                "raw_text": LABOUR_RAW,
+                "url": GDELT_URL,
+                "jurisdiction": "BD",
+                "signal_type": "news",
+                "severity": "medium",
+                "published_at": "2026-10-10T11:00:00+06:00",
+                "ingested_days_ago": 3,
+                "status": "processed",
+                "supplier_key": "dhaka_knit",
+                "metadata": {"stream": "GDELT news", "demo": True, "quote": LABOUR_QUOTE},
+            },
+            {
+                "key": "gdelt_flood",
+                "source_key": "gdelt",
+                "external_id": "gdelt-2026-10-22-flood",
+                "title": "Flooding disrupts Dhaka–Chattogram freight corridor",
+                "summary": "Logistics providers advise an additional 24–48 hours for inland transport.",
+                "raw_text": FLOOD_RAW,
+                "url": GDELT_URL,
+                "jurisdiction": "BD",
+                "signal_type": "news",
+                "severity": "medium",
+                "published_at": "2026-10-22T07:00:00+06:00",
+                "ingested_days_ago": 0,
+                "status": "new",
+                "supplier_key": "global_logistics",
+                "metadata": {"stream": "GDELT news", "demo": True, "quote": FLOOD_QUOTE},
+            },
+            {
+                "key": "eu_csddd_penalties",
+                "source_key": "eu_eurlex",
+                "external_id": "eu-csddd-penalties-2026",
+                "title": "EU member states prepare CSDDD supervisory authorities and penalties",
+                "summary": "Buyers are expected to tighten supplier due-diligence clauses and request evidence of risk-based due diligence.",
+                "raw_text": PENALTIES_RAW,
+                "url": CSDDD_URL,
+                "jurisdiction": "EU",
+                "signal_type": "regulatory",
+                "severity": "medium",
+                "published_at": "2026-09-15T00:00:00+02:00",
+                "ingested_days_ago": 5,
+                "status": "processed",
+                "metadata": {"stream": "EU regulatory", "demo": True, "quote": PENALTIES_QUOTE},
+            },
+            {
+                "key": "bb_export_incentive",
+                "source_key": "bd_bank",
+                "external_id": "bb-fepd-2026-25",
+                "title": "Bangladesh Bank extends export incentive for RMG",
+                "summary": "Cash assistance rates for specified sectors are extended through December 2026; finance teams should update claims.",
+                "raw_text": INCENTIVE_RAW,
+                "url": BB_URL,
+                "jurisdiction": "BD",
+                "signal_type": "regulatory",
+                "severity": "low",
+                "published_at": "2026-07-03T00:00:00+06:00",
+                "ingested_days_ago": 6,
+                "status": "processed",
+                "metadata": {"stream": "Bangladesh Bank", "demo": True, "quote": INCENTIVE_QUOTE},
+            },
+        ],
+        "obligations": [
+            {
+                "key": "csddd_due_diligence",
+                "signal_key": "eu_csddd",
+                "title": "Conduct risk-based human rights and environmental due diligence",
+                "description": "Companies in scope must integrate due diligence into policies and risk management, identify and assess adverse impacts, prevent or mitigate them, maintain a grievance mechanism, monitor effectiveness, and communicate progress.",
+                "jurisdiction": "EU",
+                "obligation_type": "due_diligence",
+                "applies_to": "EU buyers and their upstream value-chain partners",
+                "effective_date": "2026-07-26",
+                "confidence": 0.93,
+                "citation_url": CSDDD_URL,
+                "citation_quote": CSDDD_QUOTE,
+                "section_path": "Article 5(1)",
+                "status": "active",
+            },
+            {
+                "key": "csddd_policy_integration",
+                "signal_key": "eu_csddd",
+                "title": "Integrate due diligence into policies and risk management systems",
+                "description": "The due-diligence policy should describe the company's approach, code of conduct, and risk-management processes, and should be developed in consultation with employees and representatives.",
+                "jurisdiction": "EU",
+                "obligation_type": "policy",
+                "applies_to": "Companies in scope of the CSDDD",
+                "effective_date": "2026-07-26",
+                "confidence": 0.89,
+                "citation_url": CSDDD_URL,
+                "citation_quote": CSDDD_QUOTE,
+                "section_path": "Article 5(1)(a), Article 7",
+                "status": "active",
+            },
+            {
+                "key": "bb_export_proceeds",
+                "signal_key": "bb_export_proceeds",
+                "title": "Repatriate export proceeds within the prescribed period and report delays",
+                "description": "Exporters and authorized dealer banks must reconcile shipments, invoices, and repatriation records, and report outstanding amounts and reasons for delay.",
+                "jurisdiction": "BD",
+                "obligation_type": "financial_regulatory",
+                "applies_to": "Bangladeshi exporters and authorized dealer banks",
+                "effective_date": "2026-07-30",
+                "confidence": 0.88,
+                "citation_url": BB_GUIDE_URL,
+                "citation_quote": BB_QUOTE,
+                "section_path": "FEPD-1 Circular No. 26",
+                "status": "active",
+            },
+            {
+                "key": "uflpa_traceability",
+                "signal_key": "uflpa_cotton",
+                "title": "Maintain UFLPA traceability evidence for cotton and garment inputs",
+                "description": "US importers should maintain supply-chain traceability and respond to CBP requests; listed-entity goods face a rebuttable presumption of exclusion.",
+                "jurisdiction": "US",
+                "obligation_type": "trade_compliance",
+                "applies_to": "US-bound supply chains",
+                "effective_date": "2026-07-31",
+                "confidence": 0.91,
+                "citation_url": UFLPA_NEWS_URL,
+                "citation_quote": UFLPA_QUOTE,
+                "section_path": "UFLPA Entity List update",
+                "status": "active",
+            },
+            {
+                "key": "eu_forced_labour",
+                "signal_key": "eu_forced_labour",
+                "title": "Do not place products made with forced labour on the EU market",
+                "description": "Economic operators must not place, make available, or export products made with forced labour. Competent authorities may request information during investigations.",
+                "jurisdiction": "EU",
+                "obligation_type": "market_prohibition",
+                "applies_to": "Economic operators in the EU market",
+                "effective_date": "2027-12-14",
+                "confidence": 0.9,
+                "citation_url": FLR_URL,
+                "citation_quote": FLR_QUOTE,
+                "section_path": "Regulation (EU) 2024/3015",
+                "status": "active",
+            },
+            {
+                "key": "sanctions_screening",
+                "signal_key": "uflpa_entity_match",
+                "title": "Screen suppliers for restricted-party and ownership matches",
+                "description": "Potential matches are not findings. They require enhanced due diligence, documented review, and escalation before onboarding or continued purchasing.",
+                "jurisdiction": "US",
+                "obligation_type": "sanctions",
+                "applies_to": "All suppliers and indirect owners",
+                "effective_date": "2026-08-03",
+                "confidence": 0.78,
+                "citation_url": UFLPA_LIST_URL,
+                "citation_quote": MATCH_QUOTE,
+                "section_path": "UFLPA Entity List / ownership review",
+                "status": "active",
+            },
+            {
+                "key": "port_disruption_bcp",
+                "signal_key": "gdelt_port_strike",
+                "title": "Activate business continuity plan for port disruption",
+                "description": "Commercial and logistics teams should assess shipment exposure, notify buyers, and evaluate rerouting options.",
+                "jurisdiction": "BD",
+                "obligation_type": "contractual",
+                "applies_to": "Logistics and commercial teams",
+                "effective_date": "2026-10-20",
+                "confidence": 0.7,
+                "citation_url": GDELT_URL,
+                "citation_quote": PORT_QUOTE,
+                "section_path": "Buyer contract / internal BCP",
+                "status": "active",
+            },
+            {
+                "key": "chemical_traceability",
+                "signal_key": "uflpa_chemical_trace",
+                "title": "Obtain batch-level chemical origin declarations from dye suppliers",
+                "description": "Lot-level origin records are needed to respond to CBP traceability requests and to support UFLPA due diligence.",
+                "jurisdiction": "US",
+                "obligation_type": "traceability",
+                "applies_to": "SinoFab Chemicals and Padma sourcing",
+                "effective_date": "2026-09-28",
+                "confidence": 0.75,
+                "citation_url": UFLPA_LIST_URL,
+                "citation_quote": CHEM_QUOTE,
+                "section_path": "UFLPA traceability guidance",
+                "status": "active",
+            },
+            {
+                "key": "worker_safety",
+                "signal_key": "gdelt_factory_fire",
+                "title": "Maintain worker safety and business continuity after a factory incident",
+                "description": "Verify incident reports, structural and fire safety, insurance coverage, and alternative capacity before resuming production.",
+                "jurisdiction": "BD",
+                "obligation_type": "operational",
+                "applies_to": "Dhaka Knit and Padma operations",
+                "effective_date": "2026-10-18",
+                "confidence": 0.72,
+                "citation_url": GDELT_URL,
+                "citation_quote": FIRE_QUOTE,
+                "section_path": "Internal safety procedure / buyer code",
+                "status": "active",
+            },
+            {
+                "key": "export_incentive_docs",
+                "signal_key": "bb_export_incentive",
+                "title": "Maintain supporting documentation for export-incentive claims",
+                "description": "Finance teams should retain export documentation and update claims when incentive rates change.",
+                "jurisdiction": "BD",
+                "obligation_type": "financial_regulatory",
+                "applies_to": "Padma finance team",
+                "effective_date": "2026-07-03",
+                "confidence": 0.8,
+                "citation_url": BB_URL,
+                "citation_quote": INCENTIVE_QUOTE,
+                "section_path": "FEPD Circular No. 25 (demo excerpt)",
+                "status": "active",
+            },
+            {
+                "key": "worker_grievance",
+                "signal_key": "gdelt_labour_inspection",
+                "title": "Maintain up-to-date grievance logs and worker-safety records",
+                "description": "Factories should keep grievance logs current and be able to produce them during labour inspections and buyer audits.",
+                "jurisdiction": "BD",
+                "obligation_type": "operational",
+                "applies_to": "Dhaka Knit and Padma operations",
+                "effective_date": "2026-10-10",
+                "confidence": 0.7,
+                "citation_url": GDELT_URL,
+                "citation_quote": LABOUR_QUOTE,
+                "section_path": "Internal grievance procedure / buyer code",
+                "status": "active",
+            },
+        ],
+        "risks": [
+            {
+                "key": "csddd_supplier_code_gap",
+                "supplier_key": "dhaka_knit",
+                "obligation_key": "csddd_due_diligence",
+                "title": "Supplier code and risk mapping are not yet aligned with CSDDD due diligence",
+                "description": "The supplier code predates the CSDDD transposition window. It does not require risk-based human rights and environmental due diligence, a grievance mechanism, or tier-2 mapping. The EU buyer's contract allows evidence requests and termination for uncured material breach.",
+                "category": "regulatory",
+                "severity": "high",
+                "likelihood": "likely",
+                "exposure": "significant",
+                "status": "open",
+                "created_days_ago": 5,
+                "rationale": "The obligation is in force for in-scope EU buyers and flows down the value chain. Padma has a policy commitment but no documented risk-based mapping or supplier grievance evidence. The gap is material to the Nordwear relationship and should be remediated before the next buyer audit.",
+                "confidence": 0.86,
+                "verification_status": "verified",
+                "evidence": [
+                    {
+                        "signal_key": "eu_csddd",
+                        "quote": CSDDD_QUOTE,
+                        "citation_url": CSDDD_URL,
+                        "citation_label": "EUR-Lex — Directive (EU) 2024/1760, Article 5(1)",
+                        "confidence": 0.94,
+                        "supports": "supports",
+                    }
+                ],
+                "actions": [
+                    {
+                        "title": "Update the supplier code of conduct for CSDDD",
+                        "description": "Add risk-based human rights and environmental due diligence, tier-2 mapping, grievance mechanism, and evidence-retention requirements. Route the draft to the approver.",
+                        "owner_role": "analyst",
+                        "due_date": "2026-11-15",
+                        "priority": "high",
+                        "status": "pending_approval",
+                        "automated": True,
+                    },
+                    {
+                        "title": "Request a corrective action plan from Dhaka Knit",
+                        "description": "Ask the tier-1 supplier for a dated plan covering due-diligence ownership, tier-2 visibility, and grievance evidence.",
+                        "owner_role": "analyst",
+                        "due_date": "2026-11-22",
+                        "priority": "high",
+                        "status": "draft",
+                        "automated": False,
+                    },
+                    {
+                        "title": "Schedule a tier-2 human rights audit",
+                        "description": "Commission a third-party audit of the highest-risk tier-2 supplier and attach the report to the risk record.",
+                        "owner_role": "analyst",
+                        "due_date": "2026-12-05",
+                        "priority": "medium",
+                        "status": "draft",
+                        "automated": False,
+                    },
+                ],
+                "approval": {
+                    "assigned_to": "approver@chowkidar.demo",
+                    "status": "pending",
+                    "requested_by": "admin@chowkidar.demo",
+                },
+            },
+            {
+                "key": "bb_export_proceeds_gap",
+                "supplier_key": None,
+                "obligation_key": "bb_export_proceeds",
+                "title": "Export-proceeds reconciliation has unresolved overdue items",
+                "description": "Three export bills are past the prescribed repatriation window. The monthly reconciliation has not been signed off, and there is no automated alert for overdue proceeds.",
+                "category": "financial_regulatory",
+                "severity": "high",
+                "likelihood": "possible",
+                "exposure": "significant",
+                "status": "in_review",
+                "created_days_ago": 4,
+                "rationale": "Bangladesh Bank guidance requires repatriation within the prescribed period and reporting of delays. Finance has a manual calendar but no exception report. The unresolved items create regulatory, cash-flow, and buyer-confidence risk.",
+                "confidence": 0.84,
+                "verification_status": "verified",
+                "evidence": [
+                    {
+                        "signal_key": "bb_export_proceeds",
+                        "quote": BB_QUOTE,
+                        "citation_url": BB_GUIDE_URL,
+                        "citation_label": "Bangladesh Bank export-trade guidance / FEPD Circular No. 26 (demo excerpt)",
+                        "confidence": 0.9,
+                        "supports": "supports",
+                    }
+                ],
+                "actions": [
+                    {
+                        "title": "Reconcile overdue export bills and assign owners",
+                        "description": "Match shipment, invoice, and repatriation records for the three overdue bills; assign a finance owner and document the reason for delay.",
+                        "owner_role": "analyst",
+                        "due_date": "2026-10-30",
+                        "priority": "high",
+                        "status": "pending_approval",
+                        "automated": True,
+                    },
+                    {
+                        "title": "File the outstanding-proceeds report with the AD bank",
+                        "description": "Prepare the report for the authorized dealer bank and retain the filing evidence.",
+                        "owner_role": "analyst",
+                        "due_date": "2026-11-05",
+                        "priority": "high",
+                        "status": "draft",
+                        "automated": False,
+                    },
+                    {
+                        "title": "Add an automated overdue-proceeds alert",
+                        "description": "Create a finance dashboard alert when an export bill passes the prescribed period without repatriation.",
+                        "owner_role": "analyst",
+                        "due_date": "2026-11-20",
+                        "priority": "medium",
+                        "status": "draft",
+                        "automated": True,
+                    },
+                ],
+                "approval": {
+                    "assigned_to": "approver@chowkidar.demo",
+                    "status": "pending",
+                    "requested_by": "admin@chowkidar.demo",
+                },
+            },
+            {
+                "key": "uflpa_traceability_gap",
+                "supplier_key": "sunrise_cotton",
+                "obligation_key": "uflpa_traceability",
+                "title": "Cotton origin documentation is incomplete for US-bound order LT-4412",
+                "description": "Tier-3 cotton origin declarations are missing for two lots. The US importer's contract requires UFLPA representations and origin documentation. CBP could apply a rebuttable presumption if the goods are linked to a listed entity.",
+                "category": "trade_compliance",
+                "severity": "critical",
+                "likelihood": "likely",
+                "exposure": "severe",
+                "status": "open",
+                "created_days_ago": 2,
+                "rationale": "The order is scheduled to ship within 48 hours. Missing lot-level documentation prevents a defensible traceability response and creates a high risk of detention, buyer rejection, and reputational harm. Hold the shipment and obtain evidence before release.",
+                "confidence": 0.91,
+                "verification_status": "verified",
+                "evidence": [
+                    {
+                        "signal_key": "uflpa_cotton",
+                        "quote": UFLPA_QUOTE,
+                        "citation_url": UFLPA_NEWS_URL,
+                        "citation_label": "U.S. Department of State — UFLPA Entity List additions (31 Jul 2026)",
+                        "confidence": 0.95,
+                        "supports": "supports",
+                    },
+                    {
+                        "signal_key": "uflpa_chemical_trace",
+                        "quote": CHEM_QUOTE,
+                        "citation_url": UFLPA_LIST_URL,
+                        "citation_label": "UFLPA traceability guidance (demo excerpt)",
+                        "confidence": 0.8,
+                        "supports": "context",
+                    },
+                ],
+                "actions": [
+                    {
+                        "title": "Hold US-bound shipment LT-4412 pending traceability review",
+                        "description": "Pause the shipment, notify the US buyer, and release only after lot-level origin documents are reviewed and approved.",
+                        "owner_role": "analyst",
+                        "due_date": "2026-10-24",
+                        "priority": "critical",
+                        "status": "pending_approval",
+                        "automated": True,
+                    },
+                    {
+                        "title": "Request lot-level cotton origin declarations",
+                        "description": "Obtain signed declarations for both missing lots, including farm, gin, and trader information.",
+                        "owner_role": "analyst",
+                        "due_date": "2026-10-28",
+                        "priority": "high",
+                        "status": "draft",
+                        "automated": False,
+                    },
+                    {
+                        "title": "Qualify an alternate traceable cotton supplier",
+                        "description": "Identify and pre-qualify a second supplier with complete lot-level documentation.",
+                        "owner_role": "analyst",
+                        "due_date": "2026-11-30",
+                        "priority": "high",
+                        "status": "draft",
+                        "automated": False,
+                    },
+                ],
+                "approval": {
+                    "assigned_to": "approver@chowkidar.demo",
+                    "status": "pending",
+                    "requested_by": "admin@chowkidar.demo",
+                },
+            },
+            {
+                "key": "sanctions_ownership_match",
+                "supplier_key": "sinofab",
+                "obligation_key": "sanctions_screening",
+                "title": "Potential UFLPA ownership match requires enhanced due diligence",
+                "description": "A disclosed indirect owner name matches a listed textile entity. This is a potential match, not a confirmed finding. Enhanced ownership and traceability review is required before new orders.",
+                "category": "sanctions",
+                "severity": "critical",
+                "likelihood": "unlikely",
+                "exposure": "severe",
+                "status": "in_review",
+                "created_days_ago": 3,
+                "rationale": "The match score is 0.78 and the ownership chain is incomplete. A false positive is plausible, but the potential consequences of shipping US-bound goods linked to a listed entity are severe. Escalate to the compliance committee and freeze new orders pending review.",
+                "confidence": 0.76,
+                "verification_status": "needs_review",
+                "evidence": [
+                    {
+                        "signal_key": "uflpa_entity_match",
+                        "quote": MATCH_QUOTE,
+                        "citation_url": UFLPA_LIST_URL,
+                        "citation_label": "UFLPA Entity List — potential match analysis (synthetic demo)",
+                        "confidence": 0.78,
+                        "supports": "supports",
+                    }
+                ],
+                "actions": [
+                    {
+                        "title": "Run enhanced ownership and UFLPA due diligence on SinoFab",
+                        "description": "Obtain the full ownership chart, ultimate beneficial ownership declarations, and lot-level origin records; document the review.",
+                        "owner_role": "analyst",
+                        "due_date": "2026-10-29",
+                        "priority": "critical",
+                        "status": "pending_approval",
+                        "automated": True,
+                    },
+                    {
+                        "title": "Freeze new dye orders pending review",
+                        "description": "Pause new purchase orders while preserving existing production commitments that have been reviewed.",
+                        "owner_role": "analyst",
+                        "due_date": "2026-10-25",
+                        "priority": "high",
+                        "status": "draft",
+                        "automated": True,
+                    },
+                    {
+                        "title": "Escalate the potential match to the compliance committee",
+                        "description": "Prepare a one-page fact pattern with citations and open questions for the committee.",
+                        "owner_role": "analyst",
+                        "due_date": "2026-10-27",
+                        "priority": "high",
+                        "status": "draft",
+                        "automated": False,
+                    },
+                ],
+                "approval": {
+                    "assigned_to": "approver@chowkidar.demo",
+                    "status": "pending",
+                    "requested_by": "admin@chowkidar.demo",
+                },
+            },
+            {
+                "key": "port_disruption",
+                "supplier_key": "global_logistics",
+                "obligation_key": "port_disruption_bcp",
+                "title": "Chattogram port strike threatens October shipments",
+                "description": "A 48-hour strike may delay two export shipments and trigger demurrage. The logistics provider has identified an air-freight option for the most urgent order.",
+                "category": "operational",
+                "severity": "medium",
+                "likelihood": "likely",
+                "exposure": "moderate",
+                "status": "mitigating",
+                "created_days_ago": 1,
+                "rationale": "The disruption is time-bound but affects two buyer commitments. Rerouting the urgent shipment protects the delivery window; the second shipment can absorb a short delay. Notify both buyers and monitor port updates.",
+                "confidence": 0.82,
+                "verification_status": "verified",
+                "evidence": [
+                    {
+                        "signal_key": "gdelt_port_strike",
+                        "quote": PORT_QUOTE,
+                        "citation_url": GDELT_URL,
+                        "citation_label": "GDELT-style demo signal (synthetic)",
+                        "confidence": 0.72,
+                        "supports": "supports",
+                    }
+                ],
+                "actions": [
+                    {
+                        "title": "Reroute the two urgent shipments through air freight",
+                        "description": "Book air freight for the two urgent orders, confirm the revised ETAs, and capture the cost variance.",
+                        "owner_role": "analyst",
+                        "due_date": "2026-10-24",
+                        "priority": "high",
+                        "status": "approved",
+                        "automated": False,
+                    },
+                    {
+                        "title": "Notify Nordwear EU and Liberty Threads of revised ETAs",
+                        "description": "Send a short buyer update with the revised delivery dates and the contingency plan.",
+                        "owner_role": "analyst",
+                        "due_date": "2026-10-23",
+                        "priority": "medium",
+                        "status": "in_progress",
+                        "automated": False,
+                    },
+                ],
+                "approval": {
+                    "assigned_to": "approver@chowkidar.demo",
+                    "status": "approved",
+                    "requested_by": "admin@chowkidar.demo",
+                    "decision": "approve",
+                    "rationale": "Air freight is justified to protect the buyer relationship and avoid demurrage. Proceed and report the cost variance within 24 hours.",
+                    "decided_days_ago": 1,
+                },
+            },
+            {
+                "key": "factory_fire_safety",
+                "supplier_key": "dhaka_knit",
+                "obligation_key": "worker_safety",
+                "title": "Factory fire requires safety verification before resuming production",
+                "description": "A fire was reported at a Gazipur factory. No casualties are confirmed, but the buyer has requested an incident report and a fire-safety re-inspection before the next shipment.",
+                "category": "operational",
+                "severity": "high",
+                "likelihood": "possible",
+                "exposure": "significant",
+                "status": "open",
+                "created_days_ago": 0,
+                "rationale": "The incident is unverified and the factory's corrective action plan is only partially closed. Production should not resume until the incident report, electrical inspection, and fire-safety re-inspection are reviewed.",
+                "confidence": 0.79,
+                "verification_status": "needs_review",
+                "evidence": [
+                    {
+                        "signal_key": "gdelt_factory_fire",
+                        "quote": FIRE_QUOTE,
+                        "citation_url": GDELT_URL,
+                        "citation_label": "GDELT-style demo signal (synthetic)",
+                        "confidence": 0.7,
+                        "supports": "supports",
+                    }
+                ],
+                "actions": [
+                    {
+                        "title": "Verify fire safety and structural integrity at Dhaka Knit",
+                        "description": "Obtain the incident report and commission an independent fire-safety and electrical inspection before resuming production.",
+                        "owner_role": "analyst",
+                        "due_date": "2026-10-26",
+                        "priority": "high",
+                        "status": "draft",
+                        "automated": False,
+                    },
+                    {
+                        "title": "Request the insurer and factory incident report",
+                        "description": "Collect the insurer's preliminary report and the factory's incident log; attach both to the risk record.",
+                        "owner_role": "analyst",
+                        "due_date": "2026-10-25",
+                        "priority": "high",
+                        "status": "draft",
+                        "automated": False,
+                    },
+                    {
+                        "title": "Reinspect boiler and electrical systems",
+                        "description": "Schedule an independent inspection and document closure of any findings.",
+                        "owner_role": "analyst",
+                        "due_date": "2026-11-10",
+                        "priority": "medium",
+                        "status": "draft",
+                        "automated": False,
+                    },
+                ],
+            },
+            {
+                "key": "export_incentive_docs",
+                "supplier_key": None,
+                "obligation_key": "export_incentive_docs",
+                "title": "Export-incentive claim backup is incomplete",
+                "description": "Two claims lack supporting export documentation. Finance has a manual checklist, but it is not consistently completed.",
+                "category": "financial_regulatory",
+                "severity": "medium",
+                "likelihood": "unlikely",
+                "exposure": "limited",
+                "status": "open",
+                "created_days_ago": 6,
+                "rationale": "The issue is documentation-only and the exposure is limited, but a rejected claim would create avoidable cash-flow friction. Fix the checklist before the next filing window.",
+                "confidence": 0.74,
+                "verification_status": "verified",
+                "evidence": [
+                    {
+                        "signal_key": "bb_export_incentive",
+                        "quote": INCENTIVE_QUOTE,
+                        "citation_url": BB_URL,
+                        "citation_label": "Bangladesh Bank export-incentive guidance (demo excerpt)",
+                        "confidence": 0.8,
+                        "supports": "supports",
+                    }
+                ],
+                "actions": [
+                    {
+                        "title": "Assemble supporting documents for two incentive claims",
+                        "description": "Collect invoices, shipping bills, and proof of export for the two incomplete claims.",
+                        "owner_role": "analyst",
+                        "due_date": "2026-11-12",
+                        "priority": "medium",
+                        "status": "draft",
+                        "automated": False,
+                    },
+                    {
+                        "title": "Add a claim checklist to the finance SOP",
+                        "description": "Add a sign-off checklist to the Export Proceeds SOP so each claim has a complete evidence pack.",
+                        "owner_role": "analyst",
+                        "due_date": "2026-11-30",
+                        "priority": "low",
+                        "status": "draft",
+                        "automated": True,
+                    },
+                ],
+            },
+            {
+                "key": "worker_grievance_log",
+                "supplier_key": "dhaka_knit",
+                "obligation_key": "worker_grievance",
+                "title": "Grievance logs are not up to date at two factories",
+                "description": "Labour inspectors requested updated grievance logs. The Dhaka Knit log has a three-week gap, and the factory owner has not been assigned.",
+                "category": "operational",
+                "severity": "low",
+                "likelihood": "unlikely",
+                "exposure": "limited",
+                "status": "open",
+                "created_days_ago": 2,
+                "rationale": "The gap is administrative and no worker complaint is known to be missing, but incomplete logs weaken the next buyer audit and labour-inspection response. Assign an owner and close the gap.",
+                "confidence": 0.7,
+                "verification_status": "needs_review",
+                "evidence": [
+                    {
+                        "signal_key": "gdelt_labour_inspection",
+                        "quote": LABOUR_QUOTE,
+                        "citation_url": GDELT_URL,
+                        "citation_label": "GDELT-style demo signal (synthetic)",
+                        "confidence": 0.65,
+                        "supports": "supports",
+                    }
+                ],
+                "actions": [
+                    {
+                        "title": "Update grievance logs and assign a factory owner",
+                        "description": "Reconstruct the three-week gap, assign a named owner, and add weekly sign-off.",
+                        "owner_role": "analyst",
+                        "due_date": "2026-10-31",
+                        "priority": "low",
+                        "status": "draft",
+                        "automated": False,
+                    },
+                    {
+                        "title": "Review grievance trends in the next compliance meeting",
+                        "description": "Add grievance-log completeness to the monthly compliance review.",
+                        "owner_role": "analyst",
+                        "due_date": "2026-11-08",
+                        "priority": "low",
+                        "status": "draft",
+                        "automated": False,
+                    },
+                ],
+            },
+        ],
+        "agent_run": {
+            "workflow": "ingest_extract_map_score_remediate_verify",
+            "status": "completed",
+            "input": {"source_keys": ["bd_bank", "eu_eurlex", "us_uflpa", "gdelt"], "mode": "mock"},
+            "output": {
+                "message": "Created 8 cited risk(s) and 21 draft action(s).",
+                "counts": {
+                    "signals": 12,
+                    "candidate_signals": 11,
+                    "obligations": 11,
+                    "risks": 8,
+                    "actions": 21,
+                },
+                "created_risk_ids": [],
+                "errors": [],
+                "mode": "mock",
+            },
+            "trace_id": "demo-trace-2026-10-23",
+            "started_days_ago": 1,
+            "duration_seconds": 42,
+        },
+    }
+
+    OUT.parent.mkdir(parents=True, exist_ok=True)
+    OUT.write_text(json.dumps(demo, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"Wrote {OUT} ({OUT.stat().st_size:,} bytes)")
+
+
+if __name__ == "__main__":
+    main()

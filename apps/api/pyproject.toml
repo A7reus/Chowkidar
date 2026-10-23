@@ -23,6 +23,7 @@ dependencies = [
   "PyJWT[crypto]>=2.10",
   "pypdf>=5.1",
   "python-dotenv>=1.0",
+  "reportlab>=4.2",
   "python-multipart>=0.0.20",
   "sentry-sdk[fastapi]>=2.20",
   "sqlalchemy[asyncio]>=2.0.36",
@@ -54,7 +55,7 @@ observability = [
   "openinference-instrumentation-langchain>=0.1",
 ]
 pdf = [
-  "playwright>=1.49",
+  "reportlab>=4.2",
 ]
 
 [tool.uv]
@@ -67,11 +68,12 @@ src = ["app", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "ASYNC", "S"]
-ignore = ["S101", "S105", "S106", "S311"]
+ignore = ["E501", "S101", "S105", "S106", "S311"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+pythonpath = ["."]
 addopts = "-q"
 
 [tool.pyright]
