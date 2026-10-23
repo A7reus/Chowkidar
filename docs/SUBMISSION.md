@@ -32,9 +32,11 @@
 | AI-agent build provenance | [`docs/BUILD_LOG.md`](BUILD_LOG.md), [`prompts/MASTER_PROMPT.md`](../prompts/MASTER_PROMPT.md) |
 | Not legal advice | API root, UI, reports, README, methodology resource |
 
-**Live demo URL:** _to be added after deployment_  
-**Video URL:** _to be added after recording_  
-**Repository URL:** _to be added after pushing to GitHub_
+**Repository URL:** <https://github.com/A7reus/Chowkidar>  
+**Live demo URL:** _to be added after deployment — required for the official form_  
+**Video URL:** _to be added after recording — required for the official form_
+
+> The official form and MCP knowledge base both reward a public live demo and a 2–3 minute video. A local-only demo is not enough for maximum preliminary score. See [`COMPETITION_CONTEXT.md`](COMPETITION_CONTEXT.md) for the captured form, scoring signals, and the authoritative domain list.
 
 ---
 
@@ -162,7 +164,7 @@ Pilot with an RMG exporter and a compliance reviewer; add live source scheduling
 - [x] README, architecture, deployment, MCP, and build log.
 - [x] API tests, web tests, and Playwright smoke.
 - [x] Docker image and Render/Vercel configs.
-- [ ] GitHub remote and public repository URL.
+- [x] GitHub remote and public repository URL.
 - [ ] Supabase project and keys.
 - [ ] Render API deploy.
 - [ ] Vercel web deploy.

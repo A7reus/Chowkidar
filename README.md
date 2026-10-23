@@ -239,6 +239,7 @@ See [`docs/MCP.md`](docs/MCP.md).
 | [`PRODUCT_SPEC.md`](PRODUCT_SPEC.md) | Personas, workflows, data model, agents, evals |
 | [`BUILD_PLAN.md`](BUILD_PLAN.md) | Plan, cut list, submission checklist |
 | [`STRATEGY.md`](STRATEGY.md) | Market and strategic case |
+| [`docs/COMPETITION_CONTEXT.md`](docs/COMPETITION_CONTEXT.md) | Official form, scoring signals, screenshots, authoritative domains |
 | [`prompts/MASTER_PROMPT.md`](prompts/MASTER_PROMPT.md) | Single master prompt used for the base build |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | System design and trust boundaries |
 | [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) | Source inventory and access notes |
@@ -259,6 +260,7 @@ The base implementation was produced by an AI coding agent from a single master 
 ## Team
 
 **JU_StackMind** · International AI Builders Congress 2026  
-Event: https://cloudcampbd.com/ai-builders-congress
+Event: https://cloudcampbd.com/ai-builders-congress  
+Repository: https://github.com/A7reus/Chowkidar
 
-Live demo, video, and repository URL: to be added after deployment.
+Live demo and video: to be added after deployment and recording.

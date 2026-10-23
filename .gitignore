@@ -49,6 +49,7 @@ Thumbs.db
 
 # Private reference material
 preli-submission-ss/
+docs/private/
 
 # Playwright
 playwright-report/
