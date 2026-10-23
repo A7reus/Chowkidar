@@ -1,0 +1,62 @@
+services:
+  - type: web
+    name: chowkidar-api
+    runtime: docker
+    plan: starter
+    region: singapore
+    branch: main
+    autoDeploy: true
+    dockerContext: .
+    dockerfilePath: ./apps/api/Dockerfile
+    healthCheckPath: /healthz
+    disk:
+      name: chowkidar-reports
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: AUTH_MODE
+        value: dev
+      - key: DEMO_MODE
+        value: "true"
+      - key: DEV_JWT_SECRET
+        generateValue: true
+      - key: DATA_MODE
+        value: fixture
+      - key: LLM_MODE
+        value: mock
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: WEB_URL
+        sync: false
+      - key: LOCAL_STORAGE_DIR
+        value: /var/data
+      - key: REPORT_STORAGE_DIR
+        value: /var/data/reports
+      - key: UPLOAD_STORAGE_DIR
+        value: /var/data/uploads
+      - key: NEO4J_URI
+        sync: false
+      - key: NEO4J_USER
+        sync: false
+      - key: NEO4J_PASSWORD
+        sync: false
+      - key: NEO4J_DATABASE
+        value: neo4j
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_FLASH_MODEL
+        value: gemini/gemini-3.8-flash
+      - key: GEMINI_PRO_MODEL
+        value: gemini/gemini-pro-latest
+      - key: GROQ_MODEL
+        value: groq/openai/gpt-oss-120b
+      - key: SENTRY_DSN
+        sync: false
+      - key: POSTHOG_KEY
+        sync: false
