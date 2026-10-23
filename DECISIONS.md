@@ -1,7 +1,7 @@
 # Chowkidar — Decision Log & Persistent Context
 
 **Last updated:** 2026-10-23  
-**Status:** Active  
+**Status:** Active — base build complete; deployment pending  
 **Owner:** JU_StackMind  
 **Purpose:** Single source of truth for decisions, constraints, assumptions, and session history. Read this before starting any new work session.
 
@@ -209,8 +209,9 @@
 
 | Question | Why it matters | Owner | Status |
 |---|---|---|---|
-| Stack decisions (language, package manager, frameworks, DB, auth, AI stack, deploy) | User wants to approve every choice | User | Open — ask in batches |
-| Which live data sources work reliably from Bangladesh | Demo reliability | Team | Open |
+| Stack decisions (language, package manager, frameworks, DB, auth, AI stack, deploy) | User wants to approve every choice | User | Resolved — stack frozen 2026-10-23 |
+| Cloud accounts and keys (Supabase, Render, Vercel, Neo4j Aura, Sentry, PostHog) | Public demo URL and hosted data | Team | Open — local demo works without them |
+| Which live data sources work reliably from Bangladesh | Demo reliability | Team | Partially resolved — fixture-first path validated; connectors scaffolded |
 | Do we have any pilot user / compliance contact? | Validation and story | Team | Open |
 | Can a law student review the demo for 1 hour? | Quality check, not dependency | Team | Optional |
 
@@ -247,6 +248,22 @@ To avoid losing details between sessions:
 - Renamed project docs from Argus to Chowkidar.
 - No product code yet; waiting on stack decisions.
 - Next: ask stack questions in batches, finalize master prompt v1.0, initialize git, build base in one pass with logical commits.
+
+### 2026-10-23 — Session 3
+- Approved and froze the complete stack; recorded two explicit exceptions: ReportLab for PDF generation and TypeScript 5.9.3 for `openapi-typescript` compatibility.
+- Executed the v1.0 master prompt as one build pass with the AI coding agent.
+- Built and committed the monorepo scaffold, local services, seeded Postgres schema, full FastAPI backend, and full Next.js console.
+- Implemented the LangGraph pipeline, deterministic scoring, verifier, hybrid retrieval, PDF/JSON/Markdown reports, hash-chained audit log, role-gated approvals, and read-only MCP server.
+- Validated local runtime flows, live LiteLLM fallback, report downloads, role switching, approval decisions, and action creation.
+- Added backend pytest (36), web Vitest (8), Playwright smoke (4), Ruff/Pyright/ESLint/tsc clean, and a production build.
+
+### 2026-10-23 — Session 4
+- Fixed frontend runtime issues: `Button asChild`, Zustand hydration, signal source icons, graph clipping, search deep links.
+- Reduced Pyright errors to zero across the API.
+- Added Render Docker blueprint, Vercel framework config, CI workflow, architecture/deployment/MCP docs, and refreshed README and build log.
+- Confirmed demo baseline: 8 risks (3 critical, 3 high, 1 medium, 1 low), 4 pending approvals, 12 signals, 11 audit events, 7/7 evals.
+- Next: generate submission screenshots, record demo video, deploy once accounts/keys exist, and add the public URL/video link.
+- Blockers: cloud accounts/keys; no legal/compliance advisor; no Git remote configured.
 
 ### Template for future sessions
 ```

@@ -1,0 +1,171 @@
+# Chowkidar — Submission Packet
+
+**Team:** JU_StackMind  
+**Event:** International AI Builders Congress 2026  
+**Track:** Idea to Unicorn  
+**Domain:** JusticeSphere AI  
+**Challenge:** Risk Sentinel  
+**Deadline:** 2026-10-31, 11:59 PM GMT+6  
+**Target submission:** 6:00 PM GMT+6
+
+---
+
+## 1. One-liner
+
+**Chowkidar is an agentic compliance risk sentinel for export supply chains: it monitors regulatory and supplier-risk streams, maps them to obligations, and turns them into evidence-backed remediation that a human approves.**
+
+**Tagline:** *See the risk. Approve the fix.*
+
+---
+
+## 2. What judges can verify
+
+| Requirement | Where to verify |
+|---|---|
+| Two or more distinct data streams | `/sources` and `/signals` show Bangladesh Bank, EUR-Lex, UFLPA/DHS, and GDELT |
+| Prioritized risk audit | `/dashboard`, `/risks`, and the PDF audit pack |
+| Automated remediation | Risk detail shows proposed actions, owners, due dates, priorities |
+| Human-in-the-loop approval | `/approvals`; approver/admin decision with rationale |
+| Evidence and citations | Risk detail evidence quote + source URL; `/search` cited chunks |
+| Auditability | `/audit` hash-chain verification (admin) |
+| Quality evaluation | `/evals`, 7/7 golden cases, five metrics |
+| AI-agent build provenance | [`docs/BUILD_LOG.md`](BUILD_LOG.md), [`prompts/MASTER_PROMPT.md`](../prompts/MASTER_PROMPT.md) |
+| Not legal advice | API root, UI, reports, README, methodology resource |
+
+**Live demo URL:** _to be added after deployment_  
+**Video URL:** _to be added after recording_  
+**Repository URL:** _to be added after pushing to GitHub_
+
+---
+
+## 3. Local judge runbook
+
+```bash
+cp .env.example .env
+make setup
+make services-up
+make migrate
+make seed
+make api    # terminal 1
+make web    # terminal 2
+```
+
+Open **http://localhost:3000** and choose any demo account.
+
+### Demo accounts
+
+| Role | Name | Email |
+|---|---|---|
+| Admin | Ayesha Rahman | `admin@chowkidar.demo` |
+| Analyst | Rafiq Hasan | `analyst@chowkidar.demo` |
+| Approver | Nusrat Jahan | `approver@chowkidar.demo` |
+| Viewer | Imran Chowdhury | `viewer@chowkidar.demo` |
+
+The login page uses one-click accounts. Role switching in the app reissues a token and reloads so API authorization is exercised, not just hidden in the client.
+
+### Seed baseline
+
+```
+1 company · 4 users · 8 suppliers · 4 sources · 12 signals
+11 obligations · 8 risks (3 critical, 3 high, 1 medium, 1 low)
+21 actions · 5 approvals (4 pending) · 11 audit events · 12 evidence chunks
+```
+
+---
+
+## 4. Five-minute demo script
+
+| Time | Screen | Say |
+|---|---|---|
+| 0:00–0:20 | Login | "Exporters face a moving wall of EU, US, and Bangladesh rules plus supplier risk. Chowkidar watches the streams, finds what applies, and prepares the fix for human approval. It is compliance risk intelligence, not legal advice." |
+| 0:20–0:55 | Dashboard | "Padma Apparel is a fictional Gazipur RMG exporter. Twelve signals produced eight cited risks: three critical, three high. Source health shows all four streams. The agent run explains what it ingested and produced." |
+| 0:55–1:35 | Risk detail | "This US-bound order is critical. The score is deterministic: severity 4, likelihood 4, exposure 4. The exact UFLPA quote and citation are shown, the verifier is marked, and the proposed actions have owners and due dates." |
+| 1:35–2:10 | Signals + graph | "Signals keep the raw source text. The graph maps the company to buyers, suppliers, obligations, and risks. Each node has an inspector; clicking a risk opens its evidence." |
+| 2:10–2:50 | Approvals as approver | "As Nusrat, the approver, I review the rationale and record a decision. The API enforces the role and the decision writes an audit event. Nothing material happens without this gate." |
+| 2:50–3:25 | Audit as admin | "The audit log is append-only and hash-chained. Verify recomputes every link. Ayesha, the admin, can inspect the before/after payload and the decision event." |
+| 3:25–4:00 | Reports | "Generate a board-ready PDF audit pack, JSON, or Markdown. It contains the score method, evidence, actions, approvals, limitations, and the not-legal-advice boundary." |
+| 4:00–4:30 | Search + evals | "Search returns cited source chunks, not generated answers. The evaluation page shows 7/7 golden cases and five gates: extraction, citation coverage, verifier pass, legal-advice guard, and priority agreement." |
+| 4:30–5:00 | Close | "Chowkidar turns two or more streams into a ranked audit, a remediation plan, and a signed human decision with a trail. See the risk. Approve the fix." |
+
+---
+
+## 5. Submission-form copy
+
+### Short description
+
+Chowkidar is an agentic compliance risk sentinel for export supply chains. It monitors regulatory, sanctions, and news streams; extracts cited obligations; maps them to suppliers and controls; scores and prioritizes risk; drafts remediation; and requires human approval before material action.
+
+### Problem
+
+Export-focused SMEs and mid-market manufacturers face overlapping EU, US, and home-country rules, sanctions/watchlists, buyer codes, and supplier incidents. They often lack in-house legal/compliance capacity, so changes are tracked in spreadsheets and email. The result is missed obligations, shipment delays, buyer penalties, and no defensible audit trail.
+
+### Solution
+
+An evidence-first risk workspace:
+
+1. Monitor at least two distinct streams.
+2. Extract structured obligations with a verbatim quote and citation.
+3. Map exposure to company, supplier, and policy context.
+4. Score deterministically; use the LLM for rationale, not ranking.
+5. Draft owned, dated remediation actions.
+6. Verify evidence and guard against legal advice.
+7. Route material actions to a named human approver.
+8. Export a board-ready audit pack and keep a hash-chained log.
+
+### AI architecture
+
+- **LangGraph** state machine: ingest → extract → map → score → remediate → verify → persist.
+- **LiteLLM** provider fallback: Gemini Flash → Groq Llama → Gemini Pro.
+- **Deterministic mock mode** for reproducible judging.
+- **Hybrid retrieval**: pgvector + Postgres full-text search over cited chunks.
+- **Verifier**: quote grounding, citation URL, prohibited-language, prompt-injection, and evidence checks.
+- **MCP**: read-only FastMCP server for other agents to inspect risks and evidence.
+
+### Why this team
+
+JU_StackMind combines AI/full-stack engineering and data engineering. The build demonstrates the full path from source ingestion to evidence-grounded agent output, operational UI, role-gated approval, audit integrity, tests, evaluation, and deployment configuration.
+
+### Next
+
+Pilot with an RMG exporter and a compliance reviewer; add live source scheduling; connect Supabase Auth and Storage; expand the golden set; add tenant isolation and external audit anchoring.
+
+---
+
+## 6. Build provenance
+
+- Base implementation produced by an AI coding agent from one frozen master prompt, v1.0.
+- No iterative implementation prompts; subsequent work was QA, tests, and documentation.
+- Full session record, manual changes, model names, and test evidence: [`docs/BUILD_LOG.md`](BUILD_LOG.md).
+- Runtime prompt version: `2026-10-23.1` in `apps/api/app/agents/prompts.py`.
+- Build-level classification is left to the submission form; this packet does not assert one beyond the evidence.
+
+---
+
+## 7. Known limitations
+
+- Fixture-first demo data; live connectors are scaffolded, not production-scheduled.
+- Demo auth uses seeded role tokens; Supabase Auth decoding exists, but the hosted login flow is not wired into the UI.
+- Reports use persistent disk; Supabase Storage is not enabled.
+- BGE-M3, Docling, RAGAS, and Phoenix are optional and not on the demo path.
+- Golden set is small and synthetic (7 cases).
+- No legal/compliance advisor reviewed the content.
+- No legal advice is provided; every finding is a reviewable signal.
+- Public deployment is pending cloud accounts and keys.
+
+---
+
+## 8. Asset checklist
+
+- [x] Local build runs end to end.
+- [x] Demo seed reproducible.
+- [x] Screenshots in [`docs/assets`](assets).
+- [x] README, architecture, deployment, MCP, and build log.
+- [x] API tests, web tests, and Playwright smoke.
+- [x] Docker image and Render/Vercel configs.
+- [ ] GitHub remote and public repository URL.
+- [ ] Supabase project and keys.
+- [ ] Render API deploy.
+- [ ] Vercel web deploy.
+- [ ] Live URL verified in incognito.
+- [ ] Two-to-three-minute demo video recorded and linked.
+- [ ] Final submission form completed before the deadline.

@@ -1,24 +1,223 @@
-# Chowkidar — AI Builders Congress 2026
+# Chowkidar — See the risk. Approve the fix.
 
-**Project:** Chowkidar — agentic compliance risk intelligence for export supply chains  
+**Compliance risk intelligence for export supply chains.**
+
 **Event:** International AI Builders Congress 2026  
-**Track:** Idea to Unicorn — Preliminary Submission  
+**Track:** Idea to Unicorn  
 **Domain:** JusticeSphere AI  
 **Challenge:** Risk Sentinel  
-**Deadline:** 2026-10-31, 11:59 PM GMT+6  
-**Status:** Planning — stack decisions pending
+**Team:** JU_StackMind  
+**Deadline:** 2026-10-31, 11:59 PM GMT+6
+
+Chowkidar monitors regulatory, sanctions, and global risk streams; maps each signal to a company's obligations, suppliers, and controls; and produces a ranked, evidence-backed risk register with proposed remediation and a human approval gate.
+
+The demo follows **Padma Apparel Ltd.**, a fictional ready-made-garment exporter in Gazipur, Bangladesh, selling to an EU buyer and a US buyer under a CSDDD + UFLPA scenario.
+
+> Chowkidar provides compliance risk intelligence, not legal advice. Every finding is a reviewable signal, not a legal determination. A named human approves material actions.
 
 ---
 
-## What is Chowkidar?
+## Screens
 
-Chowkidar monitors regulatory changes, sanctions/watchlists, and global risk signals; maps them to a company's obligations, policies, contracts, suppliers, and controls; and turns them into a prioritized risk register with evidence-backed remediation plans and human approval.
+| Dashboard | Risk detail |
+|---|---|
+| ![Dashboard](docs/assets/01-dashboard.png) | ![Risk detail](docs/assets/03-risk-detail.png) |
 
-**Tagline:** *See the risk. Approve the fix.*
+| Supply-chain graph | Evaluations |
+|---|---|
+| ![Supply-chain graph](docs/assets/04-graph.png) | ![Evaluations](docs/assets/06-evals.png) |
 
-**Why this wedge:** It matches the official Risk Sentinel brief 1:1 — two data streams, a prioritized risk audit, automated remediation, and a human-in-the-loop approval interface — with a strong Bangladesh beachhead (RMG/leather/agro exports) and a global expansion story.
+More views: [signals](docs/assets/02-signals.png) · [search](docs/assets/05-search.png) · [approvals](docs/assets/07-approvals.png) · [audit](docs/assets/08-audit.png) · [login](docs/assets/00-login.png)
 
-**Important positioning:** Chowkidar is **compliance risk intelligence, not legal advice**. Every output is source-grounded, conservative, and requires human approval.
+---
+
+## Why this wedge
+
+- Matches the Risk Sentinel brief directly: **two or more data streams → prioritized audit → remediation → human-in-the-loop approval**.
+- Starts with a concrete Bangladesh beachhead (RMG, leather, agro exports) and expands to other export corridors.
+- Treats citations, verification, and auditability as product features, not afterthoughts.
+- Designed for teams without in-house legal counsel: source-grounded, conservative language, explicit limitations, and human sign-off.
+
+---
+
+## What is implemented
+
+| Capability | Status |
+|---|---|
+| Risk dashboard with posture, trends, and source health | Built |
+| Signal inbox with filters, source detail, and raw payload | Built |
+| Risk register and risk detail with score breakdown and evidence | Built |
+| LangGraph pipeline: ingest → extract → map → score → remediate → verify → persist | Built |
+| Deterministic weighted risk score + LLM rationale | Built |
+| Hybrid retrieval over cited evidence (pgvector + Postgres FTS) | Built |
+| Evidence verifier and legal-advice guard | Built |
+| Human approval queue with rationale and audit trail | Built |
+| Append-only SHA-256 hash-chained audit log | Built |
+| Reports in PDF, JSON, and Markdown | Built |
+| Supply-chain graph and node inspector | Built |
+| Evaluation dashboard with five metric gates | Built, 7/7 golden cases |
+| Read-only MCP server | Built |
+| FastAPI REST API + OpenAPI schema | Built |
+| English + Bengali UI chrome | Built |
+| Demo auth with four roles | Built |
+| Supabase Auth token decoding | Backend support; demo uses seeded role tokens |
+| Supabase Storage | Not enabled; reports use local/persistent disk |
+| Live LLM providers | Tested via LiteLLM fallback; mock mode is default |
+| Cloud deployment | Configs ready; accounts/keys pending |
+
+### Demo accounts
+
+| Role | Name | Email |
+|---|---|---|
+| Admin | Ayesha Rahman | `admin@chowkidar.demo` |
+| Analyst | Rafiq Hasan | `analyst@chowkidar.demo` |
+| Approver | Nusrat Jahan | `approver@chowkidar.demo` |
+| Viewer | Imran Chowdhury | `viewer@chowkidar.demo` |
+
+The login page uses one-click demo accounts. Role permissions are enforced in the API and reflected in the UI.
+
+---
+
+## Architecture at a glance
+
+```
+EU / BD / US source feeds
+        │
+        ▼
+FastAPI connectors + fixtures ──► Postgres (signals, obligations, risks, actions)
+        │                              │
+        ▼                              ▼
+LangGraph agent pipeline          Hybrid retrieval (pgvector + FTS)
+  extract → map → score            │
+  → remediate → verify             ▼
+        │                     Evidence citations
+        ▼
+Risk register + remediation + human approval + report
+        │
+        ▼
+Next.js console · REST/OpenAPI · read-only MCP
+```
+
+- **Web:** Next.js App Router, TypeScript, Tailwind, shadcn-style components, TanStack Query, Zustand, Recharts, React Flow.
+- **API:** FastAPI, SQLAlchemy 2, Alembic, Postgres + pgvector, REST/OpenAPI.
+- **Agents:** LangGraph orchestration; LiteLLM fallback chain (Gemini Flash → Groq → Gemini Pro); deterministic mock mode for reproducible demos.
+- **Trust:** verbatim evidence quotes, citation URLs, deterministic verifier, prohibited-phrase checks, hash-chained audit events, role-gated mutations.
+- **Ops:** Docker Compose for local Postgres/Neo4j/Ollama/n8n, Render Docker blueprint for the API, Vercel for the web app.
+
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for detail.
+
+---
+
+## Run locally
+
+### Prerequisites
+
+- Node.js 22+, pnpm 12+
+- Python 3.12+, [`uv`](https://docs.astral.sh/uv/)
+- Docker (for Postgres with pgvector; Neo4j/n8n/Ollama are optional)
+
+### Quick start
+
+```bash
+cp .env.example .env          # add keys only if you want live mode
+make setup
+make services-up
+make migrate
+make seed
+
+# Terminal 1
+make api
+
+# Terminal 2
+make web
+```
+
+Open **http://localhost:3000** and choose a demo account.
+
+API docs: **http://localhost:8000/docs** · Health: **http://localhost:8000/healthz**
+
+> Use `localhost`, not `127.0.0.1`, so the browser origin matches the configured CORS origin.
+
+### Useful commands
+
+```bash
+make test          # pytest + Vitest
+make e2e           # Playwright (API and web must be running)
+make lint          # Ruff + ESLint
+make typecheck     # Pyright + tsc
+make check         # lint + typecheck + unit tests
+make evals         # golden-set evaluation
+make mcp           # read-only MCP server over stdio
+make docker        # build the API container from the repo root
+make api-types     # regenerate OpenAPI types (API must be running)
+```
+
+Reseed the demo after mutation testing:
+
+```bash
+cd apps/api && uv run python -m app.db.seed
+```
+
+---
+
+## Demo flow (5 minutes)
+
+1. **Dashboard** — Padma Apparel has 8 risks: 3 critical, 3 high, 1 medium, 1 low; 4 approvals are waiting.
+2. **Signals** — EU CSDDD, Bangladesh Bank, UFLPA, and GDELT signals arrive with source citations.
+3. **Run pipeline** — show the LangGraph stages; in mock mode the result is deterministic.
+4. **Risk detail** — inspect the score breakdown, exact quote, citation, verifier status, and proposed actions.
+5. **Approvals** — as Nusrat (approver), review the rationale and record a decision.
+6. **Audit trail** — as Ayesha (admin), verify the hash chain and inspect the decision event.
+7. **Reports** — generate a board-ready PDF, JSON, or Markdown audit pack.
+
+---
+
+## Evidence and trust model
+
+- Every risk carries a **verbatim quote** and **citation URL** from the source signal.
+- A deterministic verifier returns `verified`, `needs_review`, or `insufficient_evidence`.
+- Output is checked for prohibited legal-advice phrases and prompt-injection markers.
+- PII is redacted with regex and allowlists before storage/display.
+- The risk score is transparent and auditable:
+  `((severity × 0.40 + likelihood × 0.35 + exposure × 0.25) / 4) × 100`.
+- Priority bands: `critical ≥ 80`, `high ≥ 60`, `medium ≥ 35`, `low < 35`.
+- Material mutations append an audit event; each event commits to the previous SHA-256 hash.
+
+### Current limitations
+
+- Fixture-first demo data; source connectors are scaffolded, not production-scheduled.
+- No legal/compliance advisor; the product is deliberately positioned as decision support.
+- Demo auth uses seeded role tokens; Supabase Auth decoding is implemented but the hosted login flow is not wired into the UI.
+- Reports are stored on disk; Supabase Storage is not enabled yet.
+- Optional BGE-M3 embeddings, Docling, RAGAS, and Phoenix are not required for the demo path.
+- Cloud deployment is pending account creation and secrets.
+
+---
+
+## MCP (optional)
+
+Chowkidar exposes a **read-only** FastMCP server so other agents can inspect risks, evidence, approvals, and the supply-chain graph without mutating state.
+
+```bash
+make mcp
+```
+
+Example client config:
+
+```json
+{
+  "mcpServers": {
+    "chowkidar": {
+      "command": "uv",
+      "args": ["run", "--project", "apps/api", "python", "-m", "app.mcp.server"],
+      "env": { "CHOWKIDAR_API_URL": "http://127.0.0.1:8000" }
+    }
+  }
+}
+```
+
+Tools: `dashboard_summary`, `list_open_risks`, `get_risk`, `search_evidence`, `list_pending_approvals`, `supply_chain_graph`.  
+See [`docs/MCP.md`](docs/MCP.md).
 
 ---
 
@@ -26,60 +225,30 @@ Chowkidar monitors regulatory changes, sanctions/watchlists, and global risk sig
 
 | Doc | Purpose |
 |---|---|
-| [`STRATEGY.md`](STRATEGY.md) | Why JusticeSphere/Risk Sentinel, saturation analysis, strategic case, business model |
-| [`DECISIONS.md`](DECISIONS.md) | Decision log, constraints, assumptions, open questions, session history |
-| [`PRODUCT_SPEC.md`](PRODUCT_SPEC.md) | Personas, workflows, MVP features, data model, agents, RAG, evals, guardrails, demo |
-| [`BUILD_PLAN.md`](BUILD_PLAN.md) | 8-day plan, roles, cut list, submission checklist, video script, QA |
-| [`prompts/MASTER_PROMPT.md`](prompts/MASTER_PROMPT.md) | Draft single master prompt for the Idea to Unicorn build |
-| [`docs/COMMIT_CONVENTIONS.md`](docs/COMMIT_CONVENTIONS.md) | Commit message and history conventions |
-| [`docs/`](docs/) | Research, data sources, build log, architecture notes (to be added) |
+| [`DECISIONS.md`](DECISIONS.md) | Decision log, constraints, session history |
+| [`PRODUCT_SPEC.md`](PRODUCT_SPEC.md) | Personas, workflows, data model, agents, evals |
+| [`BUILD_PLAN.md`](BUILD_PLAN.md) | Plan, cut list, submission checklist |
+| [`STRATEGY.md`](STRATEGY.md) | Market and strategic case |
+| [`prompts/MASTER_PROMPT.md`](prompts/MASTER_PROMPT.md) | Single master prompt used for the base build |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | System design and trust boundaries |
+| [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) | Source inventory and access notes |
+| [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Local, Render, Vercel, Supabase setup |
+| [`docs/MCP.md`](docs/MCP.md) | Read-only MCP usage |
+| [`docs/SUBMISSION.md`](docs/SUBMISSION.md) | Judge runbook, demo script, submission copy, asset checklist |
+| [`docs/BUILD_LOG.md`](docs/BUILD_LOG.md) | Build level, prompts, models, manual changes |
+| [`docs/COMMIT_CONVENTIONS.md`](docs/COMMIT_CONVENTIONS.md) | Commit history conventions |
 
 ---
 
-## Current decisions
+## Build provenance
 
-- **Domain/challenge:** JusticeSphere AI → Risk Sentinel.
-- **Product:** Chowkidar — regulatory + supplier risk sentinel for export supply chains.
-- **Positioning:** Compliance risk intelligence, not legal advice.
-- **Constraint:** No legal/compliance advisor; mitigate with evidence-first design, citations, conservative scope, human approval, and source-grounded evals.
-- **Constraint:** Per-domain submission counts are not available; saturation analysis is directional.
-- **Build rule:** One master prompt applies to the **whole build**; the AI agent builds the base alone, then the team modifies/improves.
-- **Process:** Commit history must be clean and human-followable; every stack decision is approved by the user first.
-- **Build window:** 8 days; submit by 6 PM GMT+6 on Oct 31.
-
-See [`DECISIONS.md`](DECISIONS.md) for the full log.
+The base implementation was produced by an AI coding agent from a single master prompt (`prompts/MASTER_PROMPT.md` v1.0), with no iterative human prompting during the initial build pass. Subsequent QA fixes, tests, and documentation are recorded in [`docs/BUILD_LOG.md`](docs/BUILD_LOG.md). The event's build-level classification is left to the submission form; this repo reports what was actually done.
 
 ---
 
-## Next steps
+## Team
 
-1. Answer the stack-decision questions (language, package manager, frontend, backend, DB, auth, AI stack, deployment).
-2. Finalize `prompts/MASTER_PROMPT.md` v1.0.
-3. Initialize git and commit the planning docs.
-4. Execute the master prompt as one build pass with logical commits.
-5. Validate data source access from Bangladesh.
-6. Keep `DECISIONS.md` updated after every meaningful decision.
+**JU_StackMind** · International AI Builders Congress 2026  
+Event: https://cloudcampbd.com/ai-builders-congress
 
----
-
-## Context management
-
-This repo is the project's external memory. At the start of each session, read:
-
-1. `README.md`
-2. `DECISIONS.md`
-3. `PRODUCT_SPEC.md`
-4. `BUILD_PLAN.md`
-
-At the end of each session, append a session log entry to `DECISIONS.md` with what changed, what's next, and blockers.
-
----
-
-## Contact / links
-
-- Team: JU_StackMind
-- Event: https://cloudcampbd.com/ai-builders-congress
-- MCP knowledge base: `cloudcamp://knowledge-base` via the event MCP server
-- Repo: TBD
-- Live demo: TBD
-- Video: TBD
+Live demo, video, and repository URL: to be added after deployment.
