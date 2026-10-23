@@ -1,4 +1,4 @@
-.PHONY: setup services-up services-down migrate seed api web dev test e2e lint typecheck fmt evals api-types mcp docker check reset
+.PHONY: setup services-up services-down migrate seed api web dev demo test e2e lint typecheck fmt evals api-types mcp docker check reset
 
 setup:
 	pnpm install
@@ -26,6 +26,12 @@ web:
 	pnpm --filter @chowkidar/web dev
 
 dev:
+	./scripts/dev.sh
+
+demo:
+	docker compose -f infra/docker-compose.yml up -d --wait postgres
+	$(MAKE) migrate
+	$(MAKE) seed
 	./scripts/dev.sh
 
 test:

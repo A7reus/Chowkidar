@@ -134,9 +134,19 @@ make web
 
 Open **http://localhost:3000** and choose a demo account.
 
+For a one-command fresh demo (starts Postgres, migrates, reseeds, then runs API and web):
+
+```bash
+make demo
+```
+
+`make demo` resets the seeded demo data on every launch. Use `make dev` to restart the apps without reseeding.
+
 API docs: **http://localhost:8000/docs** · Health: **http://localhost:8000/healthz**
 
 > Use `localhost`, not `127.0.0.1`, so the browser origin matches the configured CORS origin.
+
+The default demo is fixture-first and deterministic: `LLM_MODE=mock`, no external AI keys needed. See [`docs/ENVIRONMENT.md`](docs/ENVIRONMENT.md) for the exact environment-variable matrix and the live-model recipe.
 
 ### Useful commands
 
