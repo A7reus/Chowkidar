@@ -1,0 +1,81 @@
+[project]
+name = "chowkidar-api"
+version = "0.1.0"
+description = "Chowkidar compliance risk intelligence API"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "alembic>=1.14",
+  "apscheduler>=3.11",
+  "fastapi>=0.115",
+  "fastmcp>=2.3",
+  "httpx>=0.28",
+  "jinja2>=3.1",
+  "langgraph>=0.3",
+  "litellm>=1.60",
+  "llama-index-core>=0.12",
+  "markdown>=3.7",
+  "neo4j>=5.27",
+  "pgvector>=0.3.6",
+  "psycopg[binary]>=3.2",
+  "pydantic>=2.10",
+  "pydantic-settings>=2.7",
+  "PyJWT[crypto]>=2.10",
+  "pypdf>=5.1",
+  "python-dotenv>=1.0",
+  "python-multipart>=0.0.20",
+  "sentry-sdk[fastapi]>=2.20",
+  "sqlalchemy[asyncio]>=2.0.36",
+  "tenacity>=9.0",
+  "uvicorn[standard]>=0.34",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3",
+  "pytest-asyncio>=0.25",
+  "pyright>=1.1.390",
+  "respx>=0.22",
+  "ruff>=0.8",
+]
+embeddings = [
+  "FlagEmbedding>=1.3.4",
+  "torch>=2.5",
+  "transformers>=4.48",
+]
+parsing = [
+  "docling>=2.20",
+]
+evals = [
+  "ragas>=0.2",
+]
+observability = [
+  "arize-phoenix>=8.0",
+  "openinference-instrumentation-langchain>=0.1",
+]
+pdf = [
+  "playwright>=1.49",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["app", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "ASYNC", "S"]
+ignore = ["S101", "S105", "S106", "S311"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.pyright]
+pythonVersion = "3.12"
+typeCheckingMode = "basic"
+venvPath = "."
+venv = ".venv"
