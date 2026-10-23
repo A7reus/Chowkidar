@@ -11,7 +11,10 @@ def _project_root() -> Path:
     """Find the repository root locally and the app root inside a container."""
     here = Path(__file__).resolve()
     for parent in here.parents:
-        if (parent / ".env").exists():
+        if (parent / "data" / "fixtures" / "demo.json").exists():
+            return parent
+    for parent in here.parents:
+        if (parent / "pnpm-workspace.yaml").exists():
             return parent
     for parent in here.parents:
         if (parent / "pyproject.toml").exists():

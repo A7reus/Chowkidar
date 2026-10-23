@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from app.core.config import Settings
+from app.core.config import ROOT_DIR, Settings
+
+
+def test_project_root_contains_demo_fixture() -> None:
+    assert (ROOT_DIR / "data" / "fixtures" / "demo.json").exists()
 
 
 def test_database_url_accepts_supabase_style_scheme() -> None:
