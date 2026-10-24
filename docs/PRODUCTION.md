@@ -118,8 +118,9 @@ AUTH_RATE_LIMIT_PER_MINUTE=10
 MUTATION_RATE_LIMIT_PER_MINUTE=30
 ```
 
-Keep `CORS_ORIGINS` exactly equal to the Vercel origin (comma-separated if a
-custom domain is added). The API container runs `alembic upgrade head` at boot;
+If `STORAGE_BACKEND` is omitted, `APP_ENV=production` defaults it to `database`
+so reports survive restarts. Keep `CORS_ORIGINS` exactly equal to the Vercel
+origin (comma-separated if a custom domain is added). The API container runs `alembic upgrade head` at boot;
 the report-storage migration must be present before the first production report.
 
 ### 2.5 Vercel web environment

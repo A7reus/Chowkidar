@@ -125,6 +125,10 @@ class Settings(BaseSettings):
                 "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required "
                 "when STORAGE_BACKEND=supabase"
             )
+        # Hosted production has no persistent disk. If the operator did not
+        # choose a backend explicitly, use Postgres so reports survive restarts.
+        if self.is_production and "storage_backend" not in self.model_fields_set:
+            self.storage_backend = "database"
         return self
 
     @property

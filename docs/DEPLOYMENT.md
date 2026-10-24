@@ -26,7 +26,8 @@ global edge. The cross-region API/database hop is acceptable for the pilot.
 | Monitoring | Sentry / PostHog | Optional keys |
 
 The free Render service has no persistent disk. `infra/render.yaml` therefore
-uses `STORAGE_BACKEND=database` so generated reports survive restarts. Uploads
+uses `STORAGE_BACKEND=database`, and production mode defaults to `database` if
+the variable is omitted, so generated reports survive restarts. Uploads
 still use `/tmp` and are ephemeral. Supabase Storage can replace database report
 storage after the bucket is verified.
 

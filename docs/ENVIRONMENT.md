@@ -92,6 +92,11 @@ source of truth for `role`, `name`, and `is_active`.
 | `database` | `report_runs.content` (Postgres `bytea`) | Durable without object storage; recommended first hosted cutover |
 | `supabase` | Private Supabase Storage bucket | Durable object storage; falls back to Postgres if upload/bucket creation fails |
 
+On `APP_ENV=production`, if `STORAGE_BACKEND` is **unset**, the API defaults to
+`database` so reports survive a Render restart. Set it explicitly to `local` or
+`supabase` to override. Development defaults to `local` unless the variable is
+set.
+
 Optional `REPORT_STORAGE_BUCKET` defaults to `chowkidar-reports` for the API's
 Supabase Storage backend. `SUPABASE_STORAGE_BUCKET` is reserved for the
 document-ingestion path and is not the report bucket. Downloads always go through

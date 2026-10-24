@@ -110,7 +110,7 @@ Visual: risk detail crop + audit verify card + report page.
 - 7/7 golden cases in mock mode.
 - Five gates: extraction, citation coverage, verifier pass, no-legal-advice,
   priority agreement.
-- 50 API tests, 8 web tests, Playwright smoke; Ruff/Pyright/ESLint/tsc clean.
+- 52 API tests, 8 web tests, Playwright smoke; Ruff/Pyright/ESLint/tsc clean.
 - Honest limitation: small synthetic set; not a legal benchmark.
 
 Visual: eval dashboard screenshot with a “demo-scale” caption.
