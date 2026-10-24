@@ -15,7 +15,7 @@
 | API docs | <https://chowkidar-api.onrender.com/docs> | Live |
 | Web | <https://chowkidar-wheat.vercel.app/> | Live; direct browser check passed |
 | Web fallback | `https://chowkidar-web.onrender.com` | Service created; currently `502` — check Render logs |
-| Repository | <https://github.com/A7reus/Chowkidar> | CI green |
+| Repository | <https://github.com/A7reus/Chowkidar> | CI green through `08d0f3a828aa` |
 
 The Render API service is on the **free** plan: 512 MB, no persistent disk, and it spins down after about 15 minutes of inactivity. The first request after idle can take 30–60 seconds. The optional Render web fallback has the same free-plan cold-start behavior.
 
@@ -23,15 +23,16 @@ The Render API service is on the **free** plan: 512 MB, no persistent disk, and 
 
 ## 2. Verified checks
 
-- `GET /healthz` returns `status: ok`, `database: ok`, `auth_mode: dev`, `demo_mode: true`, `llm_mode: mock`, `data_mode: fixture`.
+- `GET /healthz` returns `status: ok`, `database: ok`, `auth_mode: dev`, `demo_mode: true`, `llm_mode: mock`, `data_mode: fixture`, `revision: 08d0f3a828aa`.
 - Local verification (not hosted): production auth with a mock Supabase Auth/JWKS server, database-backed report storage with checksum-matched download, demo lockout (`403`), frontend email/password login, pilot badge, and `/settings`.
-- Hosted durable storage: `/api/v1/meta` reports `storage_backend: database`; a generated PDF report (`d5124371-2be2-410f-a4a5-0a2edf260abe`) downloaded with matching SHA-256 `df9a8af9ed3011a742e5fda8d386d438ce27687d3a93cd3c161347b0e7dbaad3`. Redeploy persistence check is in progress.
+- Hosted durable storage: `/api/v1/meta` reports `storage_backend: database`. A 4-page PDF report (`d5124371-2be2-410f-a4a5-0a2edf260abe`) was generated before the `08d0f3a828aa` redeploy and downloaded again after that deploy with the same SHA-256 `df9a8af9ed3011a742e5fda8d386d438ce27687d3a93cd3c161347b0e7dbaad3` (13,731 bytes), proving persistence across a restart. The download returned `Cache-Control: private, no-store`, a matching ETag, and `X-Content-Type-Options: nosniff`.
 - `GET /api/v1/meta` returns the Padma Apparel demo metadata and four streams.
 - CORS preflight from `https://chowkidar-wheat.vercel.app` returns `200` with the exact `access-control-allow-origin`.
-- `POST /api/v1/auth/demo-login` with role `analyst` returns `200` and an analyst user.
+- `POST /api/v1/auth/demo-login` with role `analyst` returns `200` and an analyst user. The hosted auth limiter returns `429` with `Retry-After` after 10 requests in a minute.
 - The production Vercel JavaScript bundle contains `https://chowkidar-api.onrender.com`; `NEXT_PUBLIC_API_URL` was set at build time.
 - A headless Chromium run against the Vercel URL (with a host-resolver override to reachable Vercel edge IP `64.29.17.195`) successfully loaded `/login`, signed in as analyst, reached `/dashboard`, and received `200` from the API for meta, dashboard summary, approvals, and pipeline runs.
 - After DNS began returning `64.29.17.195` directly, a second headless Chromium run with **no** host override repeated the login and dashboard flow successfully. This confirms the public URL is functional when the resolver returns a reachable edge IP.
+- Latest Vercel browser check (2026-10-24, no host override): demo login as analyst, dashboard, `/settings`, and `/reports` loaded without console errors. The Reports UI generated Markdown report `d3c0d1f9-88b7-48b1-ae43-9b87e100e12b` (`storage_backend: database`) and downloaded it as `chowkidar-audit-d3c0d1f9-88b7-48b1-ae43-9b87e100e12b.md`.
 
 Baseline confirmed on the hosted API: 8 risks, 3 critical, 4 pending approvals.
 
