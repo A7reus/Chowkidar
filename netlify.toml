@@ -1,0 +1,22 @@
+# Netlify production build for the Chowkidar web console.
+#
+# Site setup:
+#   Base directory:      leave empty (repository root)
+#   Package directory:   apps/web
+#   Build command:       from this file
+#   Publish directory:   from this file
+#
+# Netlify installs its Next.js/OpenNext adapter automatically for this
+# package. Do not pin @netlify/plugin-nextjs.
+
+[build]
+  command = "pnpm --filter @chowkidar/web build"
+  publish = "apps/web/.next"
+  # Skip docs-only pushes to conserve Netlify Free credits.
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- apps/web package.json pnpm-lock.yaml pnpm-workspace.yaml netlify.toml"
+
+[build.environment]
+  NODE_VERSION = "22"
+  PNPM_FLAGS = "--shamefully-hoist"
+  NEXT_TELEMETRY_DISABLED = "1"
+  NEXT_PUBLIC_API_URL = "https://chowkidar-api.onrender.com"
