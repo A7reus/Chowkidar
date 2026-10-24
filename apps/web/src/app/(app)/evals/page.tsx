@@ -231,7 +231,7 @@ export default function EvalsPage() {
         <AccessDenied
           role="analyst"
           title={t("restricted")}
-          body="Switch to the Analyst role to inspect the golden set and run the deterministic evaluation suite."
+          body="Evaluations are restricted to Analyst and Admin accounts. This account can use the rest of the pilot workspace."
           label={t("switchAnalyst")}
         />
       </div>
@@ -385,7 +385,7 @@ export default function EvalsPage() {
                   {t("cases")}
                 </h2>
                 <p className="mt-0.5 text-[10px] text-muted">
-                  Fixed inputs from the demo source fixtures, run through the agent pipeline.
+                  Fixed inputs from the seeded source fixtures, run through the agent pipeline.
                 </p>
               </div>
               <span className="rounded border border-border bg-white/[0.02] px-1.5 py-0.5 font-mono text-[9px] text-muted-2">

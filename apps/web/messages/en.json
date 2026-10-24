@@ -242,7 +242,7 @@
     "supporting": "Supporting",
     "news": "News",
     "syncComplete": "Source synced",
-    "ingestion": "Scheduled by n8n with a FastAPI cron fallback. Fixture-first in demo mode."
+    "ingestion": "n8n and a FastAPI cron fallback are scaffolded. The hosted pilot replays fixtures."
   },
   "reports": {
     "title": "Reports",
@@ -284,7 +284,7 @@
     "payload": "Payload",
     "empty": "No audit events match these filters.",
     "adminOnly": "Audit access requires an admin",
-    "adminOnlyBody": "The audit trail is restricted to administrators. Switch to the admin demo role to inspect the hash chain.",
+    "adminOnlyBody": "The audit trail is restricted to administrators. Ask a workspace administrator for audit access.",
     "switchAdmin": "Switch to Admin",
     "explain": "Each event stores the previous hash and its own SHA-256 hash. Editing or deleting a row breaks verification."
   },
@@ -302,7 +302,7 @@
     "select": "Select a node to inspect it",
     "openRisk": "Open risk detail",
     "clickHint": "Drag to pan · scroll to zoom · click a node",
-    "source": "Graph projection from the operational database. Neo4j Aura is the production graph store."
+    "source": "Graph projection from the operational Postgres database. Neo4j is not wired in this pilot."
   },
   "evals": {
     "title": "Evaluations",
@@ -326,7 +326,7 @@
     "gateVerifier": "Verifier must accept or flag for review",
     "gateLanguage": "No prohibited legal-advice language",
     "stack": "Model stack",
-    "stackBody": "Gemini Flash for extraction, Groq GPT-OSS for classification, Gemini Pro for verification, with automatic fallback. Demo mode is deterministic.",
+    "stackBody": "Configured stack: Gemini Flash for extraction, Groq GPT-OSS for classification, and Gemini Pro for verification, with automatic fallback. The hosted pilot runs deterministic mock mode.",
     "lastRun": "Last run",
     "switchAnalyst": "Switch to Analyst",
     "restricted": "Evaluations require analyst or admin access."
@@ -345,7 +345,7 @@
     "start": "Start with a question",
     "startBody": "Every result is a source chunk with a citation, not a generated answer.",
     "how": "How retrieval works",
-    "howBody": "Chunks are embedded and indexed in Postgres with pgvector, combined with full-text search, then ranked. Live mode uses BGE-M3 and a cross-encoder reranker.",
+    "howBody": "Chunks are embedded and indexed in Postgres with pgvector, combined with full-text search, then ranked. Mock embeddings are the verified path; BGE-M3 and reranking are optional and not on the hosted path.",
     "openSignal": "Open source signal",
     "searching": "Searching evidence…"
   },
@@ -353,7 +353,7 @@
     "generic": "Something went wrong. Please try again.",
     "network": "Could not reach the Chowkidar API. Is the backend running?",
     "unauthorized": "Your session expired. Please sign in again.",
-    "forbidden": "Your demo role does not have access to this action.",
+    "forbidden": "Your role does not have access to this action.",
     "notFound": "We could not find that record.",
     "conflict": "That action conflicts with the current state."
   },

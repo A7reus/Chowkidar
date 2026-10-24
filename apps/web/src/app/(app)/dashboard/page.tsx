@@ -132,8 +132,8 @@ export default function DashboardPage() {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <div className="px-2 py-1.5 text-[10px] leading-relaxed text-muted-2">
-              Live mode calls Gemini and Groq with automatic fallback. Mock mode is
-              deterministic and instant.
+              Live mode requires Gemini/Groq provider keys. Mock mode is deterministic and
+              instant.
             </div>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -221,7 +221,7 @@ export default function SearchPage() {
             <EmptyState
               icon={FileSearch}
               title={t("empty")}
-              description="Try a broader phrase, or check that the source chunks have been seeded for this demo."
+              description="Try a broader phrase, or check that the source chunks have been seeded for this workspace."
               action={
                 <Button variant="secondary" size="sm" onClick={() => execute("export proceeds")}>
                   Try “export proceeds”

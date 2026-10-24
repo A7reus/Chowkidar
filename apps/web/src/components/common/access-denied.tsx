@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 
 function useSwitchRole() {
   const switchRole = useAuthStore((state) => state.switchRole);
+  const isDemo = useAuthStore((state) => Boolean(state.user?.is_demo));
   const [loading, setLoading] = React.useState(false);
   const change = async (role: Role) => {
     setLoading(true);
@@ -22,7 +23,7 @@ function useSwitchRole() {
       setLoading(false);
     }
   };
-  return { change, loading };
+  return { change, loading, isDemo };
 }
 
 export function AccessDenied({
@@ -38,7 +39,7 @@ export function AccessDenied({
   label: string;
   className?: string;
 }) {
-  const { change, loading } = useSwitchRole();
+  const { change, loading, isDemo } = useSwitchRole();
   return (
     <div
       className={cn(
@@ -51,10 +52,16 @@ export function AccessDenied({
       </div>
       <h2 className="font-display text-lg font-semibold text-slate-100">{title}</h2>
       <p className="mt-2 max-w-md text-sm leading-relaxed text-muted">{body}</p>
-      <Button className="mt-5" onClick={() => change(role)} loading={loading}>
-        <ShieldAlert />
-        {label}
-      </Button>
+      {isDemo ? (
+        <Button className="mt-5" onClick={() => change(role)} loading={loading}>
+          <ShieldAlert />
+          {label}
+        </Button>
+      ) : (
+        <p className="mt-4 text-[10px] text-muted-2">
+          Access is managed by a workspace administrator.
+        </p>
+      )}
     </div>
   );
 }
@@ -72,7 +79,7 @@ export function RoleHint({
   label: string;
   className?: string;
 }) {
-  const { change, loading } = useSwitchRole();
+  const { change, loading, isDemo } = useSwitchRole();
   return (
     <div
       className={cn(
@@ -89,9 +96,13 @@ export function RoleHint({
           <p className="mt-0.5 text-xs leading-relaxed text-muted">{body}</p>
         </div>
       </div>
-      <Button variant="secondary" size="sm" onClick={() => change(role)} loading={loading}>
-        {label}
-      </Button>
+      {isDemo ? (
+        <Button variant="secondary" size="sm" onClick={() => change(role)} loading={loading}>
+          {label}
+        </Button>
+      ) : (
+        <span className="shrink-0 text-[10px] text-muted-2">Managed by an administrator</span>
+      )}
     </div>
   );
 }

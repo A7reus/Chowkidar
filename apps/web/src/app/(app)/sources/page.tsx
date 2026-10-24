@@ -116,7 +116,7 @@ export default function SourcesPage() {
           <p className="mt-0.5 text-[10px] leading-relaxed text-muted">
             Chowkidar combines Bangladesh Bank circulars and EUR-Lex regulation as primary sources,
             UFLPA entity-list signals as a supporting stream, and GDELT news as an operating-risk
-            signal. Fixture-first in demo mode; live connectors sit behind a flag.
+            signal. The hosted pilot replays fixtures; live connectors are not implemented.
           </p>
         </div>
         <span className="ml-auto hidden shrink-0 rounded-full border border-sky-400/20 bg-sky-400/10 px-2 py-0.5 text-[9px] text-sky-200 md:block">
@@ -226,13 +226,13 @@ export default function SourcesPage() {
         <div className="panel p-5">
           <div className="flex items-center gap-2">
             <Clock3 className="size-4 text-accent" />
-            <h2 className="font-display text-sm font-semibold text-slate-100">How ingestion works</h2>
+            <h2 className="font-display text-sm font-semibold text-slate-100">How ingestion is designed</h2>
           </div>
           <div className="mt-4 space-y-3">
             {[
-              { step: "01", title: "Schedule", body: "n8n triggers connector runs. A FastAPI cron fallback keeps the demo working without n8n." },
-              { step: "02", title: "Fetch & normalize", body: "Connectors pull source payloads, deduplicate by external ID, and write a signal row." },
-              { step: "03", title: "Parse & chunk", body: "Docling extracts text in live mode; fixture text is chunked for citation retrieval." },
+              { step: "01", title: "Schedule", body: "n8n and a FastAPI cron fallback are scaffolded; the hosted pilot runs manual fixture sync." },
+              { step: "02", title: "Fetch & normalize", body: "Live connectors are not implemented. Fixture payloads follow the same signal-row contract." },
+              { step: "03", title: "Parse & chunk", body: "Docling is optional and not on the pilot path; fixture text is chunked for citation retrieval." },
               { step: "04", title: "Agent pipeline", body: "The LangGraph workflow extracts obligations, maps risks, scores, drafts remediation, and verifies." },
             ].map((item) => (
               <div key={item.step} className="flex gap-3">

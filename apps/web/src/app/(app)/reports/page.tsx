@@ -139,7 +139,7 @@ export default function ReportsPage() {
         <RoleHint
           role="analyst"
           title="Report generation requires analyst access"
-          body="You can download existing reports as a member of this workspace. Switch to Analyst or Admin to generate a fresh audit pack."
+          body="You can download existing reports as a member of this workspace. Generating a fresh audit pack requires Analyst or Admin access."
           label="Switch to Analyst"
         />
       ) : null}
@@ -283,9 +283,9 @@ export default function ReportsPage() {
             Priority thresholds: critical ≥ 80, high ≥ 60, medium ≥ 35.
           </p>
           <p className="mt-2 text-[10px] leading-relaxed text-muted">
-            The demo uses a fictional company and a small set of synthetic and public-source signals.
-            Coverage is not exhaustive; absence of a signal is not evidence of compliance. Potential
-            name matches are not findings.
+            This pilot uses a fictional company and a small set of synthetic and public-source
+            signals. Coverage is not exhaustive; absence of a signal is not evidence of compliance.
+            Potential name matches are not findings.
           </p>
           <p className="mt-3 border-t border-border-soft pt-3 text-[10px] leading-relaxed text-amber-100/60">
             {common("notLegalAdvice")}

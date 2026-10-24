@@ -103,7 +103,7 @@ export async function apiFetch<T>(path: string, init: ApiRequestInit = {}): Prom
     const message =
       detailMessage(detail) ??
       (response.status === 403
-        ? "Your demo role does not have access to this action."
+        ? "Your role does not have access to this action."
         : response.status === 404
           ? "Record not found."
           : "The request failed.");
