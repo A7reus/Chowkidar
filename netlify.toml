@@ -12,8 +12,10 @@
 [build]
   command = "pnpm --filter @chowkidar/web build"
   publish = "apps/web/.next"
-  # Skip docs-only pushes to conserve Netlify Free credits.
-  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- apps/web package.json pnpm-lock.yaml pnpm-workspace.yaml netlify.toml"
+  # Skip docs-only pushes to conserve Netlify Free credits. Force the first
+  # build even though Netlify sets CACHED_COMMIT_REF == COMMIT_REF when there
+  # is no previous build cache.
+  ignore = "if [ \"$CACHED_COMMIT_REF\" = \"$COMMIT_REF\" ]; then exit 1; else git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- apps/web package.json pnpm-lock.yaml pnpm-workspace.yaml netlify.toml; fi"
 
 [build.environment]
   NODE_VERSION = "22"
