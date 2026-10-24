@@ -449,7 +449,7 @@ This is the short version. The detailed limitations are in `docs/ARCHITECTURE.md
 | Supabase Storage | Not enabled; free Render uses ephemeral `/tmp` | **No** |
 | Neo4j graph projection | Not wired; graph UI reads Postgres | **No** |
 | Multi-tenant isolation, SSO, billing, SOC 2, legal review | Not implemented | **No** |
-| Public deployment | Not yet | **No** until live |
+| Public deployment | Render API + Vercel web live; Vercel edge-IP workaround needed on some networks | **Yes, with DNS caveat** |
 
 ### Why this matters
 
@@ -496,7 +496,7 @@ These cannot be answered from the repository:
 - Registered team size and member names.
 - NRB status for any member.
 - Female-member status for the team-diversity bonus.
-- Cloud accounts: Supabase is ready; Render and Vercel deployment are still pending.
+- Cloud accounts: Supabase, Render, and Vercel are configured. Neo4j Aura, Sentry, and PostHog remain optional and unconfigured.
 - Whether a Figma/design file exists, or whether an architecture diagram can serve as the design link.
 - YouTube channel access for uploading the demo.
 - Permission to install/run Ollama and n8n for extra truthful checkboxes.

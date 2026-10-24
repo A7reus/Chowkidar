@@ -1,6 +1,6 @@
 # Chowkidar — Architecture
 
-**Status:** local-first implementation validated; cloud deployment pending accounts and secrets.  
+**Status:** local-first implementation validated; hosted API and web build are live. Some networks need the Vercel edge-IP workaround in [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md).
 **Last updated:** 2026-10-23
 
 ---
@@ -268,12 +268,14 @@ Current mock-mode result: **7/7 cases**, all metrics **1.0**. This is a demo-sca
 
 | Layer | Target | Status |
 |---|---|---|
-| Web | Vercel Hobby, `apps/web` root | Config ready; deploy pending |
-| API | Render Docker free, Singapore, ephemeral `/tmp` storage | Blueprint ready; deploy pending |
+| Web | Vercel Hobby, `apps/web` root | Live; edge-IP workaround needed on some networks |
+| API | Render Docker free, Singapore, ephemeral `/tmp` storage | Live: `/healthz` healthy |
 | Database | Supabase Postgres + pgvector, Tokyo | Ready: migrated and seeded |
 | Graph | Neo4j Aura | Optional; pending account |
 | Scheduling | n8n local/Docker + FastAPI cron fallback | Local only |
 | Monitoring | Sentry + PostHog | Optional keys pending |
+
+See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md) for URLs and verification details.
 
 See [`DEPLOYMENT.md`](DEPLOYMENT.md).
 

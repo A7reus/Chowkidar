@@ -59,3 +59,18 @@ services:
         sync: false
       - key: POSTHOG_KEY
         sync: false
+  - type: web
+    name: chowkidar-web
+    runtime: node
+    plan: free
+    region: singapore
+    branch: main
+    autoDeploy: true
+    buildCommand: npx --yes pnpm@12.15.0 install --frozen-lockfile && npx --yes pnpm@12.15.0 --filter @chowkidar/web build && rm -rf apps/web/.next/standalone/apps/web/.next/static && cp -r apps/web/.next/static apps/web/.next/standalone/apps/web/.next/static
+    startCommand: node apps/web/.next/standalone/apps/web/server.js
+    healthCheckPath: /
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://chowkidar-api.onrender.com
+      - key: NODE_VERSION
+        value: "22"

@@ -1,7 +1,7 @@
 # Chowkidar — Build Log
 
-**Last updated:** 2026-10-23  
-**Status:** Base build complete; local QA and deployment preparation in progress  
+**Last updated:** 2026-10-24
+**Status:** Base build complete; local QA passed; hosted API and web build are live. Vercel edge-IP caveat is documented in [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md).
 **Purpose:** Record how the build was produced, especially the master prompt execution, confirmation triggers, and manual changes. This supports the submission's "Build Level" and "Prompt Library" fields.
 
 ---
@@ -147,6 +147,8 @@ The deterministic mock path (`app/agents/mock.py`) is the default for the demo a
 | 2026-10-23 | `apps/api/app/core/config.py`, `db/seed.py`, `services/sources.py`, `apps/api/Dockerfile`, `infra/render.yaml` | Container-safe project-root discovery; copy demo fixture into the image; use repo-root Docker context | `parents[4]` crashed inside `/app`; source sync and seed need the fixture in the container | AI agent + QA |
 | 2026-10-23 | `apps/api/scripts/run_evals.py`, `Makefile` | Add database-backed golden-set CLI; use `uv` from PATH; add `docker` and `mcp` targets | `make evals` referenced a missing script; hard-coded `~/.local/bin/uv` was not portable | AI agent + QA |
 | 2026-10-23 | `README.md`, `docs/ARCHITECTURE.md`, `docs/DEPLOYMENT.md`, `docs/MCP.md`, `docs/BUILD_LOG.md` | Document current build, trust model, MCP, deployment | Submission and handoff quality | AI agent |
+| 2026-10-24 | `infra/render.yaml`, `.env.example`, `README.md`, `docs/*` | Supabase migration/seed; free Render API; Vercel web; document Vercel edge-IP workaround and hosted env vars | Live demo deployment and context preservation | AI agent + QA |
+| 2026-10-24 | `.agents/skills/*`, `skills-lock.json` | Install pinned Supabase agent skills | Official Supabase agent guidance | AI agent |
 
 ---
 
@@ -184,7 +186,7 @@ Manual visual QA covered every route at 1440×1000. Known cosmetic trade-off: th
 - [x] Model/tool names are recorded.
 - [x] No exaggerated claims about legal capability.
 - [x] Disclaimers are present in UI, API root, reports, and docs.
-- [ ] Live demo URL added after deployment.
+- [x] Live demo URL added after deployment.
 - [ ] Video link added after recording.
 
 ---
@@ -192,7 +194,7 @@ Manual visual QA covered every route at 1440×1000. Known cosmetic trade-off: th
 ## 9. Known gaps
 
 - Public repository is live at <https://github.com/A7reus/Chowkidar>; CI is green.
-- Supabase is provisioned, migrated, and seeded; Render and Vercel deployment are pending.
+- Render API and Vercel web are live. Some networks cannot reach Vercel’s new edge IPs; see `CLOUD_DEPLOYMENT_STATUS.md`.
 - Supabase Auth token decoding exists, but the hosted login flow is not wired into the demo UI.
 - Supabase Storage is not enabled; the free Render deployment uses ephemeral `/tmp`.
 - BGE-M3, Docling, RAGAS, and Phoenix are optional and not required for the demo path.

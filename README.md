@@ -63,7 +63,7 @@ More views: [signals](docs/assets/02-signals.png) · [search](docs/assets/05-sea
 | Supabase Auth token decoding | Backend support; demo uses seeded role tokens |
 | Supabase Storage | Not enabled; reports use local/ephemeral disk |
 | Live LLM providers | Tested via LiteLLM fallback; mock mode is default |
-| Cloud deployment | Supabase ready; Render/Vercel pending |
+| Cloud deployment | Live: Render API + Vercel web; see [`docs/CLOUD_DEPLOYMENT_STATUS.md`](docs/CLOUD_DEPLOYMENT_STATUS.md) |
 
 ### Demo accounts
 
@@ -200,7 +200,7 @@ cd apps/api && uv run python -m app.db.seed
 - Demo auth uses seeded role tokens; Supabase Auth decoding is implemented but the hosted login flow is not wired into the UI.
 - Reports are stored on local disk; the free Render deployment uses ephemeral `/tmp`, and Supabase Storage is not enabled yet.
 - Optional BGE-M3 embeddings, Docling, RAGAS, and Phoenix are not required for the demo path.
-- Cloud deployment is pending Render/Vercel; the Supabase database is ready.
+- Cloud deployment is live for the API and web build; some networks need a DNS workaround for Vercel’s edge IPs. See [`docs/CLOUD_DEPLOYMENT_STATUS.md`](docs/CLOUD_DEPLOYMENT_STATUS.md).
 
 ---
 
@@ -244,6 +244,7 @@ See [`docs/MCP.md`](docs/MCP.md).
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | System design and trust boundaries |
 | [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) | Source inventory and access notes |
 | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Local, Render, Vercel, Supabase setup |
+| [`docs/CLOUD_DEPLOYMENT_STATUS.md`](docs/CLOUD_DEPLOYMENT_STATUS.md) | Live URLs, hosted env vars, Vercel edge-IP workaround |
 | [`docs/MCP.md`](docs/MCP.md) | Read-only MCP usage |
 | [`docs/SUBMISSION.md`](docs/SUBMISSION.md) | Judge runbook, demo script, submission copy, asset checklist |
 | [`docs/BUILD_LOG.md`](docs/BUILD_LOG.md) | Build level, prompts, models, manual changes |

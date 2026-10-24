@@ -32,9 +32,10 @@
 | AI-agent build provenance | [`docs/BUILD_LOG.md`](BUILD_LOG.md), [`prompts/MASTER_PROMPT.md`](../prompts/MASTER_PROMPT.md) |
 | Not legal advice | API root, UI, reports, README, methodology resource |
 
-**Repository URL:** <https://github.com/A7reus/Chowkidar>  
-**Live demo URL:** _to be added after deployment — required for the official form_  
-**Video URL:** _to be added after recording — required for the official form_
+- **Repository URL:** <https://github.com/A7reus/Chowkidar>
+- **Live demo URL:** <https://chowkidar-wheat.vercel.app/> — live, but some networks need the Vercel edge-IP workaround in [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md)
+- **API URL:** <https://chowkidar-api.onrender.com/>
+- **Video URL:** _to be added after recording — required for the official form_
 
 > The official form and MCP knowledge base both reward a public live demo and a 2–3 minute video. A local-only demo is not enough for maximum preliminary score. See [`COMPETITION_CONTEXT.md`](COMPETITION_CONTEXT.md) for the captured form, scoring signals, and the authoritative domain list.
 

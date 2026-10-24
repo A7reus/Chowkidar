@@ -1,6 +1,6 @@
 # Chowkidar — Deployment
 
-**Status:** local-first build is complete and validated. The Supabase project is provisioned, migrated, and seeded; Render and Vercel deployment are pending.
+**Status:** local-first build is complete and validated. The Supabase project is provisioned, migrated, and seeded. The Render API and Vercel web deployment are live; see [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md) for the current URLs, verified checks, and the Vercel edge-IP workaround.
 
 **Target region:** Supabase `ap-northeast-1` (Tokyo); Render `singapore`; Vercel global edge. The cross-region API/database hop is acceptable for the demo.
 
@@ -195,14 +195,14 @@ The container runs migrations first. If the database is unreachable, startup fai
 | Blocker | Impact |
 |---|---|
 | Supabase project | Ready: migrated, seeded, pgvector enabled |
-| Render deployment | Pending; free blueprint is configured |
-| Vercel deployment | Pending; Hobby project not created |
-| Public demo URL and video | Pending; required for the official form |
+| Render API | Live on the free plan; cold starts after inactivity |
+| Vercel web | Build live; some networks cannot reach Vercel's new edge IPs. See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md) |
+| Public demo video | Pending; required for the official form |
 | No Neo4j Aura | Graph falls back to fixture/relational demo data |
 | No Sentry/PostHog keys | Observability remains local/optional |
 | No legal/compliance advisor | Accepted constraint; conservative design and human approval |
 
-These remaining blockers do not affect the local demo. They affect the public URL and submission assets.
+These remaining blockers do not affect the local demo. The hosted API is functional; the web URL may need a DNS workaround or a custom domain.
 
 ---
 
