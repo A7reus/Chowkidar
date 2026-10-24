@@ -98,6 +98,25 @@ Optional overrides: `CHOWKIDAR_ADMIN_EMAIL`, `CHOWKIDAR_ANALYST_EMAIL`,
 `CHOWKIDAR_APPROVER_EMAIL`, `CHOWKIDAR_VIEWER_EMAIL`, the matching `_NAME`
 variables, and `CHOWKIDAR_<ROLE>_PASSWORD` for each role.
 
+If you do not have the hosted `DATABASE_URL`, use the pilot-only auth-only mode.
+It creates the Supabase users but leaves the local rows untouched; the API maps
+them by email on first login:
+
+```bash
+cd apps/api
+SUPABASE_URL='https://<ref>.supabase.co' \
+SUPABASE_SERVICE_ROLE_KEY='<server-key>' \
+uv run python -m scripts.provision_supabase_users \
+  --auth-only --seeded-emails
+```
+
+`--seeded-emails` uses the existing `admin@chowkidar.demo` and
+`analyst@chowkidar.demo` rows. This is acceptable for the seeded pilot workspace,
+but change the local emails to real pilot addresses when database access is
+available. The normal script is preferred because it writes
+`users.supabase_user_id` and lets the owner change emails without breaking the
+mapping.
+
 The script reuses the seeded local user row for each role so existing audit and
 approval references remain valid. It prints only IDs and the redacted path, not
 the passwords.

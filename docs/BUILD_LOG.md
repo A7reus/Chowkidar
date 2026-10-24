@@ -154,6 +154,7 @@ The deterministic mock path (`app/agents/mock.py`) is the default for the demo a
 | 2026-10-24 | `apps/api/app/core/storage.py`, `services/reports.py`, `db/models.py`, migration `82eceac00bcf` | Local/database/Supabase report storage, checksums, ETag downloads, Postgres fallback | Durable reports on free hosting | AI agent + QA |
 | 2026-10-24 | `apps/web` login, auth store, app shell, `/settings` | Password login, automatic refresh, pilot/demo labels, runtime settings | Production UI without demo leakage | AI agent + QA |
 | 2026-10-24 | `scripts/provision_supabase_users.py`, `docs/PRODUCTION.md`, env/docs | One-time Supabase account provisioning and cutover/runbook | Repeatable hosted cutover | AI agent |
+| 2026-10-24 | `apps/api/app/core/supabase_auth.py`, `storage.py`, `scripts/provision_supabase_users.py` | Support `sb_publishable_*` / `sb_secret_*` keys and legacy HS256 tokens; add auth-only provisioning | Current Supabase key format and cutover without database access | AI agent + QA |
 
 ---
 
@@ -200,7 +201,7 @@ Manual visual QA covered every route at 1440×1000. Known cosmetic trade-off: th
 
 - Public repository is live at <https://github.com/A7reus/Chowkidar>; CI is green.
 - Render API and Vercel web are live. Some networks cannot reach Vercel’s new edge IPs; see `CLOUD_DEPLOYMENT_STATUS.md`.
-- Supabase Auth is implemented end-to-end (API proxy + production login UI) but **not enabled on the live service** until the Supabase URL/anon/service-role keys and hosted env changes are applied.
+- Supabase Auth is implemented end-to-end (API proxy + production login UI) but **not enabled on the live service** until the Supabase URL/public/server keys and hosted env changes are applied.
 - Report storage is now durable on the hosted API (`STORAGE_BACKEND=database`); Supabase Storage remains an optional adapter. The previous image used ephemeral `/tmp`.
 - Rate limits are process-local (single Render instance).
 - Browser tokens are stored in local storage; HttpOnly cookies are a hardening backlog item.

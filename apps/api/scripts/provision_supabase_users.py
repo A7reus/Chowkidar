@@ -3,7 +3,7 @@
 This is a one-time production cutover helper. It:
   1. creates (or updates) four confirmed Supabase Auth users;
   2. maps their Supabase UUIDs onto the local ``users`` rows that authorize
-     role-based access; and
+     role-based access (or skips the database with ``--auth-only``); and
   3. writes generated passwords to a gitignored local file.
 
 Run it with the Supabase service-role key and the production DATABASE_URL:
@@ -18,6 +18,7 @@ the repository. The script prints only a redacted summary.
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import contextlib
 import os
@@ -51,29 +52,30 @@ def _password(role: Role) -> str:
     return os.getenv(key, "").strip() or secrets.token_urlsafe(24)
 
 
-def _users() -> list[ProvisionedUser]:
+def _users(*, seeded_emails: bool = False) -> list[ProvisionedUser]:
+    domain = "chowkidar.demo" if seeded_emails else "chowkidar.app"
     return [
         ProvisionedUser(
             role=Role.ADMIN,
-            email=_env("CHOWKIDAR_ADMIN_EMAIL", "admin@chowkidar.app").lower(),
+            email=_env("CHOWKIDAR_ADMIN_EMAIL", f"admin@{domain}").lower(),
             name=_env("CHOWKIDAR_ADMIN_NAME", "Ayesha Rahman"),
             password=_password(Role.ADMIN),
         ),
         ProvisionedUser(
             role=Role.ANALYST,
-            email=_env("CHOWKIDAR_ANALYST_EMAIL", "analyst@chowkidar.app").lower(),
+            email=_env("CHOWKIDAR_ANALYST_EMAIL", f"analyst@{domain}").lower(),
             name=_env("CHOWKIDAR_ANALYST_NAME", "Rafiq Hasan"),
             password=_password(Role.ANALYST),
         ),
         ProvisionedUser(
             role=Role.APPROVER,
-            email=_env("CHOWKIDAR_APPROVER_EMAIL", "approver@chowkidar.app").lower(),
+            email=_env("CHOWKIDAR_APPROVER_EMAIL", f"approver@{domain}").lower(),
             name=_env("CHOWKIDAR_APPROVER_NAME", "Nusrat Jahan"),
             password=_password(Role.APPROVER),
         ),
         ProvisionedUser(
             role=Role.VIEWER,
-            email=_env("CHOWKIDAR_VIEWER_EMAIL", "viewer@chowkidar.app").lower(),
+            email=_env("CHOWKIDAR_VIEWER_EMAIL", f"viewer@{domain}").lower(),
             name=_env("CHOWKIDAR_VIEWER_NAME", "Imran Chowdhury"),
             password=_password(Role.VIEWER),
         ),
@@ -199,27 +201,54 @@ def _write_credentials(accounts: list[ProvisionedUser]) -> Path:
     return path
 
 
-async def main() -> None:
+async def main(*, auth_only: bool = False, seeded_emails: bool = False) -> None:
     settings = get_settings()
     if not settings.supabase_url or not settings.supabase_service_role_key:
         raise SystemExit("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required")
+    if auth_only:
+        print(
+            "Auth-only mode: each Supabase email must already match an active "
+            "local users row. No database writes will be made."
+        )
     base_url = settings.supabase_url.rstrip("/")
-    accounts = _users()
+    accounts = _users(seeded_emails=seeded_emails)
     async with httpx.AsyncClient(timeout=30) as client:
         for account in accounts:
             supabase_user_id = await _upsert_supabase_user(
                 client, base_url, settings.supabase_service_role_key, account
             )
-            local_user_id = await _map_local_user(account, supabase_user_id)
-            print(
-                f"{account.role.value:8s} {account.email:30s} "
-                f"supabase={supabase_user_id} local={local_user_id}"
-            )
+            if auth_only:
+                print(
+                    f"{account.role.value:8s} {account.email:30s} "
+                    f"supabase={supabase_user_id} local=matched-by-email"
+                )
+            else:
+                local_user_id = await _map_local_user(account, supabase_user_id)
+                print(
+                    f"{account.role.value:8s} {account.email:30s} "
+                    f"supabase={supabase_user_id} local={local_user_id}"
+                )
     credentials_path = _write_credentials(accounts)
     print(f"\nCredentials written to {credentials_path.relative_to(ROOT_DIR)}")
     print("Set AUTH_MODE=supabase and DEMO_MODE=false on the API after this completes.")
     await engine.dispose()
 
 
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--auth-only",
+        action="store_true",
+        help="Create Supabase users but do not write the local users table.",
+    )
+    parser.add_argument(
+        "--seeded-emails",
+        action="store_true",
+        help="Use the seeded @chowkidar.demo addresses; required with --auth-only.",
+    )
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    args = _parse_args()
+    asyncio.run(main(auth_only=args.auth_only, seeded_emails=args.seeded_emails))
