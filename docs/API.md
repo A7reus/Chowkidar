@@ -77,7 +77,7 @@ unless noted.
 
 | Method | Path | Roles | Notes |
 |---|---|---|---|
-| `GET` | `/healthz` | public | DB, auth, demo, LLM, data mode |
+| `GET` | `/healthz` | public | DB, auth, demo, LLM, data mode, deployed revision |
 | `GET` | `/api/v1/meta` | any | Company, streams, modes, storage backend |
 | `GET` | `/api/v1/dashboard/summary` | any | Counts, posture, sources, recent runs |
 | `GET` | `/api/v1/signals` | any | Filters: source, severity, status, search |

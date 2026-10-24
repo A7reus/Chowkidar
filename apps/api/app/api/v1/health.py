@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from datetime import UTC, datetime
 
 from fastapi import APIRouter
@@ -27,5 +28,7 @@ async def healthz() -> HealthOut:
         demo_mode=settings.demo_enabled,
         llm_mode=settings.llm_mode,
         data_mode=settings.data_mode,
+        revision=(os.getenv("RENDER_GIT_COMMIT") or os.getenv("GIT_COMMIT") or "")[:12]
+        or None,
         timestamp=datetime.now(UTC),
     )

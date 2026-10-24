@@ -1022,6 +1022,8 @@ export interface components {
             llm_mode: string;
             /** Data Mode */
             data_mode: string;
+            /** Revision */
+            revision?: string | null;
             /**
              * Timestamp
              * Format: date-time

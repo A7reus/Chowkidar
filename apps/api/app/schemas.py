@@ -66,6 +66,7 @@ class HealthOut(BaseModel):
     demo_mode: bool
     llm_mode: str
     data_mode: str
+    revision: str | None = None
     timestamp: datetime
 
 
