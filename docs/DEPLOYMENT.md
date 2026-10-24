@@ -2,10 +2,11 @@
 
 **Status (2026-10-24):** the Supabase database is provisioned, migrated, and
 seeded. The Render API and Vercel web app are live. The hosted service is still
-the explicit **demo** (`AUTH_MODE=dev`, `DEMO_MODE=true`). The production-auth,
-durable-storage, and rate-limit code is implemented and locally verified, but
-the Supabase Auth keys and hosted environment changes are not available yet. See
-[`PRODUCTION.md`](PRODUCTION.md) for the cutover and QA checklist.
+on **demo auth** (`AUTH_MODE=dev`, `DEMO_MODE=true`). Durable Postgres report
+storage and rate limits are active; Supabase production auth is implemented and
+locally verified but the project URL/keys and hosted environment changes are not
+available yet. See [`PRODUCTION.md`](PRODUCTION.md) for the cutover and QA
+checklist.
 
 **Target region:** Supabase `ap-northeast-1` (Tokyo); Render `singapore`; Vercel
 global edge. The cross-region API/database hop is acceptable for the pilot.

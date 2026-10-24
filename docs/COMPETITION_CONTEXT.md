@@ -446,7 +446,7 @@ This is the short version. The detailed limitations are in `docs/ARCHITECTURE.md
 | Fine-tuning / LoRA | Not implemented | **No** |
 | Contextual RAG, semantic chunking, Graph RAG, late interaction | Not implemented | **No** |
 | Supabase Auth hosted login | Implemented: API password/refresh/logout proxy, JWKS verification, local role mapping, production login UI; not enabled on the live service until keys are set | **Partially — code ready, hosted cutover pending** |
-| Supabase Storage + database reports | Implemented: private bucket adapter with Postgres fallback; database is the hosted default after the next deploy | **Partially — code ready, live image still `/tmp` until deploy** |
+| Supabase Storage + database reports | Database storage is active on the hosted API; private bucket adapter exists with Postgres fallback | **Yes for durable reports; Supabase Storage bucket not enabled** |
 | Neo4j graph projection | Not wired; graph UI reads Postgres | **No** |
 | Multi-tenant isolation, SSO, billing, SOC 2, legal review | Not implemented | **No** |
 | Public deployment | Render API + Vercel web live in demo mode; Vercel edge-IP workaround needed on some networks | **Yes, demo mode; production cutover pending** |

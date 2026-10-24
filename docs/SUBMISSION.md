@@ -149,7 +149,7 @@ Pilot with an RMG exporter and a compliance reviewer; enable the Supabase Auth/S
 
 - Fixture-first demo data; live connectors are scaffolded, not production-scheduled. `DATA_MODE=live` is unsupported.
 - The **live URL is still demo mode** (`AUTH_MODE=dev`, `DEMO_MODE=true`). The Supabase Auth production path and email/password login UI are implemented and locally verified, but hosted cutover is blocked on Supabase keys and dashboard access.
-- Reports support Postgres and private Supabase Storage backends; the current live image still writes to ephemeral `/tmp` until the next deploy (`STORAGE_BACKEND=database` is in `infra/render.yaml`).
+- Reports use Postgres on the hosted API, with private Supabase Storage as an optional adapter. Local `/tmp` reports are not durable.
 - Rate limits are process-local; browser tokens are in local storage rather than HttpOnly cookies.
 - BGE-M3, Docling, RAGAS, and Phoenix are optional and not on the demo path.
 - Golden set is small and synthetic (7 cases).

@@ -198,7 +198,7 @@ cd apps/api && uv run python -m app.db.seed
 - Fixture-first demo data; source connectors are scaffolded, not production-scheduled.
 - No legal/compliance advisor; the product is deliberately positioned as decision support.
 - The **live service is still in demo mode** (`AUTH_MODE=dev`, `DEMO_MODE=true`). The Supabase Auth production path and production login UI are implemented and locally verified, but the hosted cutover is blocked on Supabase keys and dashboard access.
-- Reports support Postgres and Supabase Storage; the hosted default after the next deploy is `STORAGE_BACKEND=database`. The currently running image still writes to `/tmp` until that deploy.
+- Reports use the durable Postgres backend on the hosted API (`STORAGE_BACKEND=database`), with private Supabase Storage as an optional object-store adapter. Local `/tmp` reports remain only for offline demos.
 - Rate limits are process-local (suitable for the single Render instance); browser tokens are stored in local storage rather than HttpOnly cookies.
 - Live source connectors are not implemented; `DATA_MODE=live` is unsupported and source sync replays fixtures.
 - Optional BGE-M3 embeddings, Docling, RAGAS, and Phoenix are not required for the demo path.

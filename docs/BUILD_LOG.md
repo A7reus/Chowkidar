@@ -201,7 +201,7 @@ Manual visual QA covered every route at 1440×1000. Known cosmetic trade-off: th
 - Public repository is live at <https://github.com/A7reus/Chowkidar>; CI is green.
 - Render API and Vercel web are live. Some networks cannot reach Vercel’s new edge IPs; see `CLOUD_DEPLOYMENT_STATUS.md`.
 - Supabase Auth is implemented end-to-end (API proxy + production login UI) but **not enabled on the live service** until the Supabase URL/anon/service-role keys and hosted env changes are applied.
-- Report storage supports database and Supabase Storage in code; the live service will use `STORAGE_BACKEND=database` after the next deploy. The currently running image still uses ephemeral `/tmp`.
+- Report storage is now durable on the hosted API (`STORAGE_BACKEND=database`); Supabase Storage remains an optional adapter. The previous image used ephemeral `/tmp`.
 - Rate limits are process-local (single Render instance).
 - Browser tokens are stored in local storage; HttpOnly cookies are a hardening backlog item.
 - Live source connectors are not implemented; `DATA_MODE=live` remains unsupported.
