@@ -96,12 +96,26 @@ def decode_supabase_token(token: str) -> UserContext:
     settings = get_settings()
     if not settings.supabase_url:
         raise ValueError("SUPABASE_URL is required when AUTH_MODE=supabase")
-    jwks_url = f"{settings.supabase_url.rstrip('/')}/auth/v1/.well-known/jwks.json"
-    signing_key = jwt.PyJWKClient(jwks_url).get_signing_key_from_jwt(token)
+    header = jwt.get_unverified_header(token)
+    algorithm = str(header.get("alg") or "")
+    if algorithm == "HS256":
+        # Legacy Supabase projects sign access tokens with the shared JWT
+        # secret. New projects use asymmetric JWKS keys; only fall back to
+        # HS256 when the operator has explicitly configured the legacy secret.
+        if not settings.supabase_jwt_secret:
+            raise ValueError(
+                "SUPABASE_JWT_SECRET is required to verify legacy HS256 tokens"
+            )
+        key: Any = settings.supabase_jwt_secret
+        algorithms = ["HS256"]
+    else:
+        jwks_url = f"{settings.supabase_url.rstrip('/')}/auth/v1/.well-known/jwks.json"
+        key = jwt.PyJWKClient(jwks_url).get_signing_key_from_jwt(token).key
+        algorithms = ["RS256", "ES256"]
     payload = jwt.decode(
         token,
-        signing_key.key,
-        algorithms=["RS256", "ES256"],
+        key,
+        algorithms=algorithms,
         audience=settings.supabase_jwt_audience,
         options={"require": ["exp", "sub"]},
     )

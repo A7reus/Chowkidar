@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
+
 import app.api.v1.auth as auth_module
+import app.core.auth as core_auth_module
 import app.core.supabase_auth as supabase_module
 import httpx
+import jwt
 import pytest
 import respx
 from app.core.auth import Role, UserContext
@@ -118,3 +122,60 @@ async def test_supabase_auth_requires_configuration(monkeypatch: pytest.MonkeyPa
     with pytest.raises(SupabaseAuthError) as error:
         await supabase_module.password_login("user@example.com", "password123")
     assert error.value.status_code == 503
+
+
+def test_new_publishable_key_uses_only_the_apikey_header(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    settings = Settings(
+        auth_mode="supabase",
+        demo_mode=False,
+        supabase_url="https://example.supabase.co",
+        supabase_anon_key="sb_publishable_example",
+    )
+    monkeypatch.setattr(supabase_module, "get_settings", lambda: settings)
+    headers = supabase_module._headers()
+    assert headers["apikey"] == "sb_publishable_example"
+    assert "Authorization" not in headers
+
+
+def test_legacy_anon_key_is_also_sent_as_a_bearer_token(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    settings = Settings(
+        auth_mode="supabase",
+        demo_mode=False,
+        supabase_url="https://example.supabase.co",
+        supabase_anon_key="legacy-anon-jwt",
+    )
+    monkeypatch.setattr(supabase_module, "get_settings", lambda: settings)
+    headers = supabase_module._headers()
+    assert headers["Authorization"] == "Bearer legacy-anon-jwt"
+
+
+def test_legacy_hs256_supabase_token_is_verified(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    settings = Settings(
+        auth_mode="supabase",
+        demo_mode=False,
+        supabase_url="https://example.supabase.co",
+        supabase_anon_key="public-anon-key",
+        supabase_jwt_secret="legacy-jwt-secret-0123456789abcdef",
+    )
+    monkeypatch.setattr(core_auth_module, "get_settings", lambda: settings)
+    token = jwt.encode(
+        {
+            "sub": "11111111-1111-1111-1111-111111111111",
+            "email": "analyst@example.com",
+            "aud": "authenticated",
+            "exp": datetime.now(UTC) + timedelta(hours=1),
+            "app_metadata": {"role": "admin"},
+            "user_metadata": {"full_name": "Analyst"},
+        },
+        "legacy-jwt-secret-0123456789abcdef",
+        algorithm="HS256",
+    )
+    user = core_auth_module.decode_supabase_token(token)
+    assert user.email == "analyst@example.com"
+    assert user.is_demo is False

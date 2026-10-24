@@ -280,7 +280,7 @@ To avoid losing details between sessions:
 - Added process-local rate limits for auth and mutating endpoints.
 - Added production-mode login UI, automatic token refresh, pilot/demo labels, and `/settings`.
 - Added the Supabase account provisioning script, migration `82eceac00bcf`, tests, and production/cutover docs.
-- Verified locally with a mock Supabase Auth/JWKS server: production login, refresh, `/auth/me`, demo lockout (`403`), report generation/download, pilot badge, and settings page. API 52 tests, web 8 tests, Ruff/Pyright/`tsc`/ESLint clean.
+- Verified locally with a mock Supabase Auth/JWKS server: production login, refresh, `/auth/me`, demo lockout (`403`), report generation/download, pilot badge, and settings page. API 57 tests, web 8 tests, Ruff/Pyright/`tsc`/ESLint clean.
 - Live service remains **demo** (`AUTH_MODE=dev`, `DEMO_MODE=true`); new code is not yet deployed or committed at the end of this session. The official form remains untouched.
 - Blockers: Supabase URL/anon/service-role keys; Render/Vercel dashboard access; demo video; Figma/design link; team-diversity facts; Supabase password rotation.
 - Next: commit/push the production pass, deploy `STORAGE_BACKEND=database`, provision Supabase users, cut over auth, run hosted QA, then record assets and fill the form.

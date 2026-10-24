@@ -28,7 +28,7 @@
 | Backend | Complete: FastAPI, SQLAlchemy, Alembic, LangGraph, RAG, reports, audit, MCP |
 | Frontend | Complete: 12 routes, role-aware UI, EN/BN chrome, graph, search, evals |
 | Database | Local Postgres + pgvector seeded; 8 risks, 12 signals, 21 actions, 11 audit events |
-| Tests | API 52 passing; web unit 8 passing; Playwright 4 passing |
+| Tests | API 57 passing; web unit 8 passing; Playwright 4 passing |
 | Type checks | Pyright 0 errors; `tsc` clean |
 | Lint | Ruff clean; ESLint clean |
 | Evals | 7/7 golden cases; five metrics at 1.0 in mock mode |
@@ -163,7 +163,7 @@ The deterministic mock path (`app/agents/mock.py`) is the default for the demo a
 |---|---|---|
 | API lint | `uv run ruff check app tests` | Pass |
 | API types | `uv run pyright` | 0 errors |
-| API tests | `uv run pytest` | 52 passed |
+| API tests | `uv run pytest` | 57 passed |
 | Web lint | `pnpm lint` | Pass |
 | Web types | `pnpm typecheck` | Pass |
 | Web unit | `pnpm test` | 8 passed |

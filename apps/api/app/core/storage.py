@@ -24,10 +24,11 @@ def _settings_ready() -> tuple[str, str, str]:
 
 
 def _headers(service_key: str, content_type: str | None = None) -> dict[str, str]:
-    headers = {
-        "apikey": service_key,
-        "Authorization": f"Bearer {service_key}",
-    }
+    headers = {"apikey": service_key}
+    # Legacy service_role keys are JWTs; new sb_secret_* keys are opaque and
+    # must only use the apikey header or Supabase rejects them as invalid JWTs.
+    if not service_key.startswith("sb_"):
+        headers["Authorization"] = f"Bearer {service_key}"
     if content_type:
         headers["Content-Type"] = content_type
     return headers

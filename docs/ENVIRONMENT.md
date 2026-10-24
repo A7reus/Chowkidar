@@ -74,8 +74,9 @@ the correct form without exposing keys.
 | Variable | Required | Purpose |
 |---|---|---|
 | `SUPABASE_URL` | yes | Project URL; used for the Auth proxy, JWKS verification, and Storage |
-| `SUPABASE_ANON_KEY` | yes | Public Auth key used only server-side for password/refresh grants |
-| `SUPABASE_SERVICE_ROLE_KEY` | for provisioning/Storage | Admin user provisioning and private bucket uploads; never send to the browser |
+| `SUPABASE_ANON_KEY` | yes | Public Auth key used only server-side for password/refresh grants; accepts a legacy anon JWT or an `sb_publishable_*` key |
+| `SUPABASE_SERVICE_ROLE_KEY` | for provisioning/Storage | Admin user provisioning and private bucket uploads; accepts a legacy `service_role` JWT or an `sb_secret_*` key; never send to the browser |
+| `SUPABASE_JWT_SECRET` | only for legacy HS256 projects | Shared JWT secret used to verify legacy access tokens; leave blank for asymmetric JWKS projects |
 | `SUPABASE_JWT_AUDIENCE` | no | Default `authenticated` |
 | `SUPABASE_AUTH_TIMEOUT_SECONDS` | no | Default `15`; upstream Auth timeout |
 | `DEV_JWT_SECRET` | no in Supabase mode | Still set a random value to avoid an unsafe dev fallback |

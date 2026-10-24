@@ -4,6 +4,7 @@ import hashlib
 import uuid
 
 import pytest
+from app.core.storage import _headers as storage_headers
 from app.db.models import ReportRun
 from app.services.reports import (
     _render_report_bytes,
@@ -71,3 +72,15 @@ def test_markdown_report_renders_without_filesystem() -> None:
     rendered = _render_report_bytes(data, "markdown")
     assert b"Compliance Risk Audit" in rendered
     assert b"not legal advice" in rendered
+
+
+def test_new_storage_secret_key_uses_only_the_apikey_header() -> None:
+    headers = storage_headers("sb_secret_example", "application/pdf")
+    assert headers["apikey"] == "sb_secret_example"
+    assert "Authorization" not in headers
+    assert headers["Content-Type"] == "application/pdf"
+
+
+def test_legacy_storage_service_key_is_also_a_bearer_token() -> None:
+    headers = storage_headers("legacy-service-role-jwt")
+    assert headers["Authorization"] == "Bearer legacy-service-role-jwt"

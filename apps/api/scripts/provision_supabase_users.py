@@ -81,11 +81,11 @@ def _users() -> list[ProvisionedUser]:
 
 
 def _admin_headers(service_key: str) -> dict[str, str]:
-    return {
-        "apikey": service_key,
-        "Authorization": f"Bearer {service_key}",
-        "Content-Type": "application/json",
-    }
+    headers = {"apikey": service_key, "Content-Type": "application/json"}
+    # New sb_secret_* keys are opaque and must not be sent as a bearer token.
+    if not service_key.startswith("sb_"):
+        headers["Authorization"] = f"Bearer {service_key}"
+    return headers
 
 
 async def _find_user(

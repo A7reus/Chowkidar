@@ -51,6 +51,7 @@ class Settings(BaseSettings):
     supabase_url: str = ""
     supabase_anon_key: str = ""
     supabase_service_role_key: str = ""
+    supabase_jwt_secret: str = ""
     supabase_jwt_audience: str = "authenticated"
     supabase_storage_bucket: str = "chowkidar-documents"
     supabase_auth_timeout_seconds: int = 15

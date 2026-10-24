@@ -40,11 +40,14 @@ def _auth_url(path: str) -> str:
 
 def _headers() -> dict[str, str]:
     settings = get_settings()
-    return {
-        "apikey": settings.supabase_anon_key,
-        "Authorization": f"Bearer {settings.supabase_anon_key}",
-        "Content-Type": "application/json",
-    }
+    key = settings.supabase_anon_key
+    headers = {"apikey": key, "Content-Type": "application/json"}
+    # Legacy anon keys are JWTs and may also be sent as a bearer token. The
+    # new sb_publishable_* keys are opaque and must only use the apikey header;
+    # Supabase rejects them with "Invalid JWT" on Authorization.
+    if not key.startswith("sb_"):
+        headers["Authorization"] = f"Bearer {key}"
+    return headers
 
 
 def _error_message(payload: Any) -> str:

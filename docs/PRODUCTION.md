@@ -54,9 +54,15 @@ operations, legal review, or live source connectors).
 From the Supabase project dashboard:
 
 - Project URL (`https://<ref>.supabase.co`)
-- Publishable/anon key
-- Service-role key (server-side only; never send it to the browser or commit it)
+- Public key: a legacy `anon` JWT or an `sb_publishable_*` key
+- Server key: a legacy `service_role` JWT or an `sb_secret_*` key (server-side
+  only; never send it to the browser or commit it)
 - Postgres Session pooler URL (already used by Render)
+
+The API sends new `sb_*` keys only in the `apikey` header. Legacy JWT keys are
+also sent as a bearer token for compatibility. Access tokens are verified from
+the project JWKS by default; if the project still uses the legacy HS256 signing
+secret, also set `SUPABASE_JWT_SECRET`.
 
 Generate a random `DEV_JWT_SECRET` even though Supabase mode does not use demo
 tokens; it prevents an accidental dev fallback from using a default secret:
