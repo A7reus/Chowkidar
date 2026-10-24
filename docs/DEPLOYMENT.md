@@ -136,6 +136,16 @@ To switch to Supabase Auth, set `AUTH_MODE=supabase`, add Supabase settings, and
 
 `apps/web/vercel.json` pins the framework preset. If your Vercel workspace installs from the repo root instead, leave the default install command; pnpm resolves the workspace.
 
+### 5.1 Optional Render web fallback
+
+`infra/render.yaml` also defines `chowkidar-web`, a free Node service that runs the Next.js standalone build. It is not required when Vercel is reachable.
+
+- Build: installs the workspace, builds `@chowkidar/web`, and copies `.next/static` into the standalone output.
+- Start: `node apps/web/.next/standalone/apps/web/server.js`.
+- Env: `NEXT_PUBLIC_API_URL=https://chowkidar-api.onrender.com`, `NODE_VERSION=22`.
+- The service was created by the Blueprint but returned `502` on 2026-10-24; check its Render build logs before relying on it.
+- If it becomes healthy, add `https://chowkidar-web.onrender.com` to the API’s `CORS_ORIGINS` and test `/login`. Free services sleep after inactivity.
+
 ---
 
 ## 6. Local production-like check

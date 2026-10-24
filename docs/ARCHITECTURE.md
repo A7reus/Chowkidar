@@ -268,7 +268,8 @@ Current mock-mode result: **7/7 cases**, all metrics **1.0**. This is a demo-sca
 
 | Layer | Target | Status |
 |---|---|---|
-| Web | Vercel Hobby, `apps/web` root | Live; edge-IP workaround needed on some networks |
+| Web | Vercel Hobby, `apps/web` root | Live; direct browser check passed |
+| Web fallback | Render Node free, Next.js standalone | Optional; currently `502`, check logs |
 | API | Render Docker free, Singapore, ephemeral `/tmp` storage | Live: `/healthz` healthy |
 | Database | Supabase Postgres + pgvector, Tokyo | Ready: migrated and seeded |
 | Graph | Neo4j Aura | Optional; pending account |
