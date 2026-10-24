@@ -33,8 +33,9 @@
 | Not legal advice | API root, UI, reports, README, methodology resource |
 
 - **Repository URL:** <https://github.com/A7reus/Chowkidar>
-- **Live demo URL:** <https://chowkidar-wheat.vercel.app/> — live, but some networks need the Vercel edge-IP workaround in [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md)
+- **Live demo URL:** <https://chowkidar-wheat.vercel.app/> — live in **demo mode**; some networks need the Vercel edge-IP workaround in [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md)
 - **API URL:** <https://chowkidar-api.onrender.com/>
+- **Production pilot:** code path implemented but not enabled on the live URL until the Supabase Auth cutover in [`PRODUCTION.md`](PRODUCTION.md) is complete. Do not describe the live URL as production-ready.
 - **Video URL:** _to be added after recording — required for the official form_
 
 > The official form and MCP knowledge base both reward a public live demo and a 2–3 minute video. A local-only demo is not enough for maximum preliminary score. See [`COMPETITION_CONTEXT.md`](COMPETITION_CONTEXT.md) for the captured form, scoring signals, and the authoritative domain list.
@@ -64,7 +65,7 @@ Open **http://localhost:3000** and choose any demo account.
 | Approver | Nusrat Jahan | `approver@chowkidar.demo` |
 | Viewer | Imran Chowdhury | `viewer@chowkidar.demo` |
 
-The login page uses one-click accounts. Role switching in the app reissues a token and reloads so API authorization is exercised, not just hidden in the client.
+The local demo login page uses one-click accounts. Role switching in the app reissues a token and reloads so API authorization is exercised, not just hidden in the client. A production deployment instead shows email/password from `/api/v1/auth/config`.
 
 ### Seed baseline
 
@@ -130,7 +131,7 @@ JU_StackMind combines AI/full-stack engineering and data engineering. The build 
 
 ### Next
 
-Pilot with an RMG exporter and a compliance reviewer; add live source scheduling; connect Supabase Auth and Storage; expand the golden set; add tenant isolation and external audit anchoring.
+Pilot with an RMG exporter and a compliance reviewer; enable the Supabase Auth/Storage cutover and hosted QA; add live source scheduling; expand the golden set; add tenant isolation, HttpOnly sessions, and external audit anchoring.
 
 ---
 
@@ -146,14 +147,15 @@ Pilot with an RMG exporter and a compliance reviewer; add live source scheduling
 
 ## 7. Known limitations
 
-- Fixture-first demo data; live connectors are scaffolded, not production-scheduled.
-- Demo auth uses seeded role tokens; Supabase Auth decoding exists, but the hosted login flow is not wired into the UI.
-- Reports use local storage; the free Render deployment uses ephemeral `/tmp`, and Supabase Storage is not enabled.
+- Fixture-first demo data; live connectors are scaffolded, not production-scheduled. `DATA_MODE=live` is unsupported.
+- The **live URL is still demo mode** (`AUTH_MODE=dev`, `DEMO_MODE=true`). The Supabase Auth production path and email/password login UI are implemented and locally verified, but hosted cutover is blocked on Supabase keys and dashboard access.
+- Reports support Postgres and private Supabase Storage backends; the current live image still writes to ephemeral `/tmp` until the next deploy (`STORAGE_BACKEND=database` is in `infra/render.yaml`).
+- Rate limits are process-local; browser tokens are in local storage rather than HttpOnly cookies.
 - BGE-M3, Docling, RAGAS, and Phoenix are optional and not on the demo path.
 - Golden set is small and synthetic (7 cases).
 - No legal/compliance advisor reviewed the content.
 - No legal advice is provided; every finding is a reviewable signal.
-- Public deployment is pending cloud accounts and keys.
+- The official form has not been filled yet, by explicit instruction.
 
 ---
 
@@ -166,9 +168,10 @@ Pilot with an RMG exporter and a compliance reviewer; add live source scheduling
 - [x] API tests, web tests, and Playwright smoke.
 - [x] Docker image and Render/Vercel configs.
 - [x] GitHub remote and public repository URL.
-- [ ] Supabase project and keys.
-- [ ] Render API deploy.
-- [ ] Vercel web deploy.
-- [ ] Live URL verified in incognito.
+- [x] Supabase project and database; migrated and seeded.
+- [x] Render API deploy.
+- [x] Vercel web deploy.
+- [ ] Supabase Auth URL/anon/service-role keys and hosted cutover.
+- [ ] Production-mode live URL verified in incognito after cutover.
 - [ ] Two-to-three-minute demo video recorded and linked.
 - [ ] Final submission form completed before the deadline.

@@ -24,6 +24,7 @@ async def healthz() -> HealthOut:
         version="0.1.0",
         database="ok" if database_ok else "unavailable",
         auth_mode=settings.auth_mode,
+        demo_mode=settings.demo_enabled,
         llm_mode=settings.llm_mode,
         data_mode=settings.data_mode,
         timestamp=datetime.now(UTC),

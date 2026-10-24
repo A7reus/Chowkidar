@@ -11,9 +11,17 @@ import { setApiToken } from "@/lib/api/token";
 function UnauthorizedBridge() {
   const router = useRouter();
   React.useEffect(() => {
-    const handler = () => {
-      useAuthStore.getState().logout();
-      router.replace("/login");
+    let refreshing = false;
+    const handler = async () => {
+      const state = useAuthStore.getState();
+      if (refreshing) return;
+      refreshing = true;
+      const refreshed = await state.refresh();
+      refreshing = false;
+      if (!refreshed) {
+        state.logout();
+        router.replace("/login");
+      }
     };
     window.addEventListener("chowkidar:unauthorized", handler);
     return () => window.removeEventListener("chowkidar:unauthorized", handler);
@@ -42,6 +50,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     const state = useAuthStore.getState();
     setApiToken(state.token);
     if (!state.hydrated) state.setHydrated(true);
+    void state.refreshIfNeeded();
   }, []);
 
   return (

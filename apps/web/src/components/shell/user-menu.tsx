@@ -25,6 +25,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { apiFetch } from "@/lib/api/client";
 import type { Role } from "@/lib/api/types";
 import { useAuthStore, usePermissions } from "@/lib/auth/store";
 import { initials } from "@/lib/utils";
@@ -66,6 +67,7 @@ export function UserMenu({ variant = "sidebar" }: { variant?: "sidebar" | "topba
   };
 
   const signOut = () => {
+    void apiFetch("/api/v1/auth/logout", { method: "POST" }).catch(() => undefined);
     logout();
     router.replace("/login");
   };
@@ -116,31 +118,35 @@ export function UserMenu({ variant = "sidebar" }: { variant?: "sidebar" | "topba
           <RoleBadge role={user.role} />
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuLabel>{t("switchRole")}</DropdownMenuLabel>
-        {(Object.keys(roleIcons) as Role[]).map((item) => {
-          const Icon = roleIcons[item];
-          return (
-            <DropdownMenuItem
-              key={item}
-              disabled={switching !== null}
-              onSelect={(event) => {
-                event.preventDefault();
-                void changeRole(item);
-              }}
-              className="justify-between"
-            >
-              <span className="flex items-center gap-2">
-                <Icon className="size-4 text-muted" />
-                {roleLabels[item]}
-                {switching === item ? (
-                  <span className="size-3 animate-spin rounded-full border border-border border-t-accent" />
-                ) : null}
-              </span>
-              {item === role ? <Check className="size-3.5 text-accent" /> : null}
-            </DropdownMenuItem>
-          );
-        })}
-        <DropdownMenuSeparator />
+        {user.is_demo ? (
+          <>
+            <DropdownMenuLabel>{t("switchRole")}</DropdownMenuLabel>
+            {(Object.keys(roleIcons) as Role[]).map((item) => {
+              const Icon = roleIcons[item];
+              return (
+                <DropdownMenuItem
+                  key={item}
+                  disabled={switching !== null}
+                  onSelect={(event) => {
+                    event.preventDefault();
+                    void changeRole(item);
+                  }}
+                  className="justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <Icon className="size-4 text-muted" />
+                    {roleLabels[item]}
+                    {switching === item ? (
+                      <span className="size-3 animate-spin rounded-full border border-border border-t-accent" />
+                    ) : null}
+                  </span>
+                  {item === role ? <Check className="size-3.5 text-accent" /> : null}
+                </DropdownMenuItem>
+              );
+            })}
+            <DropdownMenuSeparator />
+          </>
+        ) : null}
         <DropdownMenuItem onSelect={(event) => event.preventDefault()} className="p-0">
           <ToggleLanguageItem />
         </DropdownMenuItem>
@@ -149,7 +155,7 @@ export function UserMenu({ variant = "sidebar" }: { variant?: "sidebar" | "topba
           <LogOut className="size-4 text-rose-300" />
           {t("signOut")}
         </DropdownMenuItem>
-        {variant === "topbar" ? (
+        {variant === "topbar" && user.is_demo ? (
           <div className="flex items-center gap-2 px-2 py-2 text-[10px] text-muted-2">
             <UserRound className="size-3" />
             Demo accounts are seeded and fictional.

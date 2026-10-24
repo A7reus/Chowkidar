@@ -11,8 +11,10 @@ import {
   FileCheck2,
   Fingerprint,
   Globe2,
+  KeyRound,
   Loader2,
   LockKeyhole,
+  Mail,
   ScanSearch,
   Shield,
   ShieldCheck,
@@ -25,6 +27,9 @@ import * as React from "react";
 import { toast } from "sonner";
 
 import { LanguageToggle } from "@/components/shell/language-toggle";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useAuthConfig } from "@/lib/api/hooks";
 import type { Role } from "@/lib/api/types";
 import { useAuthStore } from "@/lib/auth/store";
 import { cn } from "@/lib/utils";
@@ -94,8 +99,14 @@ export default function LoginPage() {
   const token = useAuthStore((state) => state.token);
   const hydrated = useAuthStore((state) => state.hydrated);
   const login = useAuthStore((state) => state.login);
+  const loginWithPassword = useAuthStore((state) => state.loginWithPassword);
   const loggingIn = useAuthStore((state) => state.loggingIn);
+  const authConfig = useAuthConfig();
   const [selected, setSelected] = React.useState<Role | null>(null);
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const demoMode = Boolean(authConfig.data?.demo_mode);
+  const passwordAuth = Boolean(authConfig.data?.password_auth);
 
   React.useEffect(() => {
     if (hydrated && token) router.replace("/dashboard");
@@ -107,8 +118,22 @@ export default function LoginPage() {
       await login(role);
       router.replace("/dashboard");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not sign in to the demo.");
+      toast.error(error instanceof Error ? error.message : "Could not sign in to the workspace.");
       setSelected(null);
+    }
+  };
+
+  const handlePasswordLogin = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!email.trim() || password.length < 8) {
+      toast.error("Enter your email and password (at least 8 characters).");
+      return;
+    }
+    try {
+      await loginWithPassword(email.trim(), password);
+      router.replace("/dashboard");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not sign in.");
     }
   };
 
@@ -133,9 +158,9 @@ export default function LoginPage() {
           <div className="flex items-center gap-3">
             <div className="hidden items-center gap-2 rounded-full border border-border bg-white/[0.02] px-3 py-1.5 text-[10px] text-muted sm:flex">
               <span className="size-1.5 rounded-full bg-teal-400 live-dot" />
-              {t("demoMode")}
+              {demoMode ? t("demoMode") : t("secureAccess")}
               <span className="text-muted-2">·</span>
-              {t("localApi")}
+              {passwordAuth ? t("hostedApi") : t("localApi")}
             </div>
             <LanguageToggle />
           </div>
@@ -177,7 +202,7 @@ export default function LoginPage() {
               <div className="flex items-center justify-between border-b border-border-soft px-5 py-3.5">
                 <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-2">
                   <Building2 className="size-3.5 text-accent/70" />
-                  {t("caseEyebrow")}
+                  {demoMode ? t("caseEyebrow") : t("pilotCaseEyebrow")}
                 </div>
                 <span className="rounded-full border border-border bg-white/[0.03] px-2 py-0.5 font-mono text-[9px] text-muted-2">
                   CASE-2026-001
@@ -262,59 +287,152 @@ export default function LoginPage() {
               <div className="relative">
                 <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">
                   <LockKeyhole className="size-3" />
-                  Demo access
+                  {demoMode ? t("demoAccess") : t("secureAccess")}
                 </div>
                 <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight text-white">
-                  {t("enter")}
+                  {demoMode ? t("enter") : t("signIn")}
                 </h2>
-                <p className="mt-1.5 text-xs leading-relaxed text-muted">{t("chooseRole")}</p>
+                <p className="mt-1.5 text-xs leading-relaxed text-muted">
+                  {demoMode ? t("chooseRole") : t("signInSubhead")}
+                </p>
 
-                <div className="mt-5 space-y-2.5">
-                  {roles.map((item) => {
-                    const Icon = item.icon;
-                    const isLoading = loggingIn && selected === item.role;
-                    return (
-                      <button
-                        key={item.role}
-                        type="button"
-                        disabled={loggingIn}
-                        onClick={() => handleLogin(item.role)}
-                        className={cn(
-                          "group flex w-full items-start gap-3 rounded-xl border border-border bg-white/[0.018] p-3 text-left transition-all disabled:cursor-not-allowed disabled:opacity-60",
-                          item.accent,
-                        )}
-                      >
-                        <div className={cn("mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg border", item.iconClass)}>
-                          {isLoading ? <Loader2 className="size-4 animate-spin" /> : <Icon className="size-4" />}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-slate-100">{item.name}</span>
-                            <span className="rounded border border-border bg-white/[0.025] px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wider text-muted-2">
-                              {t(item.labelKey)}
-                            </span>
-                          </div>
-                          <p className="mt-0.5 text-[10px] text-muted">{item.email}</p>
-                          <p className="mt-1 text-[10px] leading-relaxed text-muted-2">{t(item.descriptionKey)}</p>
-                        </div>
-                        <ArrowRight className="mt-1 size-3.5 text-muted-2 transition-transform group-hover:translate-x-0.5 group-hover:text-accent" />
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="mt-5 rounded-lg border border-border-soft bg-[#060d18]/70 p-3">
-                  <div className="flex items-center gap-2 text-[10px] text-muted">
-                    <Check className="size-3 text-emerald-400" />
-                    Seeded demo accounts · no password required
+                {authConfig.isPending ? (
+                  <div className="flex min-h-[240px] items-center justify-center">
+                    <Loader2 className="size-5 animate-spin text-accent" />
                   </div>
-                  <div className="mt-1.5 flex items-center gap-2 text-[10px] text-muted">
-                    <Check className="size-3 text-emerald-400" />
-                    Role-based access · human approval workflow
+                ) : authConfig.isError ? (
+                  <div className="mt-5 rounded-xl border border-rose-400/20 bg-rose-400/[0.05] p-4">
+                    <p className="text-xs leading-relaxed text-rose-200">{t("configError")}</p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="mt-3"
+                      onClick={() => void authConfig.refetch()}
+                    >
+                      {t("retry")}
+                    </Button>
                   </div>
-                </div>
+                ) : demoMode ? (
+                  <>
+                    <div className="mt-5 space-y-2.5">
+                      {roles.map((item) => {
+                        const Icon = item.icon;
+                        const isLoading = loggingIn && selected === item.role;
+                        return (
+                          <button
+                            key={item.role}
+                            type="button"
+                            disabled={loggingIn}
+                            onClick={() => handleLogin(item.role)}
+                            className={cn(
+                              "group flex w-full items-start gap-3 rounded-xl border border-border bg-white/[0.018] p-3 text-left transition-all disabled:cursor-not-allowed disabled:opacity-60",
+                              item.accent,
+                            )}
+                          >
+                            <div className={cn("mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg border", item.iconClass)}>
+                              {isLoading ? <Loader2 className="size-4 animate-spin" /> : <Icon className="size-4" />}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-slate-100">{item.name}</span>
+                                <span className="rounded border border-border bg-white/[0.025] px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wider text-muted-2">
+                                  {t(item.labelKey)}
+                                </span>
+                              </div>
+                              <p className="mt-0.5 text-[10px] text-muted">{item.email}</p>
+                              <p className="mt-1 text-[10px] leading-relaxed text-muted-2">{t(item.descriptionKey)}</p>
+                            </div>
+                            <ArrowRight className="mt-1 size-3.5 text-muted-2 transition-transform group-hover:translate-x-0.5 group-hover:text-accent" />
+                          </button>
+                        );
+                      })}
+                    </div>
 
-                <p className="mt-4 text-[9px] leading-relaxed text-muted-2">{t("disclaimer")}</p>
+                    <div className="mt-5 rounded-lg border border-border-soft bg-[#060d18]/70 p-3">
+                      <div className="flex items-center gap-2 text-[10px] text-muted">
+                        <Check className="size-3 text-emerald-400" />
+                        Seeded demo accounts · no password required
+                      </div>
+                      <div className="mt-1.5 flex items-center gap-2 text-[10px] text-muted">
+                        <Check className="size-3 text-emerald-400" />
+                        Role-based access · human approval workflow
+                      </div>
+                    </div>
+                  </>
+                ) : passwordAuth ? (
+                  <form className="mt-5 space-y-4" onSubmit={handlePasswordLogin}>
+                    <div>
+                      <label htmlFor="email" className="mb-1.5 block text-[11px] font-medium text-slate-300">
+                        {t("email")}
+                      </label>
+                      <div className="relative">
+                        <Mail className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-2" />
+                        <Input
+                          id="email"
+                          name="email"
+                          type="email"
+                          autoComplete="username"
+                          inputMode="email"
+                          required
+                          value={email}
+                          onChange={(event) => setEmail(event.target.value)}
+                          placeholder={t("emailPlaceholder")}
+                          className="pl-9"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label htmlFor="password" className="mb-1.5 block text-[11px] font-medium text-slate-300">
+                        {t("password")}
+                      </label>
+                      <div className="relative">
+                        <KeyRound className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-2" />
+                        <Input
+                          id="password"
+                          name="password"
+                          type="password"
+                          autoComplete="current-password"
+                          required
+                          minLength={8}
+                          value={password}
+                          onChange={(event) => setPassword(event.target.value)}
+                          placeholder={t("passwordPlaceholder")}
+                          className="pl-9"
+                        />
+                      </div>
+                    </div>
+                    <Button type="submit" className="w-full" disabled={loggingIn}>
+                      {loggingIn ? (
+                        <>
+                          <Loader2 className="size-3.5 animate-spin" />
+                          {t("signingIn")}
+                        </>
+                      ) : (
+                        <>
+                          {t("signIn")}
+                          <ArrowRight className="size-3.5" />
+                        </>
+                      )}
+                    </Button>
+
+                    <div className="flex items-center gap-2 rounded-lg border border-border-soft bg-[#060d18]/70 p-3 text-[10px] text-muted">
+                      <ShieldCheck className="size-3 shrink-0 text-emerald-400" />
+                      {t("secureSession")}
+                    </div>
+                  </form>
+                ) : (
+                  <div className="mt-5 rounded-xl border border-amber-400/20 bg-amber-400/[0.05] p-4">
+                    <p className="text-xs leading-relaxed text-amber-100">
+                      This deployment has no active sign-in method. Set AUTH_MODE=supabase and
+                      configure the Supabase credentials on the API.
+                    </p>
+                  </div>
+                )}
+
+                <p className="mt-4 text-[9px] leading-relaxed text-muted-2">
+                  {demoMode ? t("disclaimer") : t("pilotDisclaimer")}
+                </p>
               </div>
             </div>
             <div className="mt-4 flex items-center justify-center gap-2 text-[9px] uppercase tracking-[0.16em] text-muted-2">

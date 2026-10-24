@@ -17,6 +17,7 @@ import {
   Network,
   Radio,
   Search,
+  Settings2,
   ShieldCheck,
   Sparkles,
   X,
@@ -104,6 +105,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           icon: BadgeCheck,
           locked: !canViewAudit,
         },
+        { href: "/settings", label: t("settings"), icon: Settings2 },
       ],
     },
   ];
@@ -145,6 +147,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const online = health.data?.status === "ok";
   const companyName = meta.data?.company.name ?? "Padma Apparel Ltd.";
   const companyLocation = meta.data?.company.location ?? "Gazipur, Bangladesh";
+  const isDemo = meta.data?.demo ?? false;
+  const llmMode = meta.data?.llm_mode ?? "unknown";
 
   const sidebar = (
     <aside
@@ -186,7 +190,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <div className="mt-2 flex items-center gap-1.5">
                 <span className="inline-flex items-center gap-1 rounded border border-teal-400/20 bg-teal-400/10 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wider text-teal-300">
                   <span className="size-1 rounded-full bg-teal-300" />
-                  Demo
+                  {isDemo ? "Demo" : "Pilot"}
                 </span>
                 <span className="text-[9px] text-muted-2">EU + US buyers</span>
               </div>
@@ -251,7 +255,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Sparkles className="size-3 text-accent/70" />
             Agent ready
           </div>
-          <span className="font-mono text-[9px] text-muted-2">mock</span>
+          <span className="font-mono text-[9px] text-muted-2">{llmMode}</span>
         </div>
         <div className="mb-2.5 flex items-center justify-between gap-2">
           <LanguageToggle />
@@ -348,7 +352,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <span>Chowkidar · Compliance risk intelligence for export supply chains.</span>
           <span className="flex items-center gap-1.5">
             <span className="size-1 rounded-full bg-teal-400" />
-            Demo workspace · fictional data · not legal advice
+            {isDemo
+              ? "Demo workspace · fictional data · not legal advice"
+              : "Pilot workspace · synthetic pilot data · not legal advice"}
           </span>
         </footer>
       </div>

@@ -1,0 +1,161 @@
+# Chowkidar — Limitations
+
+**Last updated:** 2026-10-24  
+**Status:** Honest inventory for the preliminary submission. This file takes
+precedence over any optimistic wording elsewhere.
+
+Chowkidar is a working, seeded pilot with a production cutover path. It is not a
+commercial SaaS, a live regulatory feed, or a substitute for legal counsel. The
+list below records what is **not** built, what is **not enabled**, and what is
+**demo-only**, so judges and future maintainers can calibrate the claims.
+
+---
+
+## 1. Live deployment status
+
+- **The hosted app is still in demo mode.** `https://chowkidar-wheat.vercel.app/`
+  runs against `AUTH_MODE=dev` and `DEMO_MODE=true`. The Supabase Auth
+  production path, email/password login UI, and local-role mapping are
+  implemented and locally verified, but not enabled on the live service.
+- **The production cutover is blocked** on the Supabase project URL, anon key,
+  service-role key, and Render dashboard access. See
+  [`PRODUCTION.md`](PRODUCTION.md).
+- **The currently running API image still writes reports to `/tmp`.** The next
+  deploy uses `STORAGE_BACKEND=database`, but until that deploy completes those
+  reports are lost on restart or spin-down.
+- **Render Free sleeps** after inactivity; the first request can take 30–60
+  seconds. **Supabase Free can pause**; it must be restored before a demo.
+- **Vercel DNS is variable on some networks.** The direct URL worked on
+  2026-10-24, but some resolvers returned unreachable edge IPs. A custom domain
+  or the documented workaround may be needed. The Render web fallback returned
+  `502` and is not a reliable backup yet.
+- **No demo video, final Figma/design link, or completed submission form** exists
+  yet. The form has deliberately not been filled.
+
+## 2. Data and connectors
+
+- **Live source connectors are not implemented.** `DATA_MODE=live` is
+  unsupported. Source sync replays four fixture-backed streams and 12 seeded
+  signals; it does not call EUR-Lex, the Federal Register, DHS/UFLPA, GDELT, or
+  Bangladesh Bank in real time.
+- **No scheduled ingestion.** n8n workflows and a cron fallback are scaffolded,
+  but the demo path is manual/seed-driven.
+- **No licensing or terms review** for source ingestion, redistribution, or
+  storage. This must precede a real deployment.
+- **No replay protection, source provenance at fetch time, rate-limit handling,
+  or connector observability** beyond the seeded source-health model.
+- **No internal document ingestion pipeline in the demo.** The evidence corpus
+  is seeded; Docling/PDF parsing is optional and not on the demo path.
+- **The company, suppliers, signals, and quotes are synthetic.** They are not
+  allegations about real entities. The product labels them as a demo.
+
+## 3. AI and evaluation
+
+- **Mock mode is the default and the verified path.** Live Gemini/Groq calls
+  were smoke-tested, but the hosted demo does not call an LLM.
+- **The golden set is seven hand-built synthetic cases.** The 7/7 result measures
+  pipeline contract compliance and citation grounding on that set, not
+  generalization to unseen regulations.
+- **Expected priorities and keywords were authored with the mock outputs.** This
+  is not an independent legal or model-quality benchmark.
+- **No human legal/compliance labels.** No advisor reviewed the content or the
+  priorities.
+- **No adversarial corpus.** Prompt-injection markers and prohibited-language
+  checks exist, but there is no broad red-team evaluation.
+- **No live embeddings or reranker.** `EMBEDDING_MODE=mock` and deterministic
+  vectors are the default. BGE-M3 and reranking are not installed/benchmarked.
+- **RAGAS, Phoenix, and Docling are optional and not on the demo path.**
+- **No model cost/latency benchmark** for live mode, and no per-provider
+  reliability history.
+- **The verifier reduces risk; it does not prove correctness.** A human remains
+  responsible for every material decision.
+
+## 4. Security and identity
+
+- **No multi-tenant isolation or Postgres RLS.** The pilot has one workspace and
+  one local `users` table. Do not put unrelated customers in one deployment.
+- **Browser tokens are stored in local storage** by the current Zustand client.
+  A hardened deployment should use HttpOnly, SameSite cookies with CSRF
+  protection and a short access-token lifetime.
+- **Rate limits are process-local.** They work for one Render instance but do not
+  coordinate across replicas; a shared Redis/Postgres limiter is backlog.
+- **No MFA, SSO, organization management, invitation email flow, or password
+  reset UI.**
+- **No external anchoring of the audit hash chain.** The chain is append-only and
+  verifiable inside the application/database; a database administrator could
+  rewrite both data and hashes.
+- **No formal security audit, penetration test, or DLP system.** PII redaction is
+  pattern-based and incomplete.
+- **No secrets manager.** Platform environment variables are the current store.
+- **No CSRF protection** because the current API uses bearer tokens, not cookies;
+  this changes if cookies are adopted.
+- **No per-user audit of report downloads** beyond the authenticated request and
+  standard application logs.
+
+## 5. Operations
+
+- **Single API instance.** No horizontal scaling, queue-backed pipeline, or
+  idempotency keys for concurrent runs.
+- **No production monitoring/alerting.** Sentry and PostHog are optional and not
+  configured. There are no SLOs, paging, or dashboards.
+- **No tested backup/restore schedule** for the free Supabase project. The
+  runbook documents manual `pg_dump`/`pg_restore`, not an automated policy.
+- **No load test.** Rate limits and database pool settings are sized for a demo,
+  not measured traffic.
+- **No zero-downtime migration process.** The container runs migrations on boot;
+  a destructive migration needs a maintenance plan.
+- **No incident response team or on-call rotation.** The runbook is
+  single-maintainer guidance.
+
+## 6. Product and UX
+
+- **One seeded company and one scenario.** No onboarding, company creation,
+  supplier import, or document upload in the demo.
+- **No billing, plans, quotas, or customer administration.**
+- **No real email delivery** (notifications, invitations, password reset).
+- **English + Bengali UI chrome only.** Legal source text and generated reports
+  remain in English; translation quality is not evaluated.
+- **Accessibility was not audited** (keyboard-only, screen reader, contrast,
+  reduced motion). Basic semantic HTML and labels exist.
+- **Mobile was smoke-checked, not fully designed.** The primary target is a
+  desktop compliance workspace.
+- **Chromium was the primary browser test target.** Firefox/Safari were not
+  exhaustively verified.
+- **PDF output is a generated audit pack, not a designed legal document.**
+- **No Figma source is linked yet.**
+
+## 7. Legal, compliance, and ethics
+
+- **Not legal advice.** The product provides risk intelligence and reviewable
+  signals; it does not determine liability or guarantee compliance.
+- **No lawyer or compliance advisor reviewed the content, disclaimers, or
+  scenario.** This is an accepted constraint for the preliminary round.
+- **No privacy policy, terms of service, DPA, or data-retention policy** for real
+  users.
+- **No data-residency review** beyond the current Supabase/Render/Vercel regions.
+- **Supplier-risk signals can harm reputations if treated as findings.** The UI
+  uses signal/risk/needs-review language and requires human verification, but
+  this is not a complete due-process safeguard.
+- **No independent fairness/bias audit.** The scenario and golden set can encode
+  coverage and language bias.
+
+## 8. Evaluation and submission
+
+- **No real users, design partners, revenue, or letters of intent.**
+- **No measured accuracy on real exporter data.**
+- **No final public demo video.** [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) is ready.
+- **No final design/Figma link.** [`PITCH_DECK.md`](PITCH_DECK.md) is the
+  content outline.
+- **Team-size, NRB, and female-member facts** for the diversity question are not
+  confirmed.
+- **No legal review of the submission copy.**
+- **The official form has not been started**, by explicit instruction, until the
+  product is finalized.
+
+## 9. What “production-ready” means here
+
+It means the master-prompt production path is implemented: Supabase
+email/password auth, local role authorization, durable report storage, demo
+lockout, rate limits, settings, and operational documentation. It does **not**
+mean commercial SaaS readiness, validated legal accuracy, live connectors, or a
+security certification. The remaining gaps are listed above rather than hidden.

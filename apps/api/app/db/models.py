@@ -15,6 +15,7 @@ from sqlalchemy import (
     Identity,
     Index,
     Integer,
+    LargeBinary,
     String,
     Text,
     UniqueConstraint,
@@ -389,6 +390,16 @@ class ReportRun(UUIDPrimaryKeyMixin, Base):
     format: Mapped[str] = mapped_column(String(16), nullable=False)
     status: Mapped[str] = mapped_column(String(32), default="queued", nullable=False)
     storage_path: Mapped[str] = mapped_column(String(1024), default="", nullable=False)
+    storage_backend: Mapped[str] = mapped_column(
+        String(32), default="local", server_default="local", nullable=False
+    )
+    content: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+    content_sha256: Mapped[str] = mapped_column(
+        String(64), default="", server_default="", nullable=False
+    )
+    size_bytes: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0", nullable=False
+    )
     summary: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
     generated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

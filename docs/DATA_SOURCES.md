@@ -1,7 +1,9 @@
 # Chowkidar — Data Sources & Ingestion Notes
 
-**Last updated:** 2026-10-23  
-**Status:** Draft v0.1  
+**Last updated:** 2026-10-24
+
+**Status:** Design + fixture replay. Live connector clients are **not implemented**; `DATA_MODE=live` is unsupported.
+
 **Purpose:** Track source access, reliability, licensing, and demo usage. Update as connectors are tested.
 
 ---
@@ -16,7 +18,7 @@ Chowkidar needs **at least two distinct external data streams** plus internal co
 | Risk signals | GDELT news, OpenSanctions, UFLPA entity list | Detect supplier/counterparty risk and trigger due diligence |
 | Internal documents | Supplier list, policies, contracts, audit reports | Provide the company context for mapping and remediation |
 
-For the MVP, use **two live external streams** and **one curated Bangladesh snapshot**. Internal documents are synthetic but clearly labeled.
+**What is actually wired:** the app has four distinct fixture-backed streams (Bangladesh Bank, EUR-Lex, UFLPA/DHS, GDELT) and 12 seeded signals. Source sync replays the fixture signal set. The catalog below is the design target for live connectors, not a claim that the live APIs are currently called. Internal documents are synthetic and clearly labeled.
 
 ---
 

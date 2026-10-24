@@ -28,7 +28,7 @@
 | Backend | Complete: FastAPI, SQLAlchemy, Alembic, LangGraph, RAG, reports, audit, MCP |
 | Frontend | Complete: 12 routes, role-aware UI, EN/BN chrome, graph, search, evals |
 | Database | Local Postgres + pgvector seeded; 8 risks, 12 signals, 21 actions, 11 audit events |
-| Tests | API 36 passing; web unit 8 passing; Playwright 4 passing |
+| Tests | API 50 passing; web unit 8 passing; Playwright 4 passing |
 | Type checks | Pyright 0 errors; `tsc` clean |
 | Lint | Ruff clean; ESLint clean |
 | Evals | 7/7 golden cases; five metrics at 1.0 in mock mode |
@@ -100,8 +100,8 @@ Scope generated: Monorepo, FastAPI API, Next.js console, seed data, agents, repo
 Files created: apps/, data/fixtures/, evals/, infra/, docs/, prompts/
 Confirmation triggers used: stack decisions before build; no intervening implementation prompts
 Manual changes: QA fixes listed in §6
-Known issues: cloud deployment blocked on accounts; Supabase Auth/Storage not wired into demo UI
-Next: deploy, record video, final submission
+Known issues: live service is still demo auth; production Auth keys/dashboard access missing; no live source connectors; no video/design link
+Next: commit/push the production pass, enable database report storage, cut over Supabase Auth, run hosted QA, record video, final submission
 ```
 
 ### AI involvement disclosure
@@ -149,6 +149,11 @@ The deterministic mock path (`app/agents/mock.py`) is the default for the demo a
 | 2026-10-23 | `README.md`, `docs/ARCHITECTURE.md`, `docs/DEPLOYMENT.md`, `docs/MCP.md`, `docs/BUILD_LOG.md` | Document current build, trust model, MCP, deployment | Submission and handoff quality | AI agent |
 | 2026-10-24 | `infra/render.yaml`, `.env.example`, `README.md`, `docs/*` | Supabase migration/seed; free Render API; Vercel web; document Vercel edge-IP workaround and hosted env vars | Live demo deployment and context preservation | AI agent + QA |
 | 2026-10-24 | `.agents/skills/*`, `skills-lock.json` | Install pinned Supabase agent skills | Official Supabase agent guidance | AI agent |
+| 2026-10-24 | `apps/api/app/core/supabase_auth.py`, `api/v1/auth.py`, `api/deps.py`, `services/users.py` | Supabase Auth password/refresh/logout proxy, JWKS verification, local role mapping, demo gating | Production-auth path | AI agent + QA |
+| 2026-10-24 | `apps/api/app/core/ratelimit.py`, API mutating routes | Process-local sliding-window rate limits | Bound auth and mutation bursts | AI agent |
+| 2026-10-24 | `apps/api/app/core/storage.py`, `services/reports.py`, `db/models.py`, migration `82eceac00bcf` | Local/database/Supabase report storage, checksums, ETag downloads, Postgres fallback | Durable reports on free hosting | AI agent + QA |
+| 2026-10-24 | `apps/web` login, auth store, app shell, `/settings` | Password login, automatic refresh, pilot/demo labels, runtime settings | Production UI without demo leakage | AI agent + QA |
+| 2026-10-24 | `scripts/provision_supabase_users.py`, `docs/PRODUCTION.md`, env/docs | One-time Supabase account provisioning and cutover/runbook | Repeatable hosted cutover | AI agent |
 
 ---
 
@@ -158,12 +163,12 @@ The deterministic mock path (`app/agents/mock.py`) is the default for the demo a
 |---|---|---|
 | API lint | `uv run ruff check app tests` | Pass |
 | API types | `uv run pyright` | 0 errors |
-| API tests | `uv run pytest` | 36 passed |
+| API tests | `uv run pytest` | 50 passed |
 | Web lint | `pnpm lint` | Pass |
 | Web types | `pnpm typecheck` | Pass |
 | Web unit | `pnpm test` | 8 passed |
 | Web build | `pnpm build` | Pass; 15 routes |
-| Browser smoke | `pnpm test:e2e` | 4 passed |
+| Browser smoke | `pnpm test:e2e` | 4 passed (demo); production login verified separately against a mock Supabase/JWKS server |
 | Golden set | `make evals` | 7/7; five metrics at 1.0 |
 | Container build | `docker build -f apps/api/Dockerfile .` | Pass |
 | Container health | `/healthz` + `/docs` on mapped port | Pass |
@@ -195,8 +200,11 @@ Manual visual QA covered every route at 1440×1000. Known cosmetic trade-off: th
 
 - Public repository is live at <https://github.com/A7reus/Chowkidar>; CI is green.
 - Render API and Vercel web are live. Some networks cannot reach Vercel’s new edge IPs; see `CLOUD_DEPLOYMENT_STATUS.md`.
-- Supabase Auth token decoding exists, but the hosted login flow is not wired into the demo UI.
-- Supabase Storage is not enabled; the free Render deployment uses ephemeral `/tmp`.
+- Supabase Auth is implemented end-to-end (API proxy + production login UI) but **not enabled on the live service** until the Supabase URL/anon/service-role keys and hosted env changes are applied.
+- Report storage supports database and Supabase Storage in code; the live service will use `STORAGE_BACKEND=database` after the next deploy. The currently running image still uses ephemeral `/tmp`.
+- Rate limits are process-local (single Render instance).
+- Browser tokens are stored in local storage; HttpOnly cookies are a hardening backlog item.
+- Live source connectors are not implemented; `DATA_MODE=live` remains unsupported.
 - BGE-M3, Docling, RAGAS, and Phoenix are optional and not required for the demo path.
 - Golden set is small (7 cases) and synthetic.
 - No legal/compliance advisor reviewed the content.

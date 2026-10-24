@@ -21,6 +21,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Auth Config */
+        get: operations["auth_config_api_v1_auth_config_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/demo-users": {
         parameters: {
             query?: never;
@@ -49,6 +66,57 @@ export interface paths {
         put?: never;
         /** Demo Login */
         post: operations["demo_login_api_v1_auth_demo_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Login */
+        post: operations["login_api_v1_auth_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Refresh */
+        post: operations["refresh_api_v1_auth_refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Logout */
+        post: operations["logout_api_v1_auth_logout_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -791,6 +859,17 @@ export interface components {
             /** Reason */
             reason?: string | null;
         };
+        /** AuthConfigOut */
+        AuthConfigOut: {
+            /** Auth Mode */
+            auth_mode: string;
+            /** Demo Mode */
+            demo_mode: boolean;
+            /** Password Auth */
+            password_auth: boolean;
+            /** Demo Users */
+            demo_users?: components["schemas"]["UserOut"][];
+        };
         /** DashboardSummary */
         DashboardSummary: {
             /** Company Name */
@@ -937,6 +1016,8 @@ export interface components {
             database: string;
             /** Auth Mode */
             auth_mode: string;
+            /** Demo Mode */
+            demo_mode: boolean;
             /** Llm Mode */
             llm_mode: string;
             /** Data Mode */
@@ -977,6 +1058,13 @@ export interface components {
             /** Status */
             status: string;
         };
+        /** PasswordLoginRequest */
+        PasswordLoginRequest: {
+            /** Email */
+            email: string;
+            /** Password */
+            password: string;
+        };
         /** PipelineRunRequest */
         PipelineRunRequest: {
             /** Source Ids */
@@ -1001,6 +1089,11 @@ export interface components {
             created_risk_ids: string[];
             /** Errors */
             errors: string[];
+        };
+        /** RefreshTokenRequest */
+        RefreshTokenRequest: {
+            /** Refresh Token */
+            refresh_token: string;
         };
         /** ReportCreateRequest */
         ReportCreateRequest: {
@@ -1037,8 +1130,12 @@ export interface components {
             format: string;
             /** Status */
             status: string;
-            /** Storage Path */
-            storage_path: string;
+            /** Storage Backend */
+            storage_backend: string;
+            /** Content Sha256 */
+            content_sha256: string;
+            /** Size Bytes */
+            size_bytes: number;
             /** Summary */
             summary: {
                 [key: string]: unknown;
@@ -1413,6 +1510,12 @@ export interface components {
              * @default bearer
              */
             token_type: string;
+            /** Refresh Token */
+            refresh_token?: string | null;
+            /** Expires In */
+            expires_in?: number | null;
+            /** Expires At */
+            expires_at?: number | null;
             user: components["schemas"]["UserOut"];
         };
         /** TopRisk */
@@ -1503,6 +1606,26 @@ export interface operations {
             };
         };
     };
+    auth_config_api_v1_auth_config_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthConfigOut"];
+                };
+            };
+        };
+    };
     list_demo_users_api_v1_auth_demo_users_get: {
         parameters: {
             query?: never;
@@ -1553,6 +1676,90 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    login_api_v1_auth_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordLoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    refresh_api_v1_auth_refresh_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefreshTokenRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    logout_api_v1_auth_logout_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

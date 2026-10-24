@@ -15,19 +15,43 @@ const noopStorage: StateStorage = {
 
 interface AuthState {
   token: string | null;
+  refreshToken: string | null;
+  expiresAt: number | null;
   user: User | null;
   hydrated: boolean;
   loggingIn: boolean;
   login: (role: Role) => Promise<void>;
+  loginWithPassword: (email: string, password: string) => Promise<void>;
+  refresh: () => Promise<boolean>;
+  refreshIfNeeded: () => Promise<void>;
   switchRole: (role: Role) => Promise<void>;
   logout: () => void;
   setHydrated: (value: boolean) => void;
+}
+
+let refreshInFlight: Promise<boolean> | null = null;
+
+function applySession(
+  set: (partial: Partial<AuthState>) => void,
+  response: TokenResponse,
+) {
+  setApiToken(response.access_token);
+  set({
+    token: response.access_token,
+    refreshToken: response.refresh_token ?? null,
+    expiresAt: response.expires_at ?? null,
+    user: response.user,
+    loggingIn: false,
+    hydrated: true,
+  });
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       token: null,
+      refreshToken: null,
+      expiresAt: null,
       user: null,
       hydrated: false,
       loggingIn: false,
@@ -38,24 +62,65 @@ export const useAuthStore = create<AuthState>()(
             method: "POST",
             body: { role },
           });
-          setApiToken(response.access_token);
-          set({
-            token: response.access_token,
-            user: response.user,
-            loggingIn: false,
-            hydrated: true,
-          });
+          applySession(set, response);
         } catch (error) {
           set({ loggingIn: false });
           throw error;
         }
+      },
+      loginWithPassword: async (email, password) => {
+        set({ loggingIn: true });
+        try {
+          const response = await apiFetch<TokenResponse>("/api/v1/auth/login", {
+            method: "POST",
+            body: { email, password },
+          });
+          applySession(set, response);
+        } catch (error) {
+          set({ loggingIn: false });
+          throw error;
+        }
+      },
+      refresh: async () => {
+        const refreshToken = get().refreshToken;
+        if (!refreshToken) return false;
+        if (refreshInFlight) return refreshInFlight;
+        refreshInFlight = (async () => {
+          try {
+            const response = await apiFetch<TokenResponse>("/api/v1/auth/refresh", {
+              method: "POST",
+              body: { refresh_token: refreshToken },
+            });
+            applySession(set, response);
+            return true;
+          } catch {
+            get().logout();
+            return false;
+          } finally {
+            refreshInFlight = null;
+          }
+        })();
+        return refreshInFlight;
+      },
+      refreshIfNeeded: async () => {
+        const { expiresAt, refreshToken } = get();
+        if (!refreshToken) return;
+        // Refresh a minute early so an active session does not expire mid-request.
+        if (expiresAt && expiresAt * 1000 > Date.now() + 60_000) return;
+        await get().refresh();
       },
       switchRole: async (role) => {
         await get().login(role);
       },
       logout: () => {
         setApiToken(null);
-        set({ token: null, user: null });
+        set({
+          token: null,
+          refreshToken: null,
+          expiresAt: null,
+          user: null,
+          hydrated: true,
+        });
       },
       setHydrated: (value) => set({ hydrated: value }),
     }),
@@ -64,10 +129,16 @@ export const useAuthStore = create<AuthState>()(
       storage: createJSONStorage(() =>
         typeof window !== "undefined" ? window.localStorage : noopStorage,
       ),
-      partialize: (state) => ({ token: state.token, user: state.user }),
+      partialize: (state) => ({
+        token: state.token,
+        refreshToken: state.refreshToken,
+        expiresAt: state.expiresAt,
+        user: state.user,
+      }),
       onRehydrateStorage: () => (state) => {
         setApiToken(state?.token ?? null);
         state?.setHydrated(true);
+        void state?.refreshIfNeeded();
       },
     },
   ),

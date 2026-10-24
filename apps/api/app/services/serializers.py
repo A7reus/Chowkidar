@@ -145,7 +145,9 @@ def report_out(report: ReportRun) -> ReportOut:
         id=report.id,
         format=report.format,
         status=report.status,
-        storage_path=report.storage_path,
+        storage_backend=report.storage_backend,
+        content_sha256=report.content_sha256,
+        size_bytes=report.size_bytes,
         summary=report.summary or {},
         generated_at=report.generated_at,
     )

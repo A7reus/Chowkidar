@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -53,6 +53,12 @@ class Settings(BaseSettings):
     supabase_service_role_key: str = ""
     supabase_jwt_audience: str = "authenticated"
     supabase_storage_bucket: str = "chowkidar-documents"
+    supabase_auth_timeout_seconds: int = 15
+    rate_limit_enabled: bool = True
+    auth_rate_limit_per_minute: int = 10
+    mutation_rate_limit_per_minute: int = 30
+    storage_backend: str = "local"  # local | database | supabase
+    report_storage_bucket: str = "chowkidar-reports"
 
     llm_mode: str = "mock"
     data_mode: str = "fixture"
@@ -100,9 +106,43 @@ class Settings(BaseSettings):
                 return "postgresql+psycopg://" + value.removeprefix("postgresql://")
         return value
 
+    @model_validator(mode="after")
+    def _validate_runtime_modes(self) -> Settings:
+        if self.auth_mode not in {"dev", "supabase"}:
+            raise ValueError("AUTH_MODE must be 'dev' or 'supabase'")
+        if self.storage_backend not in {"local", "database", "supabase"}:
+            raise ValueError("STORAGE_BACKEND must be local, database, or supabase")
+        if self.auth_mode == "supabase" and (
+            not self.supabase_url or not self.supabase_anon_key
+        ):
+            raise ValueError(
+                "SUPABASE_URL and SUPABASE_ANON_KEY are required when AUTH_MODE=supabase"
+            )
+        if self.storage_backend == "supabase" and (
+            not self.supabase_url or not self.supabase_service_role_key
+        ):
+            raise ValueError(
+                "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required "
+                "when STORAGE_BACKEND=supabase"
+            )
+        return self
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+
+    @property
+    def demo_enabled(self) -> bool:
+        """Demo access only exists in the dev auth adapter with demo mode on."""
+        return self.auth_mode == "dev" and self.demo_mode
+
+    @property
+    def supabase_auth_enabled(self) -> bool:
+        return self.auth_mode == "supabase"
+
+    @property
+    def is_production(self) -> bool:
+        return self.app_env.lower() in {"production", "prod"}
 
 
 @lru_cache

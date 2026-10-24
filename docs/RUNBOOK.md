@@ -1,0 +1,248 @@
+# Chowkidar — Operations runbook
+
+**Scope:** the Render API + Vercel web + Supabase pilot. The live service is
+currently in demo auth; production cutover is in [`PRODUCTION.md`](PRODUCTION.md).
+
+---
+
+## 1. Health checks
+
+```bash
+curl -sS https://chowkidar-api.onrender.com/healthz | jq
+curl -sS https://chowkidar-api.onrender.com/api/v1/auth/config | jq
+curl -sSI https://chowkidar-wheat.vercel.app/
+```
+
+Expected demo state:
+
+```json
+{
+  "status": "ok",
+  "database": "ok",
+  "auth_mode": "dev",
+  "demo_mode": true,
+  "llm_mode": "mock",
+  "data_mode": "fixture"
+}
+```
+
+Expected production pilot:
+
+```json
+{
+  "status": "ok",
+  "database": "ok",
+  "auth_mode": "supabase",
+  "demo_mode": false
+}
+```
+
+If `database` is `unavailable`, the API is degraded; check Supabase status and
+Render logs before retrying.
+
+---
+
+## 2. Deploy
+
+### API (Render)
+
+- Service: `chowkidar-api`, Docker, Singapore, free plan.
+- Blueprint: `infra/render.yaml`.
+- The container runs `alembic upgrade head` before starting.
+- Render deploys `main` automatically; a manual deploy is available in the
+  dashboard.
+- Cold start after idle: 30–60 seconds. Warm the API before a demo.
+
+### Web (Vercel)
+
+- Project root: `apps/web`.
+- Required env: `NEXT_PUBLIC_API_URL=https://chowkidar-api.onrender.com`.
+- `NEXT_PUBLIC_*` is inlined at build time; redeploy after changing it.
+- If the API origin changes, update Render’s `CORS_ORIGINS` and `WEB_URL` and
+  redeploy the API.
+
+### Database migrations
+
+The API applies migrations on boot. To apply manually from a trusted machine:
+
+```bash
+cd apps/api
+DATABASE_URL='postgresql+psycopg://...' uv run alembic upgrade head
+```
+
+Never run migrations and the seed against a database with real data unless you
+intend to replace it.
+
+---
+
+## 3. Rollback
+
+1. Render → service → **Deploys** → choose the last known-good deploy →
+   **Redeploy**.
+2. Vercel → project → **Deployments** → choose the last good build → **Promote**.
+3. If a migration is implicated, stop and restore the database from backup
+   before rolling back the application. Do not run a downgrade on production
+   without a tested backup.
+4. If production auth is broken, roll back the API or fix the Supabase env. Do
+   not re-enable demo auth on a deployment that may contain real data.
+
+---
+
+## 4. Report storage
+
+| Backend | Verification |
+|---|---|
+| `local` | Check the report file exists under `REPORT_STORAGE_DIR`; ephemeral on Render |
+| `database` | `select storage_backend, size_bytes, length(content), content_sha256 from report_runs order by generated_at desc limit 5;` |
+| `supabase` | Check the private `chowkidar-reports` bucket in Supabase Storage |
+
+Downloads go through the API. A `409` means the row exists but the bytes are
+missing; regenerate the report or restore the backend.
+
+If Supabase Storage fails, the API falls back to Postgres and records
+`storage_warning` in the report summary. Investigate the service-role key,
+bucket name, and Supabase status.
+
+---
+
+## 5. Backup and restore
+
+### Supabase database
+
+- Use the Supabase dashboard's scheduled backups (plan-dependent) or `pg_dump`
+  from a trusted machine.
+- For a manual logical backup:
+
+```bash
+pg_dump "$DATABASE_URL" --format=custom --file=chowkidar-$(date +%F).dump
+```
+
+- Restore into a non-production database first:
+
+```bash
+pg_restore --clean --if-exists --no-owner --dbname="$TARGET_DATABASE_URL" chowkidar-YYYY-MM-DD.dump
+```
+
+- The audit table is append-only by convention; restoring an old dump rewinds
+  the chain. Record any restore in the incident log.
+
+### Reports
+
+- `STORAGE_BACKEND=database` is backed up with Postgres.
+- Supabase Storage buckets need their own backup/export policy.
+- Local `/tmp` reports are not backed up and are lost on restart.
+
+---
+
+## 6. Key rotation
+
+### Supabase service-role key
+
+1. Create a new service-role key in Supabase.
+2. Update Render’s `SUPABASE_SERVICE_ROLE_KEY` and redeploy.
+3. Verify a report upload/download and the provisioning script (if needed).
+4. Revoke the old key in Supabase.
+5. Never commit either key.
+
+### Supabase database password
+
+1. Reset the password in Supabase.
+2. URL-encode it if it contains special characters.
+3. Update Render’s `DATABASE_URL` and redeploy.
+4. Run `/healthz`; confirm `database: ok`.
+5. Revoke old sessions/credentials as appropriate.
+
+### `DEV_JWT_SECRET`
+
+Only used in demo mode. Rotate it by setting a new random value on Render; all
+demo sessions become invalid and users must log in again.
+
+### Provider keys
+
+Rotate Gemini/Groq keys in their consoles, update Render, redeploy, and verify the
+pipeline in mock mode first. Live mode is optional and not the default.
+
+---
+
+## 7. Reset the demo
+
+Local only:
+
+```bash
+make reset
+```
+
+Cloud demo (only if the data is synthetic and you intend to replace it):
+
+```bash
+cd apps/api
+DATABASE_URL='postgresql+psycopg://...' uv run python -m app.db.seed
+```
+
+The seed truncates and replaces demo data. Never run it against a database with
+real tenant data.
+
+---
+
+## 8. Incident playbooks
+
+### API 502/503 or cold start
+
+- Render Free sleeps after inactivity; wait 30–60 seconds and retry.
+- Check Render logs for a failed migration, missing env var, or database
+  connection error.
+- If the database is paused (Supabase Free), restore it in the dashboard.
+
+### Login fails in production
+
+- `/api/v1/auth/config` should show `password_auth: true` and `demo_mode: false`.
+- Check `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and the project's Email provider.
+- A `401` is invalid credentials; a `403` is an authenticated but unprovisioned
+  user; a `503` is an upstream Supabase/network failure.
+- Check the Render logs for `SupabaseAuthError` messages. Never log passwords or
+  tokens.
+
+### Report generation fails
+
+- Check the API logs for `StorageError` or database errors.
+- `STORAGE_BACKEND=database` requires the `82eceac00bcf` migration.
+- `STORAGE_BACKEND=supabase` requires the service-role key and bucket access; a
+  failed upload should fall back to Postgres.
+- Verify the report row and checksum in the database.
+
+### Audit verification fails
+
+- `GET /api/v1/audit/verify` returns `valid: false` and the first broken event.
+- Treat this as a security incident: preserve the database, do not mutate the
+  audit table, and investigate application/database access.
+- The current chain only covers application-path writes; external anchoring is a
+  backlog item.
+
+### Vercel URL unreachable
+
+- Check DNS resolution and the Vercel deployment status.
+- If the resolver returns unreachable Vercel edge IPs, try Google DNS or a
+  mobile hotspot. See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md).
+- A custom domain pointed at `cname.vercel-dns.com` is the judge-proof option.
+
+### Rate limiting is too aggressive
+
+- Check the `429` response's `Retry-After`.
+- Limits are per client IP and process-local: `AUTH_RATE_LIMIT_PER_MINUTE` (10)
+  and `MUTATION_RATE_LIMIT_PER_MINUTE` (30).
+- Raise them only after confirming the traffic is legitimate. Do not disable
+  limits on a public production deployment.
+
+---
+
+## 9. Security checklist
+
+- [ ] `AUTH_MODE=supabase`, `DEMO_MODE=false` on any deployment with real data.
+- [ ] Service-role key exists only in the API environment.
+- [ ] `CORS_ORIGINS` is an exact origin list, not `*`.
+- [ ] Report bucket is private; downloads go through the API.
+- [ ] No secrets in git, screenshots, browser bundles, or the submission form.
+- [ ] Supabase database password rotated if it was ever shared.
+- [ ] Audit chain verified after material changes.
+- [ ] Access removed for departed pilot users (`is_active=false` or Supabase
+      user deletion).

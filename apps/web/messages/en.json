@@ -14,7 +14,8 @@
     "graph": "Supply-chain graph",
     "search": "Evidence search",
     "evals": "Evaluations",
-    "audit": "Audit trail"
+    "audit": "Audit trail",
+    "settings": "Settings"
   },
   "common": {
     "loading": "Loading…",
@@ -83,7 +84,22 @@
     "loading": "Signing in…",
     "disclaimer": "All companies, suppliers, and findings in this demo are fictional. Chowkidar provides compliance risk intelligence, not legal advice.",
     "demoMode": "Demo mode",
-    "localApi": "Local-first workspace"
+    "localApi": "Local-first workspace",
+    "secureAccess": "Secure workspace",
+    "hostedApi": "Hosted workspace",
+    "signIn": "Sign in",
+    "signInSubhead": "Use your workspace credentials to continue.",
+    "email": "Email",
+    "password": "Password",
+    "emailPlaceholder": "you@company.com",
+    "passwordPlaceholder": "Your password",
+    "signingIn": "Signing in…",
+    "pilotCaseEyebrow": "Pilot case file",
+    "pilotDisclaimer": "All companies, suppliers, and findings in this pilot are fictional. Chowkidar provides compliance risk intelligence, not legal advice.",
+    "secureSession": "Encrypted session · role-based access",
+    "configError": "Could not load the sign-in configuration. Check that the API is reachable.",
+    "demoAccess": "Demo access",
+    "retry": "Retry"
   },
   "dashboard": {
     "greeting": "Good morning",
@@ -345,5 +361,31 @@
     "approvalNeeded": "approval needs your decision",
     "pipelineComplete": "Pipeline complete",
     "pipelineFailed": "Pipeline failed"
+  },
+  "settings": {
+    "eyebrow": "Governance · Workspace",
+    "title": "Settings",
+    "subtitle": "Workspace identity, runtime configuration, and session controls.",
+    "profile": "Profile",
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "authentication": "Authentication",
+    "authDev": "Demo adapter",
+    "authSupabase": "Supabase Auth",
+    "workspace": "Workspace",
+    "company": "Company",
+    "dataMode": "Data mode",
+    "llmMode": "LLM mode",
+    "embeddingMode": "Embedding mode",
+    "storage": "Report storage",
+    "api": "API endpoint",
+    "security": "Session",
+    "demoAccount": "Demo account",
+    "managedAccount": "Managed account",
+    "sessionNote": "Material actions remain human-gated. Every pipeline run, approval, and report is written to the append-only audit trail.",
+    "readOnlyNote": "This account has read-only access to the workspace.",
+    "pilotNote": "This workspace uses synthetic pilot data. It is not a production customer deployment.",
+    "signOut": "Sign out"
   }
 }

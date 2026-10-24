@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import hashlib
+import io
 import json
+import logging
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
@@ -19,9 +22,12 @@ from sqlalchemy.orm import selectinload
 from app.core.audit import record_audit
 from app.core.auth import UserContext
 from app.core.config import ROOT_DIR, get_settings
+from app.core.storage import StorageError, download_report, upload_report
 from app.db.models import Approval, Company, ReportRun, Risk, Source
 from app.schemas import ReportOut
 from app.services.serializers import report_out
+
+logger = logging.getLogger(__name__)
 
 DISCLAIMER = (
     "Chowkidar provides compliance risk intelligence, not legal advice. "
@@ -260,7 +266,7 @@ def _render_markdown(data: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def _render_pdf(data: dict[str, Any], path: Path) -> None:
+def _render_pdf(data: dict[str, Any], target: io.BytesIO) -> None:
     summary = data["summary"]
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle(
@@ -451,7 +457,7 @@ def _render_pdf(data: dict[str, Any], path: Path) -> None:
         story.append(Paragraph(f"• {escape(limitation)}", small_style))
 
     document = SimpleDocTemplate(
-        str(path),
+        target,
         pagesize=A4,
         rightMargin=18 * mm,
         leftMargin=18 * mm,
@@ -463,36 +469,76 @@ def _render_pdf(data: dict[str, Any], path: Path) -> None:
     document.build(story)
 
 
+def _render_report_bytes(data: dict[str, Any], format: str) -> bytes:
+    if format == "json":
+        return json.dumps(data, indent=2, default=str).encode("utf-8")
+    if format == "markdown":
+        return _render_markdown(data).encode("utf-8")
+    if format == "pdf":
+        buffer = io.BytesIO()
+        _render_pdf(data, buffer)
+        return buffer.getvalue()
+    raise ValueError(f"Unsupported report format: {format}")
+
+
 async def generate_report(
     session: AsyncSession, format: str, actor: UserContext
 ) -> ReportOut:
     data = await _collect_report_data(session, actor)
     report_id = uuid.uuid4()
     extension = EXTENSIONS[format]
-    path = _reports_dir() / f"{report_id}.{extension}"
-    if format == "json":
-        path.write_text(json.dumps(data, indent=2, default=str), encoding="utf-8")
-    elif format == "markdown":
-        path.write_text(_render_markdown(data), encoding="utf-8")
-    elif format == "pdf":
-        _render_pdf(data, path)
+    content = _render_report_bytes(data, format)
+    checksum = hashlib.sha256(content).hexdigest()
+    company_id = (await session.execute(select(Company.id).limit(1))).scalar_one()
+
+    settings = get_settings()
+    requested_backend = settings.storage_backend.strip().lower()
+    storage_backend = requested_backend
+    storage_path = ""
+    stored_content: bytes | None = None
+    storage_warning: str | None = None
+
+    if requested_backend == "supabase":
+        key = f"reports/{company_id}/{report_id}.{extension}"
+        try:
+            storage_path = await upload_report(key, content, CONTENT_TYPES[format])
+        except StorageError as exc:
+            logger.warning("Supabase Storage unavailable; storing report in Postgres: %s", exc)
+            storage_backend = "database"
+            stored_content = content
+            storage_warning = str(exc)
+    elif requested_backend == "database":
+        stored_content = content
+    elif requested_backend == "local":
+        path = _reports_dir() / f"{report_id}.{extension}"
+        path.write_bytes(content)
+        storage_path = str(path)
     else:
-        raise ValueError(f"Unsupported report format: {format}")
+        raise ValueError(f"Unsupported STORAGE_BACKEND: {requested_backend}")
+
+    summary = {
+        **data["summary"],
+        "risk_ids": [risk["id"] for risk in data["risks"]],
+        "content_type": CONTENT_TYPES[format],
+        "file_name": f"chowkidar-audit-{report_id}.{extension}",
+        "storage_backend": storage_backend,
+        "content_sha256": checksum,
+        "size_bytes": len(content),
+    }
+    if storage_warning:
+        summary["storage_warning"] = storage_warning
 
     report = ReportRun(
         id=report_id,
-        company_id=(
-            await session.execute(select(Company.id).limit(1))
-        ).scalar_one(),
+        company_id=company_id,
         format=format,
         status="ready",
-        storage_path=str(path),
-        summary={
-            **data["summary"],
-            "risk_ids": [risk["id"] for risk in data["risks"]],
-            "content_type": CONTENT_TYPES[format],
-            "file_name": f"chowkidar-audit-{report_id}.{extension}",
-        },
+        storage_path=storage_path,
+        storage_backend=storage_backend,
+        content=stored_content,
+        content_sha256=checksum,
+        size_bytes=len(content),
+        summary=summary,
         generated_at=datetime.now(UTC),
     )
     session.add(report)
@@ -507,7 +553,9 @@ async def generate_report(
             "format": format,
             "risks": data["summary"]["counts"]["risks"],
             "critical": data["summary"]["counts"]["critical"],
-            "demo": True,
+            "demo": settings.demo_enabled,
+            "storage_backend": storage_backend,
+            "content_sha256": checksum,
         },
     )
     return report_out(report)
@@ -540,6 +588,8 @@ def file_name_for(report: ReportRun) -> str:
 
 
 def safe_report_path(report: ReportRun) -> Path | None:
+    if not report.storage_path:
+        return None
     path = Path(report.storage_path).resolve()
     reports_dir = _reports_dir().resolve()
     if reports_dir not in path.parents:
@@ -547,3 +597,48 @@ def safe_report_path(report: ReportRun) -> Path | None:
     if not path.exists() or not path.is_file():
         return None
     return path
+
+
+def report_is_available(report: ReportRun) -> bool:
+    backend = (report.storage_backend or "local").lower()
+    if backend == "database":
+        return report.content is not None
+    if backend == "supabase":
+        return bool(report.storage_path)
+    return safe_report_path(report) is not None
+
+
+def _verify_content(report: ReportRun, content: bytes) -> bool:
+    if not report.content_sha256:
+        return True
+    actual = hashlib.sha256(content).hexdigest()
+    if actual != report.content_sha256:
+        logger.error(
+            "Report %s checksum mismatch (expected %s, got %s)",
+            report.id,
+            report.content_sha256,
+            actual,
+        )
+        return False
+    return True
+
+
+async def get_report_content(report: ReportRun) -> bytes | None:
+    backend = (report.storage_backend or "local").lower()
+    content: bytes | None = None
+    if backend == "database":
+        content = report.content
+    elif backend == "supabase":
+        try:
+            content = await download_report(report.storage_path)
+        except StorageError as exc:
+            logger.warning("Could not download report %s from Supabase Storage: %s", report.id, exc)
+            return None
+    else:
+        path = safe_report_path(report)
+        content = path.read_bytes() if path else None
+    if content is None:
+        return None
+    if not _verify_content(report, content):
+        return None
+    return content

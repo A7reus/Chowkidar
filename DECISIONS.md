@@ -1,7 +1,9 @@
 # Chowkidar — Decision Log & Persistent Context
 
-**Last updated:** 2026-10-23  
-**Status:** Active — base build complete; deployment pending  
+**Last updated:** 2026-10-24
+
+**Status:** Active — base build complete; hosted demo live; production pilot cutover blocked on Supabase Auth keys and dashboard access
+
 **Owner:** JU_StackMind  
 **Purpose:** Single source of truth for decisions, constraints, assumptions, and session history. Read this before starting any new work session.
 
@@ -45,6 +47,11 @@
 | 2026-10-23 | **AI agent builds the base alone** | User confirmed team will modify/improve later; no role assignment needed yet | Accepted |
 | 2026-10-23 | **Clean, human-followable commit history** | User requirement; logical commits, Conventional Commits, each commit coherent | Accepted |
 | 2026-10-23 | **Ask user before every stack decision** | User requirement; no assumptions about language, package manager, framework, libraries, DB, deploy | Accepted |
+| 2026-10-24 | Treat **production-ready** as the master-prompt production path, not commercial SaaS readiness | Close the concrete gaps: Supabase Auth, durable report storage, demo lockout, rate limits, settings, runbooks; disclose remaining limits | Accepted |
+| 2026-10-24 | **Local `users` table is authoritative for role/name**, not Supabase `app_metadata` | Prevents a token claim or Supabase dashboard edit from silently granting workspace privileges | Accepted |
+| 2026-10-24 | Report storage supports **local / database / Supabase Storage** | Database gives durable reports on free Render immediately; Supabase Storage is an optional object-store path with Postgres fallback | Accepted |
+| 2026-10-24 | Rate limits are **process-local** for now | Single Render free instance; document the multi-instance limitation rather than add unverified infrastructure | Accepted |
+| 2026-10-24 | Keep demo auth live until **all** production keys and hosted QA are ready | Avoid breaking the working judge URL; never claim the live URL is production before cutover | Accepted |
 
 ### 2.1 Approved stack decisions (batches 1–3)
 
@@ -101,17 +108,17 @@
 | Icons/fonts/theme | **Lucide + Inter/Space Grotesk + dark** | Modern dashboard baseline |
 | Languages | **English + Bengali UI toggle** | Scope to be defined; legal text stays source-language with translation disclaimer |
 | Background jobs | **FastAPI BackgroundTasks + LangGraph** | No extra queue for MVP |
-| PDF export | **Playwright HTML-to-PDF** | Reuses Playwright; Chromium on server |
+| PDF export | **ReportLab (server-side)** | Deterministic audit pack generated in memory; no browser dependency |
 | Data streams | **Bangladesh Bank + EU regulatory** | Primary two; UFLPA/sanctions as supporting third for the demo scenario |
 | Demo scenario | **EU CSDDD + UFLPA, RMG exporter** | Bangladeshi RMG exporter, EU buyer, US importer, multi-tier suppliers |
-| Data mode | **Fixture-first + live mode** | Deterministic demo by default; live connectors behind a flag |
+| Data mode | **Fixture-only** | Deterministic demo; live source connectors are not implemented |
 | Risk scoring | **Deterministic weights + LLM explanation** | Auditable score; LLM drafts rationale and citations |
 | Report formats | **PDF + JSON + Markdown** | Audit-ready plus machine-readable |
-| File storage | **Supabase Storage** | Signed URLs; local adapter for dev |
+| File storage | **Supabase Storage + Postgres + local adapter** | Private bucket via authenticated API; database fallback; local for offline dev. No public/signed URLs. |
 | Guardrails | **Custom verifier + policy checks** | Citation validation, schema checks, no-legal-advice classifier |
 | PII handling | **Regex + allowlist** | Redact emails/phones/IDs; Presidio documented as upgrade |
 | RBAC | **4 roles + single-step approval** | Admin, Analyst, Approver, Viewer; optional second approver for high risk |
-| Auth flow | **Email/password + seeded demo accounts** | One-click demo login only when `DEMO_MODE=true` |
+| Auth flow | **Supabase email/password + seeded demo accounts** | Demo login only when `AUTH_MODE=dev` and `DEMO_MODE=true`; production uses the API's Supabase Auth proxy. |
 | Audit log | **Append-only table + hash chain** | Tamper-evident approval trail |
 | Search | **Postgres FTS + pgvector hybrid** | Reciprocal rank fusion |
 | Model mix | **Gemini Flash + Groq Llama + Gemini Pro verifier** | LiteLLM routing; local Ollama fallback |
@@ -127,7 +134,7 @@
 
 **Free-tier fallback:** Groq and Google AI Studio have rate limits. The pipeline must degrade to local Ollama models or a deterministic mock mode without breaking the demo.
 
-**Remaining external action:** Create Supabase, Neo4j Aura, Render, Vercel, Sentry, and PostHog accounts when ready to deploy. The base builds locally without them.
+**Remaining external action:** Supabase project, Neo4j Aura, Render, Vercel, Sentry, and PostHog accounts exist in part. The production Auth keys and dashboard access are still required; the base builds locally without them.
 
 ### 2.2 Secrets handling
 
@@ -264,6 +271,19 @@ To avoid losing details between sessions:
 - Confirmed demo baseline: 8 risks (3 critical, 3 high, 1 medium, 1 low), 4 pending approvals, 12 signals, 11 audit events, 7/7 evals.
 - Next: generate submission screenshots, record demo video, deploy once accounts/keys exist, and add the public URL/video link.
 - Blockers: cloud accounts/keys; no legal/compliance advisor; no Git remote configured.
+
+### 2026-10-24 — Session 5
+- User rejected the earlier “demo mode is sufficient” position: the live service is still a demo and must become a genuine production pilot before the form is filled.
+- Re-read the persistent docs and the master prompt’s required production paths.
+- Implemented Supabase Auth config/login/refresh/logout proxies, JWKS verification, and local role mapping; demo login is gated by `AUTH_MODE=dev` + `DEMO_MODE=true`.
+- Implemented durable report storage with `local`, `database`, and `supabase` backends, checksum/ETag headers, and Postgres fallback.
+- Added process-local rate limits for auth and mutating endpoints.
+- Added production-mode login UI, automatic token refresh, pilot/demo labels, and `/settings`.
+- Added the Supabase account provisioning script, migration `82eceac00bcf`, tests, and production/cutover docs.
+- Verified locally with a mock Supabase Auth/JWKS server: production login, refresh, `/auth/me`, demo lockout (`403`), report generation/download, pilot badge, and settings page. API 50 tests, web 8 tests, Ruff/Pyright/`tsc`/ESLint clean.
+- Live service remains **demo** (`AUTH_MODE=dev`, `DEMO_MODE=true`); new code is not yet deployed or committed at the end of this session. The official form remains untouched.
+- Blockers: Supabase URL/anon/service-role keys; Render/Vercel dashboard access; demo video; Figma/design link; team-diversity facts; Supabase password rotation.
+- Next: commit/push the production pass, deploy `STORAGE_BACKEND=database`, provision Supabase users, cut over auth, run hosted QA, then record assets and fill the form.
 
 ### Template for future sessions
 ```

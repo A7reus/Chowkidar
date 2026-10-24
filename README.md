@@ -59,9 +59,9 @@ More views: [signals](docs/assets/02-signals.png) · [search](docs/assets/05-sea
 | Read-only MCP server | Built |
 | FastAPI REST API + OpenAPI schema | Built |
 | English + Bengali UI chrome | Built |
-| Demo auth with four roles | Built |
-| Supabase Auth token decoding | Backend support; demo uses seeded role tokens |
-| Supabase Storage | Not enabled; reports use local/ephemeral disk |
+| Demo auth with four roles | Built; only available in `AUTH_MODE=dev` + `DEMO_MODE=true` |
+| Supabase Auth production path | Built: password/refresh/logout proxy, JWKS verification, local role mapping, production login UI; not enabled on the live service until keys are set |
+| Durable report storage | Built: local, Postgres, and private Supabase Storage backends; Postgres is the hosted default |
 | Live LLM providers | Tested via LiteLLM fallback; mock mode is default |
 | Cloud deployment | Live: Render API + Vercel web; see [`docs/CLOUD_DEPLOYMENT_STATUS.md`](docs/CLOUD_DEPLOYMENT_STATUS.md) |
 
@@ -74,7 +74,7 @@ More views: [signals](docs/assets/02-signals.png) · [search](docs/assets/05-sea
 | Approver | Nusrat Jahan | `approver@chowkidar.demo` |
 | Viewer | Imran Chowdhury | `viewer@chowkidar.demo` |
 
-The login page uses one-click demo accounts. Role permissions are enforced in the API and reflected in the UI.
+The login page asks the API for `/api/v1/auth/config`: the local demo shows one-click role cards, while the production pilot shows email/password. Role permissions are enforced in the API and reflected in the UI. See [`docs/PRODUCTION.md`](docs/PRODUCTION.md).
 
 ---
 
@@ -197,8 +197,10 @@ cd apps/api && uv run python -m app.db.seed
 
 - Fixture-first demo data; source connectors are scaffolded, not production-scheduled.
 - No legal/compliance advisor; the product is deliberately positioned as decision support.
-- Demo auth uses seeded role tokens; Supabase Auth decoding is implemented but the hosted login flow is not wired into the UI.
-- Reports are stored on local disk; the free Render deployment uses ephemeral `/tmp`, and Supabase Storage is not enabled yet.
+- The **live service is still in demo mode** (`AUTH_MODE=dev`, `DEMO_MODE=true`). The Supabase Auth production path and production login UI are implemented and locally verified, but the hosted cutover is blocked on Supabase keys and dashboard access.
+- Reports support Postgres and Supabase Storage; the hosted default after the next deploy is `STORAGE_BACKEND=database`. The currently running image still writes to `/tmp` until that deploy.
+- Rate limits are process-local (suitable for the single Render instance); browser tokens are stored in local storage rather than HttpOnly cookies.
+- Live source connectors are not implemented; `DATA_MODE=live` is unsupported and source sync replays fixtures.
 - Optional BGE-M3 embeddings, Docling, RAGAS, and Phoenix are not required for the demo path.
 - Cloud deployment is live for the API and web build; some networks need a DNS workaround for Vercel’s edge IPs. See [`docs/CLOUD_DEPLOYMENT_STATUS.md`](docs/CLOUD_DEPLOYMENT_STATUS.md).
 
@@ -243,10 +245,20 @@ See [`docs/MCP.md`](docs/MCP.md).
 | [`prompts/MASTER_PROMPT.md`](prompts/MASTER_PROMPT.md) | Single master prompt used for the base build |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | System design and trust boundaries |
 | [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) | Source inventory and access notes |
-| [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Local, Render, Vercel, Supabase setup |
+| [`docs/SETUP.md`](docs/SETUP.md) | Local setup, seed baseline, commands, troubleshooting |
+| [`docs/ENVIRONMENT.md`](docs/ENVIRONMENT.md) | Variable reference, auth/storage/rate-limit modes |
+| [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Local, Render, Vercel, Supabase deployment |
+| [`docs/PRODUCTION.md`](docs/PRODUCTION.md) | Production-pilot cutover, Supabase Auth/Storage, hosted QA |
+| [`docs/RUNBOOK.md`](docs/RUNBOOK.md) | Deploy, rollback, backup, key rotation, incidents |
+| [`docs/API.md`](docs/API.md) | Endpoint reference, auth, errors, rate limits |
+| [`docs/EVALS.md`](docs/EVALS.md) | Golden set, metrics, results, evaluation limits |
+| [`docs/RESPONSIBLE_AI.md`](docs/RESPONSIBLE_AI.md) | No-legal-advice, evidence-first, privacy, human approval |
+| [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) | What is not built or not enabled, and why |
+| [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md) | 2–3 minute demo shot list and narration |
+| [`docs/PITCH_DECK.md`](docs/PITCH_DECK.md) | 10-slide pitch outline |
 | [`docs/CLOUD_DEPLOYMENT_STATUS.md`](docs/CLOUD_DEPLOYMENT_STATUS.md) | Live URLs, hosted env vars, Vercel edge-IP workaround |
 | [`docs/MCP.md`](docs/MCP.md) | Read-only MCP usage |
-| [`docs/SUBMISSION.md`](docs/SUBMISSION.md) | Judge runbook, demo script, submission copy, asset checklist |
+| [`docs/SUBMISSION.md`](docs/SUBMISSION.md) | Judge runbook, submission copy, asset checklist |
 | [`docs/BUILD_LOG.md`](docs/BUILD_LOG.md) | Build level, prompts, models, manual changes |
 | [`docs/COMMIT_CONVENTIONS.md`](docs/COMMIT_CONVENTIONS.md) | Commit history conventions |
 
@@ -264,4 +276,6 @@ The base implementation was produced by an AI coding agent from a single master 
 Event: https://cloudcampbd.com/ai-builders-congress  
 Repository: https://github.com/A7reus/Chowkidar
 
-Live demo and video: to be added after deployment and recording.
+- **Live demo (currently demo mode):** <https://chowkidar-wheat.vercel.app/>
+- **API:** <https://chowkidar-api.onrender.com/>
+- **Video:** pending recording.

@@ -5,6 +5,9 @@ type Schema = components["schemas"];
 export type User = Schema["UserOut"];
 export type Role = User["role"];
 export type TokenResponse = Schema["TokenResponse"];
+export type AuthConfig = Schema["AuthConfigOut"];
+export type PasswordLoginRequest = Schema["PasswordLoginRequest"];
+export type RefreshTokenRequest = Schema["RefreshTokenRequest"];
 export type DashboardSummary = Schema["DashboardSummary"];
 export type TopRisk = Schema["TopRisk"];
 export type SourceHealth = Schema["SourceHealth"];
@@ -61,6 +64,8 @@ export interface WorkspaceMeta {
   llm_mode: string;
   embedding_mode: string;
   auth_mode: string;
+  data_mode?: string;
+  storage_backend?: string;
   roles: string[];
 }
 

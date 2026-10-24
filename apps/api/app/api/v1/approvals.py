@@ -3,9 +3,10 @@ from __future__ import annotations
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.deps import ApproverUser, CurrentUser, SessionDep
+from app.core.ratelimit import rate_limit
 from app.schemas import (
     ApprovalDecisionRequest,
     ApprovalListResponse,
@@ -36,7 +37,11 @@ async def pending_count(session: SessionDep, _user: CurrentUser) -> dict[str, in
     return {"count": await get_pending_count(session)}
 
 
-@router.post("/{approval_id}/decision", response_model=ApprovalOut)
+@router.post(
+    "/{approval_id}/decision",
+    response_model=ApprovalOut,
+    dependencies=[Depends(rate_limit("approval-decision", "mutation"))],
+)
 async def decision(
     approval_id: uuid.UUID,
     payload: ApprovalDecisionRequest,

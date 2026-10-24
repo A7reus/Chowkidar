@@ -85,7 +85,11 @@ export async function apiFetch<T>(path: string, init: ApiRequestInit = {}): Prom
     throw new ApiError(0, "Could not reach the Chowkidar API.");
   }
 
-  if (response.status === 401 && typeof window !== "undefined") {
+  const isAuthAttempt =
+    path.startsWith("/api/v1/auth/login") ||
+    path.startsWith("/api/v1/auth/refresh") ||
+    path.startsWith("/api/v1/auth/demo-login");
+  if (response.status === 401 && typeof window !== "undefined" && !isAuthAttempt) {
     window.dispatchEvent(new CustomEvent("chowkidar:unauthorized"));
   }
 

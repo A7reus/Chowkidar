@@ -11,6 +11,7 @@ import type {
   AuditFilters,
   AuditListResponse,
   AuditVerify,
+  AuthConfig,
   DashboardSummary,
   EvalSummary,
   GraphData,
@@ -46,6 +47,7 @@ const queryOptions = {
 } as const;
 
 export const queryKeys = {
+  authConfig: ["auth", "config"] as const,
   meta: ["meta"] as const,
   health: ["health"] as const,
   dashboard: ["dashboard"] as const,
@@ -64,6 +66,15 @@ export const queryKeys = {
   search: (q: string) => ["search", q] as const,
   pipelineRuns: ["pipeline", "runs"] as const,
 };
+
+export function useAuthConfig() {
+  return useQuery({
+    queryKey: queryKeys.authConfig,
+    queryFn: () => apiFetch<AuthConfig>("/api/v1/auth/config"),
+    staleTime: 5 * 60_000,
+    retry: false,
+  });
+}
 
 export function useMeta() {
   return useQuery({

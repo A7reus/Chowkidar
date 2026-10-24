@@ -62,7 +62,7 @@ Root tooling: pnpm workspaces + Turborepo, Makefile, Ruff, Pyright, ESLint, Vite
 | Table | Purpose |
 |---|---|
 | `companies` | Demo exporter and report header |
-| `users` | Seeded demo identities and roles |
+| `users` | Provisioned workspace identities; local source of truth for role/name/active status |
 | `suppliers` | Tier, country, category, ownership, risk notes |
 | `sources` | Regulatory/sanctions/news streams and sync health |
 | `signals` | Normalized source events with raw text, URL, jurisdiction, severity |
@@ -73,7 +73,7 @@ Root tooling: pnpm workspaces + Turborepo, Makefile, Ruff, Pyright, ESLint, Vite
 | `approvals` | Human decision requests with assigned approver and rationale |
 | `audit_events` | Append-only events with previous hash and event hash |
 | `evidence_chunks` | Retrieval units with embedding and section path |
-| `report_runs` | Generated audit-pack metadata and storage path |
+| `report_runs` | Generated audit-pack metadata, backend, checksum, size, and optional inline bytes |
 | `agent_runs` | Pipeline run status, counts, errors, trace ID |
 | `eval_runs` / `eval_cases` | Golden-set results and metric gates |
 
@@ -90,7 +90,7 @@ Primary demo streams:
 3. **UFLPA / DHS** — forced-labour entity and traceability signals.
 4. **GDELT** — global operational news for corroboration and supplier events.
 
-Each source has a `stream_key`, jurisdiction, status, last sync, and health badge. The demo fixture includes 12 signals; n8n workflows and a FastAPI cron fallback are scaffolded for scheduled ingestion.
+Each source has a `stream_key`, jurisdiction, status, last sync, and health badge. The demo fixture includes 12 signals; n8n workflows and a FastAPI cron fallback are scaffolded for scheduled ingestion. `DATA_MODE=live` is **not implemented**; source sync replays the fixture set.
 
 See [`DATA_SOURCES.md`](DATA_SOURCES.md).
 
@@ -191,10 +191,16 @@ Three formats share one data snapshot:
 - **JSON** — machine-readable evidence and action records.
 - **Markdown** — review-friendly text for tickets or email.
 
-Reports are stored under `REPORT_STORAGE_DIR` (local `storage/reports` by default;
-`/tmp/reports` on the free Render demo; `/var/data/reports` only if a paid disk is
-attached) and downloaded through the API so authorization is enforced. Supabase
-Storage is a planned production adapter, not part of the demo path.
+Report bytes are rendered in memory, hashed with SHA-256, and stored by the
+selected backend:
+
+- `local` — `REPORT_STORAGE_DIR` (offline demo; `/tmp/reports` on Render Free).
+- `database` — `report_runs.content` in Postgres; durable without object storage.
+- `supabase` — private Supabase Storage bucket; falls back to Postgres if the
+  bucket/upload is unavailable.
+
+Downloads always go through the authenticated API, with ETag, checksum, and
+`Cache-Control: private, no-store`. Supabase Storage buckets are not public.
 
 ---
 
@@ -202,13 +208,14 @@ Storage is a planned production adapter, not part of the demo path.
 
 - Next.js App Router with route groups `(auth)` and `(app)`.
 - Typed API wrapper over generated OpenAPI schema types.
-- TanStack Query for server state; Zustand for persisted demo identity and hydration.
+- TanStack Query for server state; Zustand for persisted session/identity and hydration.
+- The login page asks `GET /api/v1/auth/config` and renders either demo role cards or an email/password form. Demo controls are hidden for managed accounts.
 - React Hook Form + Zod for approvals, actions, and search.
 - Cookie-based locale (`NEXT_LOCALE`) with English and Bengali UI chrome.
 - Recharts for posture/trend; React Flow for the supply-chain graph.
 - Dark, dense operations-console visual language; Inter + Space Grotesk.
 
-Role switching is a demo control: it reloads the app and issues a new demo token, so API authorization is exercised rather than simulated in the client.
+Role switching is a demo control: it reloads the app and issues a new demo token, so API authorization is exercised rather than simulated in the client. It is only shown for `is_demo` users. The `/settings` page shows profile, runtime modes, storage backend, and session controls.
 
 ---
 
@@ -217,7 +224,7 @@ Role switching is a demo control: it reloads the app and issues a new demo token
 Base: `/api/v1`
 
 - `GET /healthz` (root), `GET /` (product metadata)
-- `POST /auth/demo-login`, `GET /auth/demo-users`, `GET /auth/me`, `GET /auth/roles`
+- `GET /auth/config`, `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `POST /auth/demo-login`, `GET /auth/demo-users`, `GET /auth/me`, `GET /auth/roles`
 - `GET /dashboard/summary`
 - `GET /signals`, `GET /signals/{id}`
 - `GET/POST /risks`, `GET /risks/{id}`, `GET/POST /risks/{id}/actions`, `GET /risks/{id}/approvals`
@@ -239,9 +246,12 @@ OpenAPI JSON: `/openapi.json`. The web app’s schema types are generated from i
 
 ## 13. Security and privacy
 
-- Demo JWT bearer tokens signed with `DEV_JWT_SECRET`; Supabase JWT decoding is implemented for `AUTH_MODE=supabase` (hosted login flow not wired in the demo UI).
+- **Dev mode:** demo JWT bearer tokens signed with `DEV_JWT_SECRET`; demo endpoints only work when `AUTH_MODE=dev` and `DEMO_MODE=true`.
+- **Supabase mode:** the API proxies password/refresh/logout to Supabase Auth, verifies access tokens against the project JWKS, and maps the verified identity to the local `users` table. The local table is authoritative for role/name/active status; Supabase `app_metadata.role` is not trusted.
 - Role checks in API dependencies, not only in the UI.
 - CORS restricted by `CORS_ORIGINS`.
+- Sliding-window rate limits on auth and mutating endpoints; process-local for the single Render instance.
+- Report downloads are authenticated and never expose storage paths or public bucket URLs.
 - PII redaction (email, phone, NID, passport, IBAN) before evidence display/storage paths that require it.
 - Prompt-injection markers detected and treated as review findings.
 - Prohibited legal-advice phrases block verification.
@@ -270,8 +280,10 @@ Current mock-mode result: **7/7 cases**, all metrics **1.0**. This is a demo-sca
 |---|---|---|
 | Web | Vercel Hobby, `apps/web` root | Live; direct browser check passed |
 | Web fallback | Render Node free, Next.js standalone | Optional; currently `502`, check logs |
-| API | Render Docker free, Singapore, ephemeral `/tmp` storage | Live: `/healthz` healthy |
+| API | Render Docker free, Singapore; `STORAGE_BACKEND=database` | Live: `/healthz` healthy (demo auth until cutover) |
 | Database | Supabase Postgres + pgvector, Tokyo | Ready: migrated and seeded |
+| Auth | Supabase Auth proxy | Implemented; not enabled on hosted service until keys are set |
+| Report storage | Postgres (default hosted) or Supabase Storage | Implemented and locally verified |
 | Graph | Neo4j Aura | Optional; pending account |
 | Scheduling | n8n local/Docker + FastAPI cron fallback | Local only |
 | Monitoring | Sentry + PostHog | Optional keys pending |
@@ -284,9 +296,11 @@ See [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
 ## 16. Known trade-offs
 
-- Demo auth prioritizes judge reproducibility over production identity.
+- Demo auth (still live) prioritizes judge reproducibility over production identity; the Supabase path is implemented but not enabled until keys are configured.
+- Browser tokens are stored in local storage; a hardened deployment should use HttpOnly cookies.
+- Rate limiting is process-local, suitable for one Render instance.
 - Mock mode prioritizes deterministic storytelling over live model variability.
 - The graph has a compact fixed layout for 30 nodes; very large supply chains need clustering.
-- Reports use a local disk rather than object storage.
+- Reports default to Postgres on hosted deployments; Supabase Storage is an optional adapter.
 - The golden set is small and hand-built.
 - No legal/compliance advisor was available; conservative language and human approval are the mitigation, not a substitute for counsel.

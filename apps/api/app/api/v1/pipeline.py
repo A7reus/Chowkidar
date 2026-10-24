@@ -1,15 +1,20 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.deps import AnalystUser, SessionDep
+from app.core.ratelimit import rate_limit
 from app.schemas import AgentRunOut, PipelineRunRequest, PipelineRunResponse
 from app.services.pipeline import list_pipeline_runs, run_pipeline
 
 router = APIRouter(prefix="/pipeline", tags=["pipeline"])
 
 
-@router.post("/run", response_model=PipelineRunResponse)
+@router.post(
+    "/run",
+    response_model=PipelineRunResponse,
+    dependencies=[Depends(rate_limit("pipeline-run", "mutation"))],
+)
 async def run(
     payload: PipelineRunRequest,
     session: SessionDep,

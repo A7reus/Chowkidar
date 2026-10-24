@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 
 from app.api.deps import AnalystUser, CurrentUser, SessionDep
+from app.core.ratelimit import rate_limit
 from app.db.models import Source
 from app.schemas import SourceOut, SourceSyncResponse
 from app.services.sources import list_sources, sync_source
@@ -18,7 +19,11 @@ async def get_sources(session: SessionDep, _user: CurrentUser) -> list[SourceOut
     return await list_sources(session)
 
 
-@router.post("/{source_id}/sync", response_model=SourceSyncResponse)
+@router.post(
+    "/{source_id}/sync",
+    response_model=SourceSyncResponse,
+    dependencies=[Depends(rate_limit("source-sync", "mutation"))],
+)
 async def sync(
     source_id: uuid.UUID,
     session: SessionDep,

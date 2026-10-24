@@ -32,10 +32,29 @@ class DemoLoginRequest(BaseModel):
     role: RoleLiteral = "approver"
 
 
+class PasswordLoginRequest(BaseModel):
+    email: str = Field(min_length=3, max_length=320)
+    password: str = Field(min_length=8, max_length=512)
+
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str = Field(min_length=10, max_length=4096)
+
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    refresh_token: str | None = None
+    expires_in: int | None = None
+    expires_at: int | None = None
     user: UserOut
+
+
+class AuthConfigOut(BaseModel):
+    auth_mode: str
+    demo_mode: bool
+    password_auth: bool
+    demo_users: list[UserOut] = Field(default_factory=list)
 
 
 class HealthOut(BaseModel):
@@ -44,6 +63,7 @@ class HealthOut(BaseModel):
     version: str
     database: str
     auth_mode: str
+    demo_mode: bool
     llm_mode: str
     data_mode: str
     timestamp: datetime
@@ -292,7 +312,9 @@ class ReportOut(ORMModel):
     id: uuid.UUID
     format: str
     status: str
-    storage_path: str
+    storage_backend: str
+    content_sha256: str
+    size_bytes: int
     summary: dict[str, Any]
     generated_at: datetime
 

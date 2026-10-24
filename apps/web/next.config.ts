@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
   reactStrictMode: true,
   devIndicators: false,
+  allowedDevOrigins: ["localhost", "127.0.0.1"],
 };
 
 export default withNextIntl(nextConfig);

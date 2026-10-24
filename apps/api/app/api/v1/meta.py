@@ -14,13 +14,13 @@ async def meta() -> dict:
         "app": settings.app_name,
         "tagline": "See the risk. Approve the fix.",
         "version": "0.1.0",
-        "demo": settings.demo_mode,
+        "demo": settings.demo_enabled,
         "company": {
             "name": "Padma Apparel Ltd.",
             "country": "Bangladesh",
             "sector": "Ready-made garments",
             "location": "Gazipur, Bangladesh",
-            "note": "Fictional company for the Chowkidar demo.",
+            "note": "Fictional pilot company used to evaluate Chowkidar.",
         },
         "buyers": [
             {"name": "Nordwear EU", "country": "Germany", "market": "EU"},
@@ -66,5 +66,7 @@ async def meta() -> dict:
         "llm_mode": settings.llm_mode,
         "embedding_mode": settings.embedding_mode,
         "auth_mode": settings.auth_mode,
+        "data_mode": settings.data_mode,
+        "storage_backend": settings.storage_backend,
         "roles": ["admin", "analyst", "approver", "viewer"],
     }

@@ -445,11 +445,11 @@ This is the short version. The detailed limitations are in `docs/ARCHITECTURE.md
 | n8n workflow | Compose service and scaffolding exist; not part of the demo path | **No** until wired and demonstrated |
 | Fine-tuning / LoRA | Not implemented | **No** |
 | Contextual RAG, semantic chunking, Graph RAG, late interaction | Not implemented | **No** |
-| Supabase Auth hosted login | Token decoding exists; demo uses seeded role tokens | **No hosted login yet** |
-| Supabase Storage | Not enabled; free Render uses ephemeral `/tmp` | **No** |
+| Supabase Auth hosted login | Implemented: API password/refresh/logout proxy, JWKS verification, local role mapping, production login UI; not enabled on the live service until keys are set | **Partially — code ready, hosted cutover pending** |
+| Supabase Storage + database reports | Implemented: private bucket adapter with Postgres fallback; database is the hosted default after the next deploy | **Partially — code ready, live image still `/tmp` until deploy** |
 | Neo4j graph projection | Not wired; graph UI reads Postgres | **No** |
 | Multi-tenant isolation, SSO, billing, SOC 2, legal review | Not implemented | **No** |
-| Public deployment | Render API + Vercel web live; Vercel edge-IP workaround needed on some networks | **Yes, with DNS caveat** |
+| Public deployment | Render API + Vercel web live in demo mode; Vercel edge-IP workaround needed on some networks | **Yes, demo mode; production cutover pending** |
 
 ### Why this matters
 

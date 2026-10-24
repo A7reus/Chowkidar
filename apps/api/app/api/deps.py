@@ -15,6 +15,7 @@ from app.core.auth import (
 )
 from app.core.config import get_settings
 from app.db.session import get_session
+from app.services.users import WorkspaceUserError, resolve_workspace_user
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -22,6 +23,7 @@ SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 
 async def get_current_user(
+    session: SessionDep,
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
     x_demo_role: Annotated[str | None, Header(alias="X-Demo-Role")] = None,
 ) -> UserContext:
@@ -35,6 +37,11 @@ async def get_current_user(
         )
 
     if settings.auth_mode == "dev":
+        if not settings.demo_enabled:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Demo access is disabled",
+            )
         if token:
             try:
                 return decode_dev_token(token)
@@ -43,11 +50,6 @@ async def get_current_user(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Invalid or expired demo token",
                 ) from exc
-        if not settings.demo_mode:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Demo login is disabled",
-            )
         try:
             return demo_user_for_role(x_demo_role or Role.VIEWER.value)
         except ValueError as exc:
@@ -61,13 +63,22 @@ async def get_current_user(
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Supabase bearer token required",
+                headers={"WWW-Authenticate": "Bearer"},
             )
         try:
-            return decode_supabase_token(token)
+            token_user = decode_supabase_token(token)
         except Exception as exc:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid Supabase token",
+                headers={"WWW-Authenticate": "Bearer"},
+            ) from exc
+        try:
+            return await resolve_workspace_user(session, token_user)
+        except WorkspaceUserError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=str(exc),
             ) from exc
 
     raise HTTPException(
