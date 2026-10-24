@@ -191,7 +191,10 @@ Three formats share one data snapshot:
 - **JSON** — machine-readable evidence and action records.
 - **Markdown** — review-friendly text for tickets or email.
 
-Reports are stored under `REPORT_STORAGE_DIR` (local `storage/reports` by default; `/var/data/reports` on Render) and downloaded through the API so authorization is enforced. Supabase Storage is a planned production adapter, not part of the demo path.
+Reports are stored under `REPORT_STORAGE_DIR` (local `storage/reports` by default;
+`/tmp/reports` on the free Render demo; `/var/data/reports` only if a paid disk is
+attached) and downloaded through the API so authorization is enforced. Supabase
+Storage is a planned production adapter, not part of the demo path.
 
 ---
 
@@ -265,9 +268,9 @@ Current mock-mode result: **7/7 cases**, all metrics **1.0**. This is a demo-sca
 
 | Layer | Target | Status |
 |---|---|---|
-| Web | Vercel, `apps/web` root | Config ready |
-| API | Render Docker, Singapore, `/var/data` disk | Blueprint ready |
-| Database | Supabase Postgres + pgvector, Singapore | Pending account |
+| Web | Vercel Hobby, `apps/web` root | Config ready; deploy pending |
+| API | Render Docker free, Singapore, ephemeral `/tmp` storage | Blueprint ready; deploy pending |
+| Database | Supabase Postgres + pgvector, Tokyo | Ready: migrated and seeded |
 | Graph | Neo4j Aura | Optional; pending account |
 | Scheduling | n8n local/Docker + FastAPI cron fallback | Local only |
 | Monitoring | Sentry + PostHog | Optional keys pending |

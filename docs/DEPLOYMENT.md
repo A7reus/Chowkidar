@@ -1,7 +1,8 @@
 # Chowkidar — Deployment
 
-**Status:** local-first build is complete and validated. Cloud deployment is waiting on account creation and secrets.  
-**Target region:** Singapore (Supabase, Render, Neo4j Aura).
+**Status:** local-first build is complete and validated. The Supabase project is provisioned, migrated, and seeded; Render and Vercel deployment are pending.
+
+**Target region:** Supabase `ap-northeast-1` (Tokyo); Render `singapore`; Vercel global edge. The cross-region API/database hop is acceptable for the demo.
 
 ---
 
@@ -16,7 +17,11 @@
 | Scheduling | n8n | Optional; FastAPI cron fallback exists |
 | Monitoring | Sentry / PostHog | Optional keys |
 
-Reports are written to a Render persistent disk (`/var/data/reports`) in the demo deployment. Supabase Storage is not enabled yet.
+Reports are written to local storage. On the free Render deployment they go to
+`/tmp/reports` and are **ephemeral** (lost on restart or spin-down). A paid Render
+disk is optional; attach one at `/var/data` and set
+`REPORT_STORAGE_DIR=/var/data/reports` if reports must survive restarts.
+Supabase Storage is not enabled yet.
 
 ---
 
@@ -24,42 +29,47 @@ Reports are written to a Render persistent disk (`/var/data/reports`) in the dem
 
 Create accounts and collect:
 
-- Supabase project URL, anon key, service-role key, JWT secret, database connection string.
-- Render account (Blueprint deploy).
-- Vercel account.
+- A Supabase project with pgvector enabled and a **Session pooler** connection string.
+- A Render account (free plan).
+- A Vercel Hobby account.
 - Optional: Neo4j Aura URI/user/password, Sentry DSN, PostHog key, Gemini and Groq API keys.
 
-Never commit secrets. Local secrets belong in the root `.env`; platform secrets belong in Render/Vercel environment settings.
+For this demo, the only required Supabase secret is the Postgres connection string. The anon key, service-role key, JWT secret, and Supabase Auth settings are **not needed** because the hosted demo uses seeded demo auth. Never paste secrets into chat or commit them; put them directly into platform environment variables.
 
 ---
 
 ## 3. Supabase
 
-1. Create a project in **Singapore**.
+1. Create a project in the region closest to Render. The current project is in `ap-northeast-1` (Tokyo).
 2. In the SQL editor, enable pgvector:
 
    ```sql
    create extension if not exists vector;
    ```
 
-3. Copy the Postgres connection string. The API normalizes `postgres://` and `postgresql://` to the installed `psycopg` driver, so all three forms work:
+3. Copy the **Session pooler** URI from **Connect**. Use port `5432`, not the transaction pooler on port `6543`, because migrations need session semantics:
 
    ```text
-   postgresql://postgres:<password>@<host>:5432/postgres
-   postgresql+psycopg://postgres:<password>@<host>:5432/postgres
+   postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres?sslmode=require
    ```
 
-4. The API container runs `alembic upgrade head` on boot, creating the schema and HNSW index.
-5. Seed the demo once from a trusted environment:
+   The direct `db.<project-ref>.supabase.co` host can be IPv6-only; the pooler is the reliable path from Render. URL-encode special characters in the password, or reset it to letters and numbers only.
+
+4. The current project is already migrated and seeded. To recreate it from a trusted machine:
 
    ```bash
    cd apps/api
-   DATABASE_URL='postgresql+psycopg://...' uv run python -m app.db.seed
+   export DATABASE_URL='postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres?sslmode=require'
+   uv run alembic upgrade head
+   EMBEDDING_MODE=mock uv run python -m app.db.seed
+   unset DATABASE_URL
    ```
 
-   Do not expose a seed endpoint in production.
+   The seed truncates and replaces demo data. Never run it against a database that contains real tenant data.
 
-If you use Supabase Auth rather than demo auth, set `AUTH_MODE=supabase`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_JWT_SECRET` / audience, and wire a hosted login flow. The current web login uses seeded demo accounts.
+5. The API container also runs `alembic upgrade head` on boot, creating the schema and HNSW index. A fresh deploy against an empty database is safe; the seed is the separate data step.
+
+6. If you use Supabase Auth rather than demo auth, set `AUTH_MODE=supabase`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_JWT_SECRET` / audience, and wire a hosted login flow. The current web login uses seeded demo accounts and does not need those values.
 
 ---
 
@@ -71,25 +81,32 @@ If you use Supabase Auth rather than demo auth, set `AUTH_MODE=supabase`, `SUPAB
 
    | Variable | Value |
    |---|---|
-   | `DATABASE_URL` | Supabase connection string |
-   | `CORS_ORIGINS` | `https://<your-vercel-domain>` |
-   | `WEB_URL` | `https://<your-vercel-domain>` |
-   | `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD` | Aura credentials (optional) |
-   | `GEMINI_API_KEY`, `GROQ_API_KEY` | Optional live mode |
-   | `SENTRY_DSN`, `POSTHOG_KEY` | Optional |
+   | `DATABASE_URL` | Supabase **Session pooler** connection string |
+   | `CORS_ORIGINS` | `http://localhost:3000` until Vercel is live, then `https://<your-vercel-domain>` |
+   | `WEB_URL` | Same as `CORS_ORIGINS` |
+   | `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD` | Leave blank; optional Aura credentials |
+   | `GEMINI_API_KEY`, `GROQ_API_KEY` | Leave blank for mock mode; optional live mode |
+   | `SENTRY_DSN`, `POSTHOG_KEY` | Leave blank; optional |
+
+   `CORS_ORIGINS` accepts a comma-separated list of exact origins. Do not use `*`, a trailing slash, or a path.
 
 4. The blueprint uses:
    - Docker context `.`
    - Dockerfile `apps/api/Dockerfile`
    - health check `/healthz`
-   - persistent disk mounted at `/var/data`
-   - `REPORT_STORAGE_DIR=/var/data/reports`
-5. Deploy and wait for the health check. Verify:
+   - free plan (spins down after inactivity)
+   - ephemeral storage under `/tmp` for reports and uploads
+5. Deploy and wait for the health check. On the free plan, the first request
+   after idle can take 30–60 seconds while the service wakes. Verify:
 
    ```bash
    curl https://<api-domain>/healthz
    curl https://<api-domain>/docs
    ```
+
+6. Copy the API URL. After Vercel is live, return to Render and update
+   `CORS_ORIGINS` and `WEB_URL` to the exact Vercel production origin. Saving the
+   environment triggers a redeploy.
 
 ### Demo auth on Render
 
@@ -101,21 +118,21 @@ To switch to Supabase Auth, set `AUTH_MODE=supabase`, add Supabase settings, and
 
 ## 5. Vercel (web)
 
-1. Import the repository.
+1. Import the repository into a Vercel Hobby project.
 2. Set **Root Directory** to `apps/web`.
 3. Enable “Include source files outside of the Root Directory” so the pnpm workspace and lockfile are available.
-4. Framework preset: **Next.js**.
-5. Set environment variables:
+4. Framework preset: **Next.js**. Select Node.js 22.x. Set the install command to `cd ../.. && pnpm install --frozen-lockfile`; leave the build command at its default.
+5. Set the only required environment variable:
 
    | Variable | Value |
    |---|---|
    | `NEXT_PUBLIC_API_URL` | `https://<api-domain>` |
-   | `NEXT_PUBLIC_SUPABASE_URL` | Optional, if using Supabase client features |
-   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Optional |
-   | `NEXT_PUBLIC_POSTHOG_KEY` | Optional |
-   | `NEXT_PUBLIC_POSTHOG_HOST` | Optional |
 
-6. Deploy. Open the Vercel URL, choose a demo account, and verify the dashboard.
+   `NEXT_PUBLIC_API_URL` is public and is inlined at build time. If you change it, redeploy. Supabase URL/keys and PostHog keys are not needed for the demo.
+
+6. Deploy. Copy the exact production domain, not a preview URL.
+7. Return to Render and set `CORS_ORIGINS` and `WEB_URL` to that domain. Redeploy Render and wait for `/healthz` to pass.
+8. Open the Vercel URL, choose a demo account, and verify the dashboard. If the browser reports a CORS error, confirm the origins match exactly (`https`, no trailing slash, no path).
 
 `apps/web/vercel.json` pins the framework preset. If your Vercel workspace installs from the repo root instead, leave the default install command; pnpm resolves the workspace.
 
@@ -168,7 +185,7 @@ The container runs migrations first. If the database is unreachable, startup fai
 
 - Render keeps previous deploys; roll back from the dashboard.
 - Reseeding replaces demo data. Do not run the seed against a real tenant.
-- Reports on the Render disk survive deploys but are tied to that service instance.
+- Reports on the free Render plan live in `/tmp` and do not survive restarts.
 - Back up Supabase before schema changes. Alembic is the only schema path.
 
 ---
@@ -177,14 +194,15 @@ The container runs migrations first. If the database is unreachable, startup fai
 
 | Blocker | Impact |
 |---|---|
-| No Supabase project/keys | Cannot deploy Postgres-backed API |
-| No Render account/Blueprint | Cannot host API |
-| No Vercel account | Cannot host web |
+| Supabase project | Ready: migrated, seeded, pgvector enabled |
+| Render deployment | Pending; free blueprint is configured |
+| Vercel deployment | Pending; Hobby project not created |
+| Public demo URL and video | Pending; required for the official form |
 | No Neo4j Aura | Graph falls back to fixture/relational demo data |
 | No Sentry/PostHog keys | Observability remains local/optional |
 | No legal/compliance advisor | Accepted constraint; conservative design and human approval |
 
-These blockers do not affect the local demo. They only affect the public URL.
+These remaining blockers do not affect the local demo. They affect the public URL and submission assets.
 
 ---
 

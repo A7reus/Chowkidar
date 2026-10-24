@@ -61,9 +61,9 @@ More views: [signals](docs/assets/02-signals.png) · [search](docs/assets/05-sea
 | English + Bengali UI chrome | Built |
 | Demo auth with four roles | Built |
 | Supabase Auth token decoding | Backend support; demo uses seeded role tokens |
-| Supabase Storage | Not enabled; reports use local/persistent disk |
+| Supabase Storage | Not enabled; reports use local/ephemeral disk |
 | Live LLM providers | Tested via LiteLLM fallback; mock mode is default |
-| Cloud deployment | Configs ready; accounts/keys pending |
+| Cloud deployment | Supabase ready; Render/Vercel pending |
 
 ### Demo accounts
 
@@ -198,9 +198,9 @@ cd apps/api && uv run python -m app.db.seed
 - Fixture-first demo data; source connectors are scaffolded, not production-scheduled.
 - No legal/compliance advisor; the product is deliberately positioned as decision support.
 - Demo auth uses seeded role tokens; Supabase Auth decoding is implemented but the hosted login flow is not wired into the UI.
-- Reports are stored on disk; Supabase Storage is not enabled yet.
+- Reports are stored on local disk; the free Render deployment uses ephemeral `/tmp`, and Supabase Storage is not enabled yet.
 - Optional BGE-M3 embeddings, Docling, RAGAS, and Phoenix are not required for the demo path.
-- Cloud deployment is pending account creation and secrets.
+- Cloud deployment is pending Render/Vercel; the Supabase database is ready.
 
 ---
 

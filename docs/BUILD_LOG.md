@@ -192,9 +192,9 @@ Manual visual QA covered every route at 1440×1000. Known cosmetic trade-off: th
 ## 9. Known gaps
 
 - Public repository is live at <https://github.com/A7reus/Chowkidar>; CI is green.
-- Cloud deployment pending Supabase, Render, Vercel, Neo4j Aura, Sentry, and PostHog credentials.
+- Supabase is provisioned, migrated, and seeded; Render and Vercel deployment are pending.
 - Supabase Auth token decoding exists, but the hosted login flow is not wired into the demo UI.
-- Supabase Storage is not enabled; reports use local/persistent disk.
+- Supabase Storage is not enabled; the free Render deployment uses ephemeral `/tmp`.
 - BGE-M3, Docling, RAGAS, and Phoenix are optional and not required for the demo path.
 - Golden set is small (7 cases) and synthetic.
 - No legal/compliance advisor reviewed the content.

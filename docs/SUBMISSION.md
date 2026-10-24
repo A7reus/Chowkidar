@@ -147,7 +147,7 @@ Pilot with an RMG exporter and a compliance reviewer; add live source scheduling
 
 - Fixture-first demo data; live connectors are scaffolded, not production-scheduled.
 - Demo auth uses seeded role tokens; Supabase Auth decoding exists, but the hosted login flow is not wired into the UI.
-- Reports use persistent disk; Supabase Storage is not enabled.
+- Reports use local storage; the free Render deployment uses ephemeral `/tmp`, and Supabase Storage is not enabled.
 - BGE-M3, Docling, RAGAS, and Phoenix are optional and not on the demo path.
 - Golden set is small and synthetic (7 cases).
 - No legal/compliance advisor reviewed the content.

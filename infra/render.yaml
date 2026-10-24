@@ -1,18 +1,17 @@
+# Free-tier deployment: no persistent disk. Reports use /tmp and survive only
+# for the life of the Render instance. Attach a paid disk and change the storage
+# paths if reports must survive restarts.
 services:
   - type: web
     name: chowkidar-api
     runtime: docker
-    plan: starter
+    plan: free
     region: singapore
     branch: main
     autoDeploy: true
     dockerContext: .
     dockerfilePath: ./apps/api/Dockerfile
     healthCheckPath: /healthz
-    disk:
-      name: chowkidar-reports
-      mountPath: /var/data
-      sizeGB: 1
     envVars:
       - key: APP_ENV
         value: production
@@ -33,11 +32,11 @@ services:
       - key: WEB_URL
         sync: false
       - key: LOCAL_STORAGE_DIR
-        value: /var/data
+        value: /tmp
       - key: REPORT_STORAGE_DIR
-        value: /var/data/reports
+        value: /tmp/reports
       - key: UPLOAD_STORAGE_DIR
-        value: /var/data/uploads
+        value: /tmp/uploads
       - key: NEO4J_URI
         sync: false
       - key: NEO4J_USER
