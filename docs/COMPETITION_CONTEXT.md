@@ -446,7 +446,7 @@ This is the short version. The detailed limitations are in `docs/ARCHITECTURE.md
 | Fine-tuning / LoRA | Not implemented | **No** |
 | Contextual RAG, semantic chunking, Graph RAG, late interaction | Not implemented | **No** |
 | Supabase Auth hosted login | Token decoding exists; demo uses seeded role tokens | **No hosted login yet** |
-| Supabase Storage | Not enabled; reports use disk | **No** |
+| Supabase Storage | Not enabled; free Render uses ephemeral `/tmp` | **No** |
 | Neo4j graph projection | Not wired; graph UI reads Postgres | **No** |
 | Multi-tenant isolation, SSO, billing, SOC 2, legal review | Not implemented | **No** |
 | Public deployment | Not yet | **No** until live |
@@ -496,7 +496,7 @@ These cannot be answered from the repository:
 - Registered team size and member names.
 - NRB status for any member.
 - Female-member status for the team-diversity bonus.
-- Which cloud accounts are available (Vercel, Render, Supabase, Neo4j Aura, Sentry, PostHog).
+- Cloud accounts: Supabase is ready; Render and Vercel deployment are still pending.
 - Whether a Figma/design file exists, or whether an architecture diagram can serve as the design link.
 - YouTube channel access for uploading the demo.
 - Permission to install/run Ollama and n8n for extra truthful checkboxes.
