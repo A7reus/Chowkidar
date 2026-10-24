@@ -51,18 +51,25 @@ operations, legal review, or live source connectors).
 
 ### 2.1 Collect secrets
 
-From the Supabase project dashboard:
+Open <https://supabase.com/dashboard>, select the project, and use the
+dashboard's **Connect** button or these pages:
 
-- Project URL (`https://<ref>.supabase.co`)
-- Public key: a legacy `anon` JWT or an `sb_publishable_*` key
-- Server key: a legacy `service_role` JWT or an `sb_secret_*` key (server-side
-  only; never send it to the browser or commit it)
-- Postgres Session pooler URL (already used by Render)
+| Value | Where to find it | Use |
+|---|---|---|
+| Project URL | Project Settings → API, or Connect | `SUPABASE_URL` |
+| Public key | Project Settings → API Keys; use `sb_publishable_*` or the legacy `anon` JWT | `SUPABASE_ANON_KEY` |
+| Server key | Project Settings → API Keys; use `sb_secret_*` or the legacy `service_role` JWT. Never expose it in the browser. | `SUPABASE_SERVICE_ROLE_KEY` |
+| Postgres connection | Project Settings → Database → Connection string → Session pooler | Only needed for the normal provisioning script, not for the running API (Render already has `DATABASE_URL`) |
+| JWT signing | Project Settings → JWT Keys | Only needed for legacy HS256 projects (`SUPABASE_JWT_SECRET`); new asymmetric projects use the JWKS endpoint automatically |
 
 The API sends new `sb_*` keys only in the `apikey` header. Legacy JWT keys are
 also sent as a bearer token for compatibility. Access tokens are verified from
 the project JWKS by default; if the project still uses the legacy HS256 signing
 secret, also set `SUPABASE_JWT_SECRET`.
+
+Keep the keys in the gitignored local `.env` (or `docs/private/`) for
+provisioning. Do not paste the server key or database password into chat, the
+submission form, or git. The `.env` in this repository is ignored.
 
 Generate a random `DEV_JWT_SECRET` even though Supabase mode does not use demo
 tokens; it prevents an accidental dev fallback from using a default secret:
@@ -124,7 +131,10 @@ the passwords.
 ### 2.4 Render API environment
 
 Set these in the Render dashboard (or update `infra/render.yaml` only after the
-values are ready):
+values are ready). Save the URL and keys first, then set `AUTH_MODE=supabase` and
+`DEMO_MODE=false` in one save; the API fails fast if Supabase auth is selected
+without the URL and public key. Render should redeploy on save; trigger a manual
+deploy if it does not.
 
 ```dotenv
 AUTH_MODE=supabase

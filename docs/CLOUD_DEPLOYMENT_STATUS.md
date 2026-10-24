@@ -15,7 +15,7 @@
 | API docs | <https://chowkidar-api.onrender.com/docs> | Live |
 | Web | <https://chowkidar-wheat.vercel.app/> | Live; direct browser check passed |
 | Web fallback | `https://chowkidar-web.onrender.com` | Service created; currently `502` — check Render logs |
-| Repository | <https://github.com/A7reus/Chowkidar> | CI green through `330c0b35d5bc` |
+| Repository | <https://github.com/A7reus/Chowkidar> | CI green on `main` |
 
 The Render API service is on the **free** plan: 512 MB, no persistent disk, and it spins down after about 15 minutes of inactivity. The first request after idle can take 30–60 seconds. The optional Render web fallback has the same free-plan cold-start behavior.
 
@@ -23,7 +23,7 @@ The Render API service is on the **free** plan: 512 MB, no persistent disk, and 
 
 ## 2. Verified checks
 
-- `GET /healthz` returns `status: ok`, `database: ok`, `auth_mode: dev`, `demo_mode: true`, `llm_mode: mock`, `data_mode: fixture`, `revision: 330c0b35d5bc`.
+- `GET /healthz` returns `status: ok`, `database: ok`, `auth_mode: dev`, `demo_mode: true`, `llm_mode: mock`, `data_mode: fixture`, and a `revision` matching the deployed commit.
 - Local verification (not hosted): production auth with a mock Supabase Auth/JWKS server, database-backed report storage with checksum-matched download, demo lockout (`403`), frontend email/password login, pilot badge, and `/settings`.
 - Hosted durable storage: `/api/v1/meta` reports `storage_backend: database`. A 4-page PDF report (`d5124371-2be2-410f-a4a5-0a2edf260abe`) was generated before the `08d0f3a828aa` redeploy and downloaded again after that deploy with the same SHA-256 `df9a8af9ed3011a742e5fda8d386d438ce27687d3a93cd3c161347b0e7dbaad3` (13,731 bytes), proving persistence across a restart. The download returned `Cache-Control: private, no-store`, a matching ETag, and `X-Content-Type-Options: nosniff`.
 - `GET /api/v1/meta` returns the Padma Apparel demo metadata and four streams.
