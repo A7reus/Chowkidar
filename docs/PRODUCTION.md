@@ -1,11 +1,11 @@
 # Production pilot path
 
-**Status:** implemented in code and locally verified, but **not yet enabled on the
-live deployment** because the Supabase Auth URL/keys and hosted environment
-changes are not available in this workspace. The live service is still the
-explicit demo (`AUTH_MODE=dev`, `DEMO_MODE=true`). Do not describe it as a
-production customer deployment until the cutover and hosted QA in this document
-are complete.
+**Status:** **live and verified.** The hosted API runs with Supabase
+email/password auth (`AUTH_MODE=supabase`, `DEMO_MODE=false`), four pilot accounts
+are provisioned, demo login is disabled, and reports are stored in Postgres. The
+hosted API and browser QA matrix in section 3 passed against the live service;
+the runtime was verified at revision `fcd7fd8`. This is a single-workspace
+production pilot, not a commercial customer deployment.
 
 This document defines “production-ready” for Chowkidar's preliminary round as
 the production path required by `prompts/MASTER_PROMPT.md`: real authentication,
@@ -19,15 +19,15 @@ operations, legal review, or live source connectors).
 
 | Capability | Implementation | Verification |
 |---|---|---|
-| Supabase Auth login | `POST /api/v1/auth/login` proxies Supabase's password grant. The browser never receives the anon/service-role keys. | `test_auth_production.py`; local mock Supabase end-to-end check |
-| Refresh and logout | `POST /api/v1/auth/refresh` and `/logout` proxy Supabase sessions; the web client refreshes before expiry and clears the session on failure. | Unit tests; browser check with mock Supabase |
-| Authorization | The local `users` table is authoritative for role, name, and active status. Supabase `app_metadata.role` is not trusted. | `resolve_workspace_user`; `/auth/me` check |
-| Demo separation | Demo role cards and demo login exist only when `AUTH_MODE=dev` **and** `DEMO_MODE=true`. In Supabase mode, `/auth/demo-login` returns `403` and `/auth/config` returns no demo users. | API + browser checks |
-| Durable reports | `STORAGE_BACKEND=database` stores report bytes in Postgres; `supabase` stores them in a private Supabase Storage bucket and falls back to Postgres if the bucket is unavailable. `local` remains the default for offline demos. | Database download/checksum check; storage unit tests |
-| Report integrity | SHA-256, byte size, storage backend, and ETag are recorded and returned; downloads are authenticated and `no-store`. | API check |
-| Rate limits | Process-local sliding-window limits on auth and mutating endpoints. | `test_rate_limiter`/manual checks |
-| Production UI | Login switches from demo cards to email/password from `/auth/config`; demo badge and role switching disappear for managed accounts; `/settings` shows profile, runtime modes, storage, and session controls. | Browser check in production mode |
-| Health/config visibility | `/healthz` reports `auth_mode`, `demo_mode`, `llm_mode`, `data_mode`; `/api/v1/meta` reports storage backend. | local + hosted checks |
+| Supabase Auth login | `POST /api/v1/auth/login` proxies Supabase's password grant. The browser never receives the anon/service-role keys. | Hosted QA: all four accounts; `test_auth_production.py` |
+| Refresh and logout | `POST /api/v1/auth/refresh` and `/logout` proxy Supabase sessions; the web client refreshes before expiry and clears the session on failure. | Hosted QA: refresh rotated for all four roles; browser sign-out |
+| Authorization | The local `users` table is authoritative for role, name, and active status. Supabase `app_metadata.role` is not trusted. | Hosted `/auth/me` and role-restriction checks |
+| Demo separation | Demo role cards and demo login exist only when `AUTH_MODE=dev` **and** `DEMO_MODE=true`. In Supabase mode, `/auth/demo-login` returns `403` and `/auth/config` returns no demo users. | Hosted API + browser checks |
+| Durable reports | `STORAGE_BACKEND=database` stores report bytes in Postgres; `supabase` stores them in a private Supabase Storage bucket and falls back to Postgres if the bucket is unavailable. `local` remains the default for offline demos. | Hosted PDF/JSON/Markdown downloads; checksum match after redeploy |
+| Report integrity | SHA-256, byte size, storage backend, and ETag are recorded and returned; downloads are authenticated and `no-store`. | Hosted checksum, ETag, and cache-header checks |
+| Rate limits | Process-local sliding-window limits on auth and mutating endpoints. | Hosted `429` + `Retry-After` check |
+| Production UI | Login switches from demo cards to email/password from `/auth/config`; demo badge and role switching disappear for managed accounts; `/settings` shows profile, runtime modes, storage, and session controls. | Hosted admin + viewer browser QA, including mobile |
+| Health/config visibility | `/healthz` reports `auth_mode`, `demo_mode`, `llm_mode`, `data_mode`; `/api/v1/meta` reports storage backend. | Hosted `/healthz` and `/api/v1/meta` |
 
 ### Deliberate limitations
 
@@ -45,9 +45,25 @@ operations, legal review, or live source connectors).
 - **No legal/compliance advisor sign-off.** The product's own disclaimer says it
   provides risk intelligence, not legal advice.
 
+### Current hosted state
+
+| Item | Value |
+|---|---|
+| API | `https://chowkidar-api.onrender.com` |
+| Web | `https://chowkidar-wheat.vercel.app` |
+| Auth | Supabase email/password; `AUTH_MODE=supabase`, `DEMO_MODE=false` |
+| Accounts | `admin@chowkidar.app`, `analyst@chowkidar.app`, `approver@chowkidar.app`, `viewer@chowkidar.app` |
+| Credentials | Gitignored `docs/private/supabase-credentials.local.md`, mode `600` |
+| Report storage | Postgres (`STORAGE_BACKEND=database`) |
+| Runtime QA | Revision `fcd7fd8`; API, role, report, browser, mobile, CORS, and rate-limit checks passed. Later docs-only commits may advance the reported revision. |
+| Remaining external constraint | Vercel default DNS is variable on some networks; see [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md) |
+
 ---
 
 ## 2. Hosted cutover checklist
+
+> The current pilot completed sections 2.1–2.4 on 2026-10-24. Keep this checklist
+> as the reproducible cutover and key-rotation runbook for a future deployment.
 
 ### 2.1 Collect secrets
 
@@ -68,8 +84,9 @@ the project JWKS by default; if the project still uses the legacy HS256 signing
 secret, also set `SUPABASE_JWT_SECRET`.
 
 Keep the keys in the gitignored local `.env` (or `docs/private/`) for
-provisioning. Do not paste the server key or database password into chat, the
-submission form, or git. The `.env` in this repository is ignored.
+provisioning. Do not commit or publish the server key or database password.
+The `.env` in this repository is ignored; the generated pilot passwords live in
+the gitignored private access note.
 
 Generate a random `DEV_JWT_SECRET` even though Supabase mode does not use demo
 tokens; it prevents an accidental dev fallback from using a default secret:
@@ -86,6 +103,9 @@ openssl rand -hex 32
 3. Set the Site URL to the final web origin, for example
    `https://chowkidar-wheat.vercel.app`.
 4. Add the same origin to the redirect allow list if email links are enabled.
+
+The current project has the Email provider enabled and uses ES256/JWKS. The
+access tokens are validated against the project JWKS; no HS256 secret is set.
 
 ### 2.3 Provision the four accounts
 
@@ -125,8 +145,9 @@ available. The normal script is preferred because it writes
 mapping.
 
 The script reuses the seeded local user row for each role so existing audit and
-approval references remain valid. It prints only IDs and the redacted path, not
-the passwords.
+approval references remain valid. It prints only IDs and the credential file
+path, not the passwords. The current hosted database has all four rows mapped by
+`supabase_user_id`; the accounts are active and confirmed.
 
 ### 2.4 Render API environment
 
@@ -189,28 +210,28 @@ fresh synthetic demo deployment.
 
 ## 3. Hosted QA matrix
 
-Run this in a private/incognito window against the final URLs after cutover:
+Completed against the live URLs on 2026-10-24 at runtime revision `fcd7fd8`:
 
-- [ ] `/healthz` returns `status: ok`, `database: ok`, `auth_mode: supabase`,
+- [x] `/healthz` returns `status: ok`, `database: ok`, `auth_mode: supabase`,
       `demo_mode: false`.
-- [ ] `/api/v1/auth/config` returns `password_auth: true` and no demo users.
-- [ ] Login with the admin account; the demo role cards are absent and the
+- [x] `/api/v1/auth/config` returns `password_auth: true` and no demo users.
+- [x] Login with the admin account; the demo role cards are absent and the
       sidebar says **Pilot**, not **Demo**.
-- [ ] Logout clears the session; protected pages redirect to `/login`.
-- [ ] Each of the four accounts sees the expected role permissions; a viewer
+- [x] Logout clears the session; protected pages redirect to `/login`.
+- [x] Each of the four accounts sees the expected role permissions; a viewer
       cannot approve or generate reports.
-- [ ] An unprovisioned Supabase user gets `403`, not a workspace session.
-- [ ] Dashboard, risk detail, approvals, audit verification, reports, search,
+- [x] An unprovisioned Supabase user gets `403`, not a workspace session.
+- [x] Dashboard, risk detail, approvals, audit verification, reports, search,
       evals, and graph load without console errors.
-- [ ] PDF, JSON, and Markdown report downloads succeed; checksum headers match
-      the generated bytes.
-- [ ] Reports survive an API restart (database or Supabase backend).
-- [ ] `/settings` shows the correct profile, auth mode, data/LLM/storage modes,
+- [x] PDF, JSON, and Markdown report downloads succeed; checksums match the
+      generated bytes.
+- [x] Reports survive an API restart (database backend).
+- [x] `/settings` shows the correct profile, auth mode, data/LLM/storage modes,
       and sign-out.
-- [ ] Mobile layout at 390 px works; no horizontal overflow.
-- [ ] CORS preflight from the final web origin succeeds.
-- [ ] No secrets appear in the browser bundle, network responses, or git.
-- [ ] Rate limit returns `429` with `Retry-After` after the configured burst.
+- [x] Mobile layout at 390 px works; no dashboard horizontal overflow.
+- [x] CORS preflight from the final web origin succeeds.
+- [x] No secrets appear in the browser bundle, public responses, or git.
+- [x] Rate limit returns `429` with `Retry-After` after the configured burst.
 
 ---
 
@@ -219,7 +240,10 @@ Run this in a private/incognito window against the final URLs after cutover:
 - Render Free spins down after inactivity; warm the API before a judging session.
 - Supabase Free may pause; restore the project before recording or judging.
 - Keep `docs/private/` out of git. The credentials file is generated at mode
-  `0600` and must never be pasted into the submission form.
+  `0600`; provide access to judges only through the submission's private access
+  field or another controlled channel, never a public commit.
+- The Supabase database password is currently weak and should be rotated before
+  any real-user deployment. Update Render's `DATABASE_URL` after rotation.
 - The report storage migration is `82eceac00bcf_durable_report_storage.py`.
 - The append-only audit chain remains the system of record for material actions;
   production cutover does not change that behavior.

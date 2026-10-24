@@ -34,7 +34,7 @@
 └────────────────────────────────────────────────────────────────────┘
 ```
 
-The demo is deliberately **fixture-first**: a seeded Postgres database makes the story reproducible. Connectors and the agent pipeline can run again over the same signals; mutation tools are role-gated and audited.
+The pilot is deliberately **fixture-first**: a seeded Postgres database makes the story reproducible. Connectors and the agent pipeline can run again over the same signals; mutation tools are role-gated and audited.
 
 ---
 
@@ -278,12 +278,12 @@ Current mock-mode result: **7/7 cases**, all metrics **1.0**. This is a demo-sca
 
 | Layer | Target | Status |
 |---|---|---|
-| Web | Vercel Hobby, `apps/web` root | Live; direct browser check passed |
+| Web | Vercel Hobby, `apps/web` root | Live production pilot; Vercel DNS variability caveat |
 | Web fallback | Render Node free, Next.js standalone | Optional; currently `502`, check logs |
-| API | Render Docker free, Singapore; `STORAGE_BACKEND=database` | Live: `/healthz` healthy (demo auth until cutover) |
-| Database | Supabase Postgres + pgvector, Tokyo | Ready: migrated and seeded |
-| Auth | Supabase Auth proxy | Implemented; not enabled on hosted service until keys are set |
-| Report storage | Postgres (default hosted) or Supabase Storage | Implemented and locally verified |
+| API | Render Docker free, Singapore; `STORAGE_BACKEND=database` | Live: `/healthz` healthy, `auth_mode=supabase`, `demo_mode=false` |
+| Database | Supabase Postgres + pgvector, Tokyo | Live: migrated and seeded |
+| Auth | Supabase Auth proxy | Live: email/password, JWKS verification, four provisioned accounts, demo login disabled |
+| Report storage | Postgres (default hosted) or Supabase Storage | Live on Postgres; checksum-verified across a Render redeploy; Storage optional |
 | Graph | Neo4j Aura | Optional; pending account |
 | Scheduling | n8n local/Docker + FastAPI cron fallback | Local only |
 | Monitoring | Sentry + PostHog | Optional keys pending |
@@ -296,7 +296,7 @@ See [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
 ## 16. Known trade-offs
 
-- Demo auth (still live) prioritizes judge reproducibility over production identity; the Supabase path is implemented but not enabled until keys are configured.
+- The public deployment uses Supabase Auth, not demo auth. The local demo adapter remains for offline reproducibility and is selected only with `AUTH_MODE=dev` + `DEMO_MODE=true`.
 - Browser tokens are stored in local storage; a hardened deployment should use HttpOnly cookies.
 - Rate limiting is process-local, suitable for one Render instance.
 - Mock mode prioritizes deterministic storytelling over live model variability.

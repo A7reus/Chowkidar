@@ -110,7 +110,8 @@ Visual: risk detail crop + audit verify card + report page.
 - 7/7 golden cases in mock mode.
 - Five gates: extraction, citation coverage, verifier pass, no-legal-advice,
   priority agreement.
-- 57 API tests, 8 web tests, Playwright smoke; Ruff/Pyright/ESLint/tsc clean.
+- 57 API tests, 8 web tests, local Playwright smoke, and hosted production
+  Playwright QA; Ruff/Pyright/ESLint/tsc clean.
 - Honest limitation: small synthetic set; not a legal benchmark.
 
 Visual: eval dashboard screenshot with a “demo-scale” caption.
@@ -119,16 +120,17 @@ Visual: eval dashboard screenshot with a “demo-scale” caption.
 
 ## Slide 9 — Production path and moat
 
-**Built:** Supabase Auth proxy, local role mapping, durable report storage
-(Postgres/Supabase), rate limits, production login, settings, runbook.
+**Live:** Supabase email/password auth, local role mapping, durable Postgres
+reports, rate limits, production login, settings, hosted QA, and runbook.
 
 **Next:** live source connectors, tenant isolation/RLS, HttpOnly sessions,
-external audit anchoring, human legal review, design-partner pilots.
+MFA/SSO, external audit anchoring, human legal review, design-partner pilots.
 
 **Moat:** the evidence graph + approval/audit workflow + domain-specific
 evaluation, not a generic chatbot.
 
-Visual: “demo → pilot → production” maturity ladder with honest labels.
+Visual: “local demo → live single-workspace pilot → commercial SaaS” maturity
+ladder with honest labels.
 
 ---
 
@@ -139,7 +141,7 @@ feedback on obligations, evidence quality, and approval workflow.
 
 **Team:** JU_StackMind — AI/full-stack engineering + data engineering.
 
-**Links:** GitHub, live demo (currently demo mode), API docs, video.
+**Links:** GitHub, live production pilot, API docs, video.
 
 **Close:** See the risk. Approve the fix.
 
@@ -151,4 +153,4 @@ feedback on obligations, evidence quality, and approval workflow.
 - Type: Space Grotesk for display; Inter for body.
 - Use real screenshots, not invented dashboards.
 - One idea per slide; no paragraph walls.
-- Label demo vs production state on every relevant slide.
+- Label synthetic-data pilot vs customer deployment on every relevant slide.

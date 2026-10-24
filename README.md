@@ -59,11 +59,11 @@ More views: [signals](docs/assets/02-signals.png) · [search](docs/assets/05-sea
 | Read-only MCP server | Built |
 | FastAPI REST API + OpenAPI schema | Built |
 | English + Bengali UI chrome | Built |
-| Demo auth with four roles | Built; only available in `AUTH_MODE=dev` + `DEMO_MODE=true` |
-| Supabase Auth production path | Built: password/refresh/logout proxy, JWKS verification, local role mapping, production login UI; not enabled on the live service until keys are set |
-| Durable report storage | Built: local, Postgres, and private Supabase Storage backends; Postgres is the hosted default |
-| Live LLM providers | Tested via LiteLLM fallback; mock mode is default |
-| Cloud deployment | Live: Render API + Vercel web; see [`docs/CLOUD_DEPLOYMENT_STATUS.md`](docs/CLOUD_DEPLOYMENT_STATUS.md) |
+| Demo auth with four roles | Built; local only in `AUTH_MODE=dev` + `DEMO_MODE=true` |
+| Supabase Auth production path | Live: password/refresh/logout proxy, JWKS verification, local role mapping, production login UI; four pilot accounts provisioned and hosted QA passed |
+| Durable report storage | Built: local, Postgres, and private Supabase Storage backends; Postgres is live on the hosted API and survived a redeploy |
+| Live LLM providers | Tested via LiteLLM fallback; mock mode is the hosted pilot default |
+| Cloud deployment | Live production pilot: Render API + Vercel web; Vercel DNS caveat applies; see [`docs/CLOUD_DEPLOYMENT_STATUS.md`](docs/CLOUD_DEPLOYMENT_STATUS.md) |
 
 ### Demo accounts
 
@@ -74,7 +74,7 @@ More views: [signals](docs/assets/02-signals.png) · [search](docs/assets/05-sea
 | Approver | Nusrat Jahan | `approver@chowkidar.demo` |
 | Viewer | Imran Chowdhury | `viewer@chowkidar.demo` |
 
-The login page asks the API for `/api/v1/auth/config`: the local demo shows one-click role cards, while the production pilot shows email/password. Role permissions are enforced in the API and reflected in the UI. See [`docs/PRODUCTION.md`](docs/PRODUCTION.md).
+The login page asks the API for `/api/v1/auth/config`: the local demo shows one-click role cards, while the hosted pilot shows email/password. The hosted pilot uses managed accounts with the emails `admin@chowkidar.app`, `analyst@chowkidar.app`, `approver@chowkidar.app`, and `viewer@chowkidar.app`. Passwords are held only in the gitignored private access note and are not committed. Role permissions are enforced in the API and reflected in the UI. See [`docs/PRODUCTION.md`](docs/PRODUCTION.md).
 
 ---
 
@@ -195,10 +195,10 @@ cd apps/api && uv run python -m app.db.seed
 
 ### Current limitations
 
-- Fixture-first demo data; source connectors are scaffolded, not production-scheduled.
+- Fixture-first pilot data; source connectors are not implemented or production-scheduled.
 - No legal/compliance advisor; the product is deliberately positioned as decision support.
-- The **live service is still in demo mode** (`AUTH_MODE=dev`, `DEMO_MODE=true`). The Supabase Auth production path and production login UI are implemented and locally verified, but the hosted cutover is blocked on Supabase keys and dashboard access.
-- Reports use the durable Postgres backend on the hosted API (`STORAGE_BACKEND=database`), with private Supabase Storage as an optional object-store adapter. Local `/tmp` reports remain only for offline demos.
+- The **live service is a production pilot**, not a demo: `AUTH_MODE=supabase`, `DEMO_MODE=false`, four provisioned accounts, and demo login disabled. It is still a single-workspace pilot, not a commercial multi-tenant service.
+- Reports use the durable Postgres backend on the hosted API (`STORAGE_BACKEND=database`), with private Supabase Storage as an optional object-store adapter. Hosted reports survived an API redeploy with matching checksums; local `/tmp` reports remain only for offline demos.
 - Rate limits are process-local (suitable for the single Render instance); browser tokens are stored in local storage rather than HttpOnly cookies.
 - Live source connectors are not implemented; `DATA_MODE=live` is unsupported and source sync replays fixtures.
 - Optional BGE-M3 embeddings, Docling, RAGAS, and Phoenix are not required for the demo path.
@@ -248,7 +248,7 @@ See [`docs/MCP.md`](docs/MCP.md).
 | [`docs/SETUP.md`](docs/SETUP.md) | Local setup, seed baseline, commands, troubleshooting |
 | [`docs/ENVIRONMENT.md`](docs/ENVIRONMENT.md) | Variable reference, auth/storage/rate-limit modes |
 | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Local, Render, Vercel, Supabase deployment |
-| [`docs/PRODUCTION.md`](docs/PRODUCTION.md) | Production-pilot cutover, Supabase Auth/Storage, hosted QA |
+| [`docs/PRODUCTION.md`](docs/PRODUCTION.md) | Production-pilot operations, Supabase Auth, credentials, hosted QA |
 | [`docs/RUNBOOK.md`](docs/RUNBOOK.md) | Deploy, rollback, backup, key rotation, incidents |
 | [`docs/API.md`](docs/API.md) | Endpoint reference, auth, errors, rate limits |
 | [`docs/EVALS.md`](docs/EVALS.md) | Golden set, metrics, results, evaluation limits |
@@ -276,6 +276,6 @@ The base implementation was produced by an AI coding agent from a single master 
 Event: https://cloudcampbd.com/ai-builders-congress  
 Repository: https://github.com/A7reus/Chowkidar
 
-- **Live demo (currently demo mode):** <https://chowkidar-wheat.vercel.app/>
+- **Live production pilot:** <https://chowkidar-wheat.vercel.app/> (Supabase email/password; some networks need the Vercel DNS workaround)
 - **API:** <https://chowkidar-api.onrender.com/>
 - **Video:** pending recording.

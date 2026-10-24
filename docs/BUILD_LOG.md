@@ -1,7 +1,7 @@
 # Chowkidar — Build Log
 
 **Last updated:** 2026-10-24
-**Status:** Base build complete; local QA passed; hosted API and web build are live. Vercel edge-IP caveat is documented in [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md).
+**Status:** Base build complete; local and hosted QA passed. The hosted API and web app are live as a production pilot with Supabase email/password auth and durable Postgres reports. Vercel edge-IP variability is documented in [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md).
 **Purpose:** Record how the build was produced, especially the master prompt execution, confirmation triggers, and manual changes. This supports the submission's "Build Level" and "Prompt Library" fields.
 
 ---
@@ -23,17 +23,17 @@
 | Item | Status |
 |---|---|
 | Master prompt | **v1.0** (`prompts/MASTER_PROMPT.md`), frozen 2026-10-23 |
-| Execution | Base build executed as one master-prompt pass; QA follow-up in progress |
+| Execution | Base build executed as one master-prompt pass; production auth cutover, QA, and submission prep followed |
 | Repo scaffold | Complete |
 | Backend | Complete: FastAPI, SQLAlchemy, Alembic, LangGraph, RAG, reports, audit, MCP |
 | Frontend | Complete: 12 routes, role-aware UI, EN/BN chrome, graph, search, evals |
-| Database | Local Postgres + pgvector seeded; 8 risks, 12 signals, 21 actions, 11 audit events |
-| Tests | API 57 passing; web unit 8 passing; Playwright 4 passing |
+| Database | Local Postgres + pgvector seeded; hosted Supabase migrated and seeded; 8 risks, 12 signals, 21 actions, 11 audit events |
+| Tests | API 57 passing; web unit 8 passing; local Playwright 4 passing; hosted production Playwright 2 passing |
 | Type checks | Pyright 0 errors; `tsc` clean |
 | Lint | Ruff clean; ESLint clean |
 | Evals | 7/7 golden cases; five metrics at 1.0 in mock mode |
 | MCP | Read-only FastMCP server implemented and manually exercised |
-| Deployment | Render/Vercel configs + docs ready; cloud accounts/keys pending |
+| Deployment | Live production pilot: Render API + Vercel web + Supabase Auth/Postgres; runtime QA at `fcd7fd8` |
 
 ### Verified demo baseline
 
@@ -100,8 +100,8 @@ Scope generated: Monorepo, FastAPI API, Next.js console, seed data, agents, repo
 Files created: apps/, data/fixtures/, evals/, infra/, docs/, prompts/
 Confirmation triggers used: stack decisions before build; no intervening implementation prompts
 Manual changes: QA fixes listed in §6
-Known issues: live service is still demo auth; production Auth keys/dashboard access missing; no live source connectors; no video/design link
-Next: commit/push the production pass, enable database report storage, cut over Supabase Auth, run hosted QA, record video, final submission
+Known issues: no live source connectors; no demo video/design link; team-diversity facts unconfirmed; Supabase database password still needs rotation
+Next: record video, confirm design/team facts, rotate the database password, then fill the official form
 ```
 
 ### AI involvement disclosure
@@ -155,6 +155,10 @@ The deterministic mock path (`app/agents/mock.py`) is the default for the demo a
 | 2026-10-24 | `apps/web` login, auth store, app shell, `/settings` | Password login, automatic refresh, pilot/demo labels, runtime settings | Production UI without demo leakage | AI agent + QA |
 | 2026-10-24 | `scripts/provision_supabase_users.py`, `docs/PRODUCTION.md`, env/docs | One-time Supabase account provisioning and cutover/runbook | Repeatable hosted cutover | AI agent |
 | 2026-10-24 | `apps/api/app/core/supabase_auth.py`, `storage.py`, `scripts/provision_supabase_users.py` | Support `sb_publishable_*` / `sb_secret_*` keys and legacy HS256 tokens; add auth-only provisioning | Current Supabase key format and cutover without database access | AI agent + QA |
+| 2026-10-24 | Render/Supabase environment, hosted database | Enabled Supabase auth, disabled demo login, provisioned four confirmed accounts, migrated durable report storage, and ran hosted API/browser QA | Complete the production-pilot cutover | AI agent + QA |
+| 2026-10-24 | `apps/web/src/components/common/access-denied.tsx`, auth UI, messages, reports/evals/search/sources copy | Hide demo role-switch controls for managed accounts and replace stale demo-only wording | Managed viewers were seeing a demo action that would fail in production | AI agent + QA |
+| 2026-10-24 | `apps/api/tests/test_config.py` | Construct isolated settings with `_env_file=None` | Local `.env` Supabase values made config tests order/environment-dependent | AI agent + QA |
+| 2026-10-24 | `infra/render.yaml`, `.env.example`, `README.md`, `docs/*` | Record production auth as the hosted default and refresh deployment, production, status, limitation, and submission docs | Keep repository docs consistent with the live pilot | AI agent + QA |
 
 ---
 
@@ -169,14 +173,18 @@ The deterministic mock path (`app/agents/mock.py`) is the default for the demo a
 | Web types | `pnpm typecheck` | Pass |
 | Web unit | `pnpm test` | 8 passed |
 | Web build | `pnpm build` | Pass; 15 routes |
-| Browser smoke | `pnpm test:e2e` | 4 passed (demo); production login verified separately against a mock Supabase/JWKS server |
+| Browser smoke | `pnpm test:e2e` | 4 passed locally in demo mode |
+| Hosted production browser QA | Playwright against Vercel + hosted API | 2 passed with real Supabase admin/viewer accounts |
+| Hosted API auth QA | Login/refresh/role checks | Four accounts passed; wrong password `401`; demo login `403`; unprovisioned user `403` |
+| Hosted report persistence | Generate, redeploy, download | PDF/JSON/Markdown checksums matched after Render redeploy |
+| Hosted rate limit | Burst login requests | `429` with `Retry-After` |
 | Golden set | `make evals` | 7/7; five metrics at 1.0 |
 | Container build | `docker build -f apps/api/Dockerfile .` | Pass |
 | Container health | `/healthz` + `/docs` on mapped port | Pass |
-| API smoke | `/healthz`, `/dashboard/summary`, `/graph`, `/audit/verify` | Pass |
+| API smoke | `/healthz`, `/dashboard/summary`, `/graph`, `/audit/verify` | Pass locally and hosted |
 | Source sync | `POST /sources/{id}/sync` | Fixture load + audit event pass |
-| Report generation | PDF/JSON/Markdown | Pass |
-| Role flows | Analyst mutation, approver decision, admin audit verify | Pass |
+| Report generation | PDF/JSON/Markdown | Pass locally and hosted; checksums verified |
+| Role flows | Analyst mutation, approver decision, admin audit verify | Pass locally and hosted |
 | Reseed | `python -m app.db.seed` | Baseline restored |
 
 Manual visual QA covered every route at 1440×1000. Known cosmetic trade-off: the UI is dense at laptop scale; use a 1440p display or browser zoom for the demo video.
@@ -192,20 +200,23 @@ Manual visual QA covered every route at 1440×1000. Known cosmetic trade-off: th
 - [x] Model/tool names are recorded.
 - [x] No exaggerated claims about legal capability.
 - [x] Disclaimers are present in UI, API root, reports, and docs.
-- [x] Live demo URL added after deployment.
+- [x] Live pilot URL added after deployment.
 - [ ] Video link added after recording.
 
 ---
 
 ## 9. Known gaps
 
-- Public repository is live at <https://github.com/A7reus/Chowkidar>; CI is green.
+- Public repository is live at <https://github.com/A7reus/Chowkidar>; CI is green at `fcd7fd8`.
 - Render API and Vercel web are live. Some networks cannot reach Vercel’s new edge IPs; see `CLOUD_DEPLOYMENT_STATUS.md`.
-- Supabase Auth is implemented end-to-end (API proxy + production login UI) but **not enabled on the live service** until the Supabase URL/public/server keys and hosted env changes are applied.
-- Report storage is now durable on the hosted API (`STORAGE_BACKEND=database`); Supabase Storage remains an optional adapter. The previous image used ephemeral `/tmp`.
+- Supabase Auth is **enabled on the live service** with four provisioned accounts, local role mapping, and demo login disabled. Hosted auth, refresh, role, and browser QA passed.
+- Report storage is durable on the hosted API (`STORAGE_BACKEND=database`) and survived a Render redeploy; Supabase Storage remains an optional adapter. The previous image used ephemeral `/tmp`.
 - Rate limits are process-local (single Render instance).
 - Browser tokens are stored in local storage; HttpOnly cookies are a hardening backlog item.
+- The Supabase database password is weak and rotation is pending.
+- Vercel default DNS is variable on some networks; the final hosted QA used a reachable Vercel edge IP.
 - Live source connectors are not implemented; `DATA_MODE=live` remains unsupported.
 - BGE-M3, Docling, RAGAS, and Phoenix are optional and not required for the demo path.
 - Golden set is small (7 cases) and synthetic.
 - No legal/compliance advisor reviewed the content.
+- No demo video or final Figma/design link yet; team-diversity facts are unconfirmed.

@@ -1,7 +1,8 @@
 # Chowkidar — Operations runbook
 
-**Scope:** the Render API + Vercel web + Supabase pilot. The live service is
-currently in demo auth; production cutover is in [`PRODUCTION.md`](PRODUCTION.md).
+**Scope:** the Render API + Vercel web + Supabase production pilot. Supabase
+email/password auth and durable Postgres reports are live. The cutover, QA
+evidence, and credential handling are in [`PRODUCTION.md`](PRODUCTION.md).
 
 ---
 
@@ -13,19 +14,6 @@ curl -sS https://chowkidar-api.onrender.com/api/v1/auth/config | jq
 curl -sSI https://chowkidar-wheat.vercel.app/
 ```
 
-Expected demo state:
-
-```json
-{
-  "status": "ok",
-  "database": "ok",
-  "auth_mode": "dev",
-  "demo_mode": true,
-  "llm_mode": "mock",
-  "data_mode": "fixture"
-}
-```
-
 Expected production pilot:
 
 ```json
@@ -33,9 +21,14 @@ Expected production pilot:
   "status": "ok",
   "database": "ok",
   "auth_mode": "supabase",
-  "demo_mode": false
+  "demo_mode": false,
+  "llm_mode": "mock",
+  "data_mode": "fixture"
 }
 ```
+
+The local offline demo still uses `auth_mode: dev` and `demo_mode: true`; those
+values on the public deployment would be a regression.
 
 If `database` is `unavailable`, the API is degraded; check Supabase status and
 Render logs before retrying.
@@ -172,7 +165,7 @@ Local only:
 make reset
 ```
 
-Cloud demo (only if the data is synthetic and you intend to replace it):
+Hosted synthetic pilot (only if you intend to replace the current pilot data):
 
 ```bash
 cd apps/api
@@ -237,12 +230,14 @@ real tenant data.
 
 ## 9. Security checklist
 
-- [ ] `AUTH_MODE=supabase`, `DEMO_MODE=false` on any deployment with real data.
-- [ ] Service-role key exists only in the API environment.
-- [ ] `CORS_ORIGINS` is an exact origin list, not `*`.
-- [ ] Report bucket is private; downloads go through the API.
-- [ ] No secrets in git, screenshots, browser bundles, or the submission form.
-- [ ] Supabase database password rotated if it was ever shared.
-- [ ] Audit chain verified after material changes.
+- [x] `AUTH_MODE=supabase`, `DEMO_MODE=false` on any deployment with real data.
+- [x] Service-role key exists only in the API environment.
+- [x] `CORS_ORIGINS` is an exact origin list, not `*`.
+- [x] Report bytes are in Postgres and downloads go through the API; the
+      optional Supabase Storage bucket remains private.
+- [x] No secrets in git or public API responses; the deployed browser bundle was
+      checked for server-key material.
+- [ ] Supabase database password rotated if it was ever shared. **Still pending.**
+- [x] Audit chain verified after material changes.
 - [ ] Access removed for departed pilot users (`is_active=false` or Supabase
-      user deletion).
+      user deletion). **N/A for the current fixed four-account pilot.**

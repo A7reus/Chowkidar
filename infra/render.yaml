@@ -1,6 +1,7 @@
 # Free-tier deployment: no persistent disk. Reports use the database backend
 # so they survive restarts. Uploads still use /tmp and are ephemeral.
-# The live service remains on demo auth until Supabase Auth keys are configured.
+# Production pilot: Supabase Auth is enabled. The URL and keys are dashboard
+# secrets (sync: false), not committed values.
 services:
   - type: web
     name: chowkidar-api
@@ -16,9 +17,9 @@ services:
       - key: APP_ENV
         value: production
       - key: AUTH_MODE
-        value: dev
+        value: supabase
       - key: DEMO_MODE
-        value: "true"
+        value: "false"
       - key: DEV_JWT_SECRET
         generateValue: true
       - key: DATA_MODE

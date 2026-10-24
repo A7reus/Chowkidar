@@ -445,11 +445,11 @@ This is the short version. The detailed limitations are in `docs/ARCHITECTURE.md
 | n8n workflow | Compose service and scaffolding exist; not part of the demo path | **No** until wired and demonstrated |
 | Fine-tuning / LoRA | Not implemented | **No** |
 | Contextual RAG, semantic chunking, Graph RAG, late interaction | Not implemented | **No** |
-| Supabase Auth hosted login | Implemented: API password/refresh/logout proxy, JWKS verification, local role mapping, production login UI; not enabled on the live service until keys are set | **Partially — code ready, hosted cutover pending** |
+| Supabase Auth hosted login | Enabled on the live API: password/refresh/logout proxy, JWKS verification, local role mapping, four provisioned accounts, demo login disabled; hosted auth and browser QA passed | **Yes, for the single-workspace pilot** |
 | Supabase Storage + database reports | Database storage is active on the hosted API; private bucket adapter exists with Postgres fallback | **Yes for durable reports; Supabase Storage bucket not enabled** |
 | Neo4j graph projection | Not wired; graph UI reads Postgres | **No** |
 | Multi-tenant isolation, SSO, billing, SOC 2, legal review | Not implemented | **No** |
-| Public deployment | Render API + Vercel web live in demo mode; Vercel edge-IP workaround needed on some networks | **Yes, demo mode; production cutover pending** |
+| Public deployment | Render API + Vercel web live as a Supabase-authenticated production pilot; Vercel edge-IP workaround needed on some networks | **Yes as a single-workspace pilot; not commercial SaaS readiness** |
 
 ### Why this matters
 
@@ -467,10 +467,10 @@ These are ranked by score and credibility per unit of work. They do **not** requ
 
 ### Must do
 
-1. **Deploy the app publicly.** Vercel web + Render API + Supabase Postgres, or a stable Cloudflare Tunnel if cloud accounts are unavailable. Verify in incognito, with CORS and `NEXT_PUBLIC_API_URL` set correctly.
-2. **Record the 2–3 minute YouTube demo.** Show the working UI, one critical risk with evidence, approver decision, audit verification, and report generation.
+1. **Keep the live pilot healthy.** The app is deployed on Vercel + Render + Supabase with production auth and hosted QA complete. If the Vercel DNS issue affects judges, add a custom domain and update CORS.
+2. **Record the 2–3 minute YouTube demo.** Show the real Supabase login, one critical risk with evidence, approver decision, audit verification, and report generation.
 3. **Fill every form field with existing evidence.** The text fields are worth many points and cost only careful writing.
-4. **Add the GitHub URL, live URL, video URL, and access note.**
+4. **Add the GitHub URL, live URL, video URL, and private hosted access note.**
 5. **Add Figma/design and up to three other links.** Architecture diagrams, API docs, prompt library, and the video can serve as “other links.”
 6. **Get team composition data from the team.** Size, NRB status, and female-member status are worth 7 points and cannot be invented.
 

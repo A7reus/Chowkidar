@@ -2,18 +2,23 @@
 
 **Target length:** 2:30–2:50. Hard stop at 3:00.
 **Narrative:** See the risk. Approve the fix.
-**Preferred recording state:** production pilot (`AUTH_MODE=supabase`,
-`DEMO_MODE=false`) so the video shows the real sign-in path. If the cutover is
-not ready, record the same flow in demo mode and say “demo workspace” on screen;
-do not imply it is a customer deployment.
+**Recording state:** the live production pilot (`AUTH_MODE=supabase`,
+`DEMO_MODE=false`) with a managed Supabase account. Show the real email/password
+sign-in path. The data is synthetic; say “pilot workspace” and do not imply it is
+a customer deployment. If production is unavailable, record the local demo and
+label it **local demo**, not the hosted pilot.
 
 ---
 
 ## Pre-flight (10 minutes before recording)
 
-- [ ] Warm the API: open `/healthz` and wait for `status: ok`.
+- [ ] Warm the API: open `/healthz` and wait for `status: ok` with
+      `auth_mode: supabase` and `demo_mode: false`.
+- [ ] Confirm the Vercel URL resolves; use the documented edge-IP workaround if
+      the default resolver returns an unreachable `.3` address.
 - [ ] Open the web app in a clean incognito window.
-- [ ] Log in once to verify the account and password.
+- [ ] Log in once with the managed analyst account; passwords stay in the
+      private access note and must be blurred if they appear on screen.
 - [ ] Set browser zoom to 100%; hide bookmarks and notifications.
 - [ ] Close extra tabs; use a 1440×900 or 1920×1080 window.
 - [ ] Confirm the microphone level and record a 10-second test.
@@ -36,8 +41,8 @@ do not imply it is a customer deployment.
 
 ### 0:15–0:35 — Sign in
 
-**Screen:** Production login → email/password → dashboard. If demo mode, choose
-the **Analyst** card and say “demo workspace”.
+**Screen:** Production login → managed email/password → dashboard. Do not show
+the password field contents; cut or blur while typing.
 
 **Say:**
 > “This is a managed workspace with role-based access. I’m signing in as the
@@ -105,10 +110,10 @@ open the downloaded PDF; return to dashboard.
 | Failure | Recovery |
 |---|---|
 | API cold start | Cut the pause; keep talking over the dashboard; retry the action. |
-| Login fails | Use the demo role card if available, or restart from the pre-warmed tab. |
+| Login fails | Use the pre-warmed logged-in tab or a second prepared session. Do not switch to a demo role card for a production-labelled video. |
 | Report generation slow | Show the previously downloaded PDF; say “generated in the same session”. |
 | Graph clipping | Use the inspector panel; do not resize the window mid-recording. |
-| Supabase/network error | Stop; do not record a broken production claim. Use the demo-mode recording and label it clearly. |
+| Supabase/network error | Stop; do not record a broken production claim. If production stays down, record the local demo and label it **local demo** on screen and in the description. |
 
 ## Post-record checklist
 

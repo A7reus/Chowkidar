@@ -29,13 +29,16 @@
 | Evidence and citations | Risk detail evidence quote + source URL; `/search` cited chunks |
 | Auditability | `/audit` hash-chain verification (admin) |
 | Quality evaluation | `/evals`, 7/7 golden cases, five metrics |
+| Supabase email/password auth | `/login`; `/api/v1/auth/config`; role-gated routes |
+| Durable hosted reports | PDF/JSON/Markdown downloads backed by Postgres |
 | AI-agent build provenance | [`docs/BUILD_LOG.md`](BUILD_LOG.md), [`prompts/MASTER_PROMPT.md`](../prompts/MASTER_PROMPT.md) |
 | Not legal advice | API root, UI, reports, README, methodology resource |
 
 - **Repository URL:** <https://github.com/A7reus/Chowkidar>
-- **Live demo URL:** <https://chowkidar-wheat.vercel.app/> — live in **demo mode**; some networks need the Vercel edge-IP workaround in [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md)
+- **Live pilot URL:** <https://chowkidar-wheat.vercel.app/> — production-pilot configuration with Supabase email/password auth, four managed accounts, and demo login disabled. Some networks need the Vercel edge-IP workaround in [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md).
 - **API URL:** <https://chowkidar-api.onrender.com/>
-- **Production pilot:** code path implemented but not enabled on the live URL until the Supabase Auth cutover in [`PRODUCTION.md`](PRODUCTION.md) is complete. Do not describe the live URL as production-ready.
+- **Hosted access:** Supabase accounts use the emails `admin@chowkidar.app`, `analyst@chowkidar.app`, `approver@chowkidar.app`, and `viewer@chowkidar.app`. Passwords are held in the private, gitignored access note and must be supplied to judges only through the form's private access field or another controlled channel.
+- **Production status:** live and verified at revision `fcd7fd8`: `/healthz` reports `auth_mode=supabase`, `demo_mode=false`, `database=ok`; hosted browser QA passed for admin and viewer; reports survived a Render redeploy with matching SHA-256. This is a single-workspace pilot, not commercial SaaS readiness.
 - **Video URL:** _to be added after recording — required for the official form_
 
 > The official form and MCP knowledge base both reward a public live demo and a 2–3 minute video. A local-only demo is not enough for maximum preliminary score. See [`COMPETITION_CONTEXT.md`](COMPETITION_CONTEXT.md) for the captured form, scoring signals, and the authoritative domain list.
@@ -56,7 +59,15 @@ make web    # terminal 2
 
 Open **http://localhost:3000** and choose any demo account.
 
-### Demo accounts
+### Hosted pilot accounts
+
+The hosted login uses Supabase email/password, not the demo cards. The four
+accounts follow the pattern `<role>@chowkidar.app`; the passwords are in the
+private access note. A managed account cannot switch roles from the UI: role
+changes are made by an administrator in the local `users` table. Local demo
+accounts remain available for offline judging.
+
+### Local demo accounts
 
 | Role | Name | Email |
 |---|---|---|
@@ -131,7 +142,7 @@ JU_StackMind combines AI/full-stack engineering and data engineering. The build 
 
 ### Next
 
-Pilot with an RMG exporter and a compliance reviewer; enable the Supabase Auth/Storage cutover and hosted QA; add live source scheduling; expand the golden set; add tenant isolation, HttpOnly sessions, and external audit anchoring.
+Pilot with an RMG exporter and a compliance reviewer; add live source scheduling; optionally enable the private Supabase Storage adapter; expand the golden set; add tenant isolation, HttpOnly sessions, MFA/SSO, and external audit anchoring.
 
 ---
 
@@ -147,14 +158,15 @@ Pilot with an RMG exporter and a compliance reviewer; enable the Supabase Auth/S
 
 ## 7. Known limitations
 
-- Fixture-first demo data; live connectors are scaffolded, not production-scheduled. `DATA_MODE=live` is unsupported.
-- The **live URL is still demo mode** (`AUTH_MODE=dev`, `DEMO_MODE=true`). The Supabase Auth production path and email/password login UI are implemented and locally verified, but hosted cutover is blocked on Supabase keys and dashboard access.
+- Fixture-first pilot data; live connectors are not implemented, and `DATA_MODE=live` is unsupported. Scheduled n8n/cron ingestion is scaffolded, not demonstrated.
+- The hosted app is a **single-workspace production pilot**, not demo mode: `AUTH_MODE=supabase`, `DEMO_MODE=false`, four provisioned accounts, demo login `403`. It is not a multi-tenant commercial deployment.
 - Reports use Postgres on the hosted API, with private Supabase Storage as an optional adapter. Local `/tmp` reports are not durable.
-- Rate limits are process-local; browser tokens are in local storage rather than HttpOnly cookies.
-- BGE-M3, Docling, RAGAS, and Phoenix are optional and not on the demo path.
-- Golden set is small and synthetic (7 cases).
-- No legal/compliance advisor reviewed the content.
-- No legal advice is provided; every finding is a reviewable signal.
+- Rate limits are process-local; browser tokens are in local storage rather than HttpOnly cookies. The current Supabase database password is weak and rotation is pending.
+- Vercel default DNS is variable on some networks; use the documented edge-IP workaround or a custom domain.
+- BGE-M3, Docling, RAGAS, Phoenix, Neo4j, and n8n are optional and not on the hosted pilot path.
+- Golden set is small and synthetic (7 cases). No real exporter data or accuracy benchmark.
+- No legal/compliance advisor reviewed the content. No legal advice is provided; every finding is a reviewable signal.
+- No final demo video or Figma/design link yet. Team-diversity facts are not confirmed.
 - The official form has not been filled yet, by explicit instruction.
 
 ---
@@ -171,7 +183,11 @@ Pilot with an RMG exporter and a compliance reviewer; enable the Supabase Auth/S
 - [x] Supabase project and database; migrated and seeded.
 - [x] Render API deploy.
 - [x] Vercel web deploy.
-- [ ] Supabase Auth URL/anon/service-role keys and hosted cutover.
-- [ ] Production-mode live URL verified in incognito after cutover.
+- [x] Supabase Auth enabled with four provisioned accounts; demo login disabled.
+- [x] Production-mode live URL verified through the hosted browser QA matrix.
+- [x] Hosted role restrictions, rate limiting, audit verification, report downloads, and mobile layout checked.
+- [x] Durable reports verified across a Render redeploy with matching checksums.
+- [x] CI green and local `make check` passing after the hosted fixes.
 - [ ] Two-to-three-minute demo video recorded and linked.
+- [ ] Final Figma/design link and team-diversity facts confirmed.
 - [ ] Final submission form completed before the deadline.
