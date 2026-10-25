@@ -38,7 +38,8 @@ cold-start behavior.
 
 - `GET /healthz` returns `status: ok`, `database: ok`, `auth_mode: supabase`,
   `demo_mode: false`, `llm_mode: mock`, `data_mode: fixture`, and a revision.
-  The current runtime was verified at revision `d70e493db510`.
+  The QA run was verified at revision `d70e493db510`; later docs-only commits
+  may advance the reported revision without changing runtime behavior.
 - `GET /api/v1/auth/config` returns `password_auth: true`, `demo_mode: false`,
   and an empty `demo_users` list.
 - `POST /api/v1/auth/demo-login` returns `403` with `Demo login is disabled`.
