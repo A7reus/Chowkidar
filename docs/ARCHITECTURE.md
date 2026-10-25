@@ -1,6 +1,6 @@
 # Chowkidar — Architecture
 
-**Status:** local-first implementation validated; hosted API and web builds are live. Netlify is the primary web origin; Vercel remains a secondary fallback. Netlify browser login is pending the Render CORS cutover. See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md).
+**Status:** local-first implementation validated; hosted API and web builds are live. Netlify is the primary web origin with production browser QA passed 2/2; Vercel remains a secondary fallback. See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md).
 **Last updated:** 2026-10-25
 
 ---

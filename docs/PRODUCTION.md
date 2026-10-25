@@ -1,11 +1,11 @@
 # Production pilot path
 
-**Status:** **live as a production pilot.** The hosted API runs with Supabase
-email/password auth (`AUTH_MODE=supabase`, `DEMO_MODE=false`), four pilot accounts
-are provisioned, demo login is disabled, and reports are stored in Postgres.
-Netlify is the primary web origin; Vercel is the secondary fallback. The prior
-hosted API and browser QA matrix in section 3 passed against Vercel at revision
-`fcd7fd8`. Netlify browser QA is pending the Render CORS cutover. This is a
+**Status:** **live and verified as a production pilot.** The hosted API runs
+with Supabase email/password auth (`AUTH_MODE=supabase`, `DEMO_MODE=false`), four
+pilot accounts are provisioned, demo login is disabled, and reports are stored
+in Postgres. Netlify is the primary web origin and Vercel is the secondary
+fallback. Netlify production browser QA passed 2/2 on 2026-10-25 at revision
+`d70e493db510`; the prior Vercel run passed at `fcd7fd8`. This is a
 single-workspace production pilot, not a commercial customer deployment.
 
 This document defines “production-ready” for Chowkidar's preliminary round as
@@ -57,16 +57,16 @@ operations, legal review, or live source connectors).
 | Accounts | `admin@chowkidar.app`, `analyst@chowkidar.app`, `approver@chowkidar.app`, `viewer@chowkidar.app` |
 | Credentials | Gitignored `docs/private/supabase-credentials.local.md`, mode `600` |
 | Report storage | Postgres (`STORAGE_BACKEND=database`) |
-| Runtime QA | Prior Vercel run at revision `fcd7fd8`; API, role, report, browser, mobile, CORS, and rate-limit checks passed. Netlify browser QA is pending the Render CORS update. Later docs-only commits may advance the reported revision. |
-| Remaining external constraints | Netlify CORS cutover pending; Vercel default DNS is variable on some networks. See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md). |
+| Runtime QA | Netlify run passed 2/2 at revision `d70e493db510`; prior Vercel run passed at `fcd7fd8`. API, role, report, browser, mobile, CORS, and rate-limit checks passed. |
+| Remaining external constraint | Vercel default DNS is variable on some networks; it is only the secondary fallback. See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md). |
 
 ---
 
 ## 2. Hosted cutover checklist
 
-> The current pilot completed sections 2.1–2.4 on 2026-10-24. The Netlify-primary
-> CORS cutover is in progress. Keep this checklist as the reproducible cutover
-> and key-rotation runbook for a future deployment.
+> The current pilot completed sections 2.1–2.4 on 2026-10-24 and the
+> Netlify-primary CORS cutover on 2026-10-25. Keep this checklist as the
+> reproducible cutover and key-rotation runbook for a future deployment.
 
 ### 2.1 Collect secrets
 
@@ -225,9 +225,8 @@ fresh synthetic demo deployment.
 
 ## 3. Hosted QA matrix
 
-Completed against Vercel and the hosted API on 2026-10-24 at runtime revision
-`fcd7fd8`. Netlify is now primary; rerun this matrix against Netlify after the
-Render `CORS_ORIGINS` update and record the result here.
+Completed against Netlify and the hosted API on 2026-10-25 at runtime revision
+`d70e493db510`, with the prior Vercel run retained at `fcd7fd8`:
 
 - [x] `/healthz` returns `status: ok`, `database: ok`, `auth_mode: supabase`,
       `demo_mode: false`.
@@ -246,9 +245,10 @@ Render `CORS_ORIGINS` update and record the result here.
 - [x] `/settings` shows the correct profile, auth mode, data/LLM/storage modes,
       and sign-out.
 - [x] Mobile layout at 390 px works; no dashboard horizontal overflow.
-- [x] CORS preflight from Vercel succeeds.
-- [ ] CORS preflight from Netlify succeeds. **Pending the Render
-      `CORS_ORIGINS` update.**
+- [x] CORS preflight from both Netlify and Vercel succeeds with the exact
+      allow-origin header.
+- [x] Netlify PDF generation and download succeed; the downloaded SHA-256
+      matches the recorded checksum.
 - [x] No secrets appear in the browser bundle, public responses, or git.
 - [x] Rate limit returns `429` with `Retry-After` after the configured burst.
 

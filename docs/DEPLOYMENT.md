@@ -5,8 +5,8 @@ seeded. The Render API and both web builds are live as a **production pilot**:
 Netlify is the primary web origin, Vercel is the secondary fallback, and
 Supabase email/password auth (`AUTH_MODE=supabase`, `DEMO_MODE=false`) is
 enabled with four provisioned accounts, demo login disabled, and durable
-Postgres report storage. The prior hosted API/browser QA passed against Vercel;
-Netlify browser QA is pending the Render CORS cutover. See
+Postgres report storage. Netlify production browser QA passed 2/2 at revision
+`d70e493db510`; the prior Vercel run passed at `fcd7fd8`. See
 [`PRODUCTION.md`](PRODUCTION.md) and
 [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md). This is a
 single-workspace pilot, not a commercial multi-tenant deployment.
@@ -291,9 +291,8 @@ an account whose Supabase UUID or email is present in the local `users` table.
 
 ## 7. Post-deploy smoke checklist
 
-Prior production pilot QA against Vercel (completed on 2026-10-24 at revision
-`fcd7fd8`). Netlify is now primary; rerun the matrix after the Render CORS
-cutover:
+Production pilot QA completed against Netlify on 2026-10-25 at revision
+`d70e493db510`, with the prior Vercel run retained at `fcd7fd8`:
 
 - [x] `/healthz` returns `status: ok`, `database: ok`, `auth_mode: supabase`,
       `demo_mode: false`.
@@ -309,10 +308,9 @@ cutover:
 - [x] Search returns cited chunks.
 - [x] Evals page shows 7/7 and five gates for analyst/admin.
 - [x] Graph renders all 30 nodes.
-- [x] CORS allows the Vercel origin.
-- [ ] CORS allows the Netlify origin. **Pending the Render `CORS_ORIGINS` update.**
-- [x] Browser QA found no console errors or `5xx` responses on Vercel.
-- [ ] Netlify primary browser QA after the CORS update.
+- [x] CORS allows both the Netlify and Vercel origins.
+- [x] Browser QA found no console errors or `5xx` responses on Netlify.
+- [x] Netlify PDF generation/download and viewer read-only state passed.
 - [x] No secrets appear in public responses or git history.
 
 Local demo mode keeps the one-click role cards and `AUTH_MODE=dev`; use the
@@ -346,7 +344,6 @@ local seed baseline for offline judging. The full production matrix is in
 | No Neo4j Aura | Graph uses relational demo data |
 | No Sentry/PostHog keys | Observability remains local/optional |
 | No legal/compliance advisor | Accepted constraint; conservative design and human approval |
-| Netlify CORS cutover | Netlify is live but cannot call the API until Render `CORS_ORIGINS` includes it |
 | Vercel DNS variability | Secondary fallback only; some networks may need a custom domain |
 | Render web fallback | Currently `502`; optional while Netlify and Vercel are reachable |
 

@@ -202,7 +202,7 @@ cd apps/api && uv run python -m app.db.seed
 - Rate limits are process-local (suitable for the single Render instance); browser tokens are stored in local storage rather than HttpOnly cookies.
 - Live source connectors are not implemented; `DATA_MODE=live` is unsupported and source sync replays fixtures.
 - Optional BGE-M3 embeddings, Docling, RAGAS, and Phoenix are not required for the demo path.
-- Cloud deployment is live for the API and web build. Netlify is the primary web origin; Vercel remains a secondary fallback and still has DNS variability on some networks. The Netlify CORS cutover is pending, so the Vercel path is the currently verified browser login until Render is updated. See [`docs/CLOUD_DEPLOYMENT_STATUS.md`](docs/CLOUD_DEPLOYMENT_STATUS.md).
+- Cloud deployment is live for the API and web build. Netlify is the primary web origin with production browser QA passed 2/2; Vercel remains a secondary fallback and still has DNS variability on some networks. See [`docs/CLOUD_DEPLOYMENT_STATUS.md`](docs/CLOUD_DEPLOYMENT_STATUS.md).
 
 ---
 
@@ -276,6 +276,6 @@ The base implementation was produced by an AI coding agent from a single master 
 Event: https://cloudcampbd.com/ai-builders-congress  
 Repository: https://github.com/A7reus/Chowkidar
 
-- **Live production pilot:** <https://ch0wkidar.netlify.app/> (Netlify primary; Supabase email/password; CORS cutover pending). Verified browser fallback: <https://chowkidar-wheat.vercel.app/> (Vercel DNS may vary on some networks).
+- **Live production pilot:** <https://ch0wkidar.netlify.app/> (Netlify primary; Supabase email/password; production browser QA passed 2/2). Secondary fallback: <https://chowkidar-wheat.vercel.app/> (Vercel DNS may vary on some networks).
 - **API:** <https://chowkidar-api.onrender.com/>
 - **Video:** pending recording.

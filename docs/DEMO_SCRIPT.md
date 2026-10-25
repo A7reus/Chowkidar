@@ -15,9 +15,9 @@ label it **local demo**, not the hosted pilot.
 - [ ] Warm the API: open `/healthz` and wait for `status: ok` with
       `auth_mode: supabase` and `demo_mode: false`.
 - [ ] Confirm the Netlify URL resolves and that login reaches the API:
-      <https://ch0wkidar.netlify.app/>. If Netlify CORS is not yet updated, or
-      the URL does not resolve, use the Vercel fallback and the documented DNS
-      workaround in [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md).
+      <https://ch0wkidar.netlify.app/>. If the URL does not resolve, use the
+      Vercel fallback and the documented DNS workaround in
+      [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md).
 - [ ] Open the web app in a clean incognito window.
 - [ ] Log in once with the managed analyst account; passwords stay in the
       private access note and must be blurred if they appear on screen.

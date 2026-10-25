@@ -7,9 +7,9 @@
   remains a secondary fallback at <https://chowkidar-wheat.vercel.app/>. Supabase
   email/password auth is enabled, four pilot accounts are provisioned, demo
   login returns `403`, and reports are stored in Postgres. The Netlify CORS
-  cutover is pending: Render currently allows only the Vercel origin, so the
-  Netlify login cannot call the API until `CORS_ORIGINS` is updated. This is not
-  a claim of commercial SaaS readiness; see [`LIMITATIONS.md`](LIMITATIONS.md).
+  cutover is complete and Netlify production browser QA passed 2/2 with the real
+  admin and viewer accounts. This is not a claim of commercial SaaS readiness;
+  see [`LIMITATIONS.md`](LIMITATIONS.md).
 
 ---
 
@@ -17,7 +17,7 @@
 
 | Surface | URL | Status |
 |---|---|---|
-| Web — primary | <https://ch0wkidar.netlify.app/> | UI live; API CORS cutover pending |
+| Web — primary | <https://ch0wkidar.netlify.app/> | Live; production browser QA passed 2/2 |
 | Web — secondary | <https://chowkidar-wheat.vercel.app/> | Live; DNS reachability varies by resolver |
 | API | <https://chowkidar-api.onrender.com/> | Live |
 | API health | <https://chowkidar-api.onrender.com/healthz> | Live: database `ok`, Supabase auth |
@@ -38,7 +38,7 @@ cold-start behavior.
 
 - `GET /healthz` returns `status: ok`, `database: ok`, `auth_mode: supabase`,
   `demo_mode: false`, `llm_mode: mock`, `data_mode: fixture`, and a revision.
-  The current runtime was verified at revision `8fdd413a4222`.
+  The current runtime was verified at revision `d70e493db510`.
 - `GET /api/v1/auth/config` returns `password_auth: true`, `demo_mode: false`,
   and an empty `demo_users` list.
 - `POST /api/v1/auth/demo-login` returns `403` with `Demo login is disabled`.
@@ -55,16 +55,18 @@ cold-start behavior.
 
 ### Browser QA
 
-- The prior hosted production-auth Playwright run passed 2/2 against Vercel with
-  the real admin and viewer accounts. That run covered managed login, dashboard,
-  risks, approvals, signals, sources, reports, graph, search, evals, audit
-  verification, `/settings`, viewer read-only state, mobile layout, and console
-  errors.
-- The Netlify production page is live and returns the real login page with
-  **Secure workspace** and no demo role cards.
-- Netlify browser QA is **pending** until the Render CORS origin is updated.
-  Current preflight from `https://ch0wkidar.netlify.app` returns `400`
-  `Disallowed CORS origin`; Vercel preflight still returns `200`.
+- **Netlify production browser QA passed 2/2** on 2026-10-25 at API revision
+  `d70e493db510`, using the real admin and viewer accounts. The run covered
+  managed login, dashboard, risks, approvals, signals, sources, reports, graph,
+  search, evals, audit verification, `/settings`, PDF generation/download,
+  viewer read-only state, mobile layout at 390 px, logout/protected-route
+  redirect, and console errors.
+- The prior hosted production-auth Playwright run passed 2/2 against Vercel at
+  revision `fcd7fd8`. Vercel remains the secondary fallback.
+- The Netlify login page renders **Secure workspace**, the pilot case file, and
+  no demo role cards.
+- CORS preflight now returns `200` with the exact allow-origin header for both
+  `https://ch0wkidar.netlify.app` and `https://chowkidar-wheat.vercel.app`.
 - The deployed Vercel JavaScript chunks were scanned; no Supabase secret,
   service-role key, database URI, or pilot password appeared in the bundle.
 - Public health, auth-config, and OpenAPI responses contain no service keys or
@@ -86,15 +88,19 @@ cold-start behavior.
 - Those three reports were generated before the `fcd7fd8` Render redeploy and
   downloaded again afterward with matching SHA-256 checksums. The PDF is 13,732
   bytes; JSON is 24,804 bytes; Markdown is 14,048 bytes.
-- Downloads require authentication, do not expose `storage_path`, return
-  `Cache-Control: private, no-store` and `X-Content-Type-Options: nosniff`, and
-  verify the stored checksum before sending bytes. Compressed formats can
-  receive a weak proxy ETag; the recorded SHA-256 is the integrity reference.
+- A new PDF was generated through the Netlify UI on 2026-10-25:
+  `02bae404-9b39-4913-ac50-7d53c950b798`. It is 13,733 bytes with SHA-256
+  `9bca3361b5c687ae0702c3cdc3ddf52e8ea8d61dabab1f51685544927abeeef1`.
+  The downloaded bytes matched the recorded checksum and used
+  `Cache-Control: private, no-store` and `X-Content-Type-Options: nosniff`.
+- Downloads require authentication, do not expose `storage_path`, and verify
+  the stored checksum before sending bytes. Compressed formats can receive a
+  weak proxy ETag; the recorded SHA-256 is the integrity reference.
 
 ### CI and local verification
 
-- CI is green for the Netlify migration commits; the latest checked commit is
-  `8fdd413` (API and web jobs).
+- CI is green for the Netlify migration and dual-hosting docs commits; the
+  latest checked commit is `d70e493` (API and web jobs).
 - `make check` passes: 57 API tests and 8 web tests.
 - Local Playwright demo smoke passes 4/4.
 
@@ -126,8 +132,10 @@ deployment is reachable through older Vercel edge IPs:
 76.76.21.164
 ```
 
-It is also reachable through `64.29.17.195`, which was used for the final
-Vercel browser QA with a Chromium host-resolver override:
+It is also reachable through `64.29.17.195`, which was used for the prior
+Vercel browser QA with a Chromium host-resolver override. On 2026-10-25 the root
+and `/login` both returned `200` through that IP, while the default resolver
+still timed out:
 
 ```bash
 curl -sS -I \
@@ -240,13 +248,9 @@ placeholders, never the Supabase password/URI, JWTs, or provider keys.
 
 ## 6. Next actions
 
-1. Update Render's `CORS_ORIGINS` and `WEB_URL` to the values in section 4,
-   then redeploy the API and confirm both origins pass preflight.
-2. Run the production Playwright QA against the Netlify URL with the real
-   admin/viewer accounts; update this document with the result.
-3. Record the 2–3 minute demo video with the live Supabase login.
-4. Confirm the final Figma/design link and the team-diversity facts.
-5. Rotate the Supabase database password; the current one is weak and was shared
+1. Record the 2–3 minute demo video with the live Supabase login.
+2. Confirm the final Figma/design link and the team-diversity facts.
+3. Rotate the Supabase database password; the current one is weak and was shared
    during setup. Update Render's `DATABASE_URL` after rotation.
-6. Optional: fix or remove the Render web fallback.
-7. Fill and submit the official form only after finalization is complete.
+4. Optional: fix or remove the Render web fallback.
+5. Fill and submit the official form only after finalization is complete.

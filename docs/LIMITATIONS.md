@@ -19,9 +19,8 @@ calibrate the claims.
   `https://ch0wkidar.netlify.app/` is the primary origin and runs against
   `AUTH_MODE=supabase` and `DEMO_MODE=false`. Email/password login, token
   refresh, local-role mapping, demo lockout, and four provisioned pilot accounts
-  are live. Demo login returns `403`. `https://chowkidar-wheat.vercel.app/`
-  remains a secondary fallback. The Netlify origin is not yet in Render's CORS
-  allowlist; until it is, use the Vercel fallback for browser login.
+  are live. Demo login returns `403`. Netlify production browser QA passed 2/2;
+  `https://chowkidar-wheat.vercel.app/` remains a secondary fallback.
 - **The hosted pilot is still a single-workspace deployment.** It has no
   multi-tenancy, RLS, MFA, SSO, or customer administration. It is not a
   commercial production environment.

@@ -35,10 +35,10 @@
 | Not legal advice | API root, UI, reports, README, methodology resource |
 
 - **Repository URL:** <https://github.com/A7reus/Chowkidar>
-- **Live pilot URL:** <https://ch0wkidar.netlify.app/> — Netlify primary, with production-pilot configuration, Supabase email/password auth, four managed accounts, and demo login disabled. Netlify CORS cutover is pending; the verified browser fallback is <https://chowkidar-wheat.vercel.app/> (Vercel DNS may vary on some networks; see [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md)).
+- **Live pilot URL:** <https://ch0wkidar.netlify.app/> — Netlify primary, verified with production browser QA: Supabase email/password auth, four managed accounts, demo login disabled, PDF generation/download, and viewer read-only access. Secondary fallback: <https://chowkidar-wheat.vercel.app/> (Vercel DNS may vary on some networks; see [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md)).
 - **API URL:** <https://chowkidar-api.onrender.com/>
 - **Hosted access:** Supabase accounts use the emails `admin@chowkidar.app`, `analyst@chowkidar.app`, `approver@chowkidar.app`, and `viewer@chowkidar.app`. Passwords are held in the private, gitignored access note and must be supplied to judges only through the form's private access field or another controlled channel.
-- **Production status:** live as a production pilot. Prior hosted QA at revision `fcd7fd8` passed against Vercel: `/healthz` reports `auth_mode=supabase`, `demo_mode=false`, `database=ok`; browser QA passed for admin and viewer; reports survived a Render redeploy with matching SHA-256. Netlify is now primary; its browser QA is pending the Render CORS update. This is a single-workspace pilot, not commercial SaaS readiness.
+- **Production status:** live and verified as a production pilot. Netlify browser QA passed 2/2 at revision `d70e493db510`: `/healthz` reports `auth_mode=supabase`, `demo_mode=false`, `database=ok`; admin and viewer flows passed; PDF generation/download matched SHA-256; reports use Postgres; viewer role restrictions returned `403`; and both web origins pass CORS preflight. This is a single-workspace pilot, not commercial SaaS readiness.
 - **Video URL:** _to be added after recording — required for the official form_
 
 > The official form and MCP knowledge base both reward a public live demo and a 2–3 minute video. A local-only demo is not enough for maximum preliminary score. See [`COMPETITION_CONTEXT.md`](COMPETITION_CONTEXT.md) for the captured form, scoring signals, and the authoritative domain list.
@@ -185,9 +185,8 @@ Pilot with an RMG exporter and a compliance reviewer; add live source scheduling
 - [x] Netlify primary web deploy.
 - [x] Vercel secondary web deploy.
 - [x] Supabase Auth enabled with four provisioned accounts; demo login disabled.
-- [x] Production-mode live URL verified through the hosted browser QA matrix against Vercel.
-- [ ] Netlify primary browser QA after the Render CORS cutover.
-- [x] Hosted role restrictions, rate limiting, audit verification, report downloads, and mobile layout checked against Vercel.
+- [x] Production-mode live URL verified through the hosted browser QA matrix against Netlify (2/2).
+- [x] Hosted role restrictions, rate limiting, audit verification, report downloads, and mobile layout checked.
 - [x] Durable reports verified across a Render redeploy with matching checksums.
 - [x] CI green and local `make check` passing after the hosted fixes.
 - [ ] Two-to-three-minute demo video recorded and linked.
