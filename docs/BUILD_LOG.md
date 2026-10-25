@@ -214,7 +214,7 @@ Manual visual QA covered every route at 1440×1000. Known cosmetic trade-off: th
 
 ## 9. Known gaps
 
-- Public repository is live at <https://github.com/A7reus/Chowkidar>; CI is green through `d70e493`.
+- Public repository is live at <https://github.com/A7reus/Chowkidar>; CI is green for the Netlify migration and QA-evidence commits.
 - Render API, Netlify primary web, and Vercel secondary web are live. Both web origins pass CORS preflight; some networks cannot reach Vercel’s new edge IPs, which affects only the fallback. See `CLOUD_DEPLOYMENT_STATUS.md`.
 - Supabase Auth is **enabled on the live service** with four provisioned accounts, local role mapping, and demo login disabled. Hosted auth, refresh, role, and browser QA passed against Netlify and Vercel.
 - Report storage is durable on the hosted API (`STORAGE_BACKEND=database`) and survived a Render redeploy; Supabase Storage remains an optional adapter. The previous image used ephemeral `/tmp`.

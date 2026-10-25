@@ -99,8 +99,8 @@ cold-start behavior.
 
 ### CI and local verification
 
-- CI is green for the Netlify migration and dual-hosting docs commits; the
-  latest checked commit is `d70e493` (API and web jobs).
+- CI is green for the Netlify migration and QA-evidence docs commits, including
+  `021c8b6` (API and web jobs).
 - `make check` passes: 57 API tests and 8 web tests.
 - Local Playwright demo smoke passes 4/4.
 
