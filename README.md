@@ -63,7 +63,7 @@ More views: [signals](docs/assets/02-signals.png) · [search](docs/assets/05-sea
 | Supabase Auth production path | Live: password/refresh/logout proxy, JWKS verification, local role mapping, production login UI; four pilot accounts provisioned and hosted QA passed |
 | Durable report storage | Built: local, Postgres, and private Supabase Storage backends; Postgres is live on the hosted API and survived a redeploy |
 | Live LLM providers | Tested via LiteLLM fallback; mock mode is the hosted pilot default |
-| Cloud deployment | Live production pilot: Render API + Vercel web; Vercel DNS caveat applies; see [`docs/CLOUD_DEPLOYMENT_STATUS.md`](docs/CLOUD_DEPLOYMENT_STATUS.md) |
+| Cloud deployment | Live production pilot: Render API + Netlify web primary, Vercel secondary fallback; see [`docs/CLOUD_DEPLOYMENT_STATUS.md`](docs/CLOUD_DEPLOYMENT_STATUS.md) |
 
 ### Demo accounts
 
@@ -102,7 +102,7 @@ Next.js console · REST/OpenAPI · read-only MCP
 - **API:** FastAPI, SQLAlchemy 2, Alembic, Postgres + pgvector, REST/OpenAPI.
 - **Agents:** LangGraph orchestration; LiteLLM fallback chain (Gemini Flash → Groq → Gemini Pro); deterministic mock mode for reproducible demos.
 - **Trust:** verbatim evidence quotes, citation URLs, deterministic verifier, prohibited-phrase checks, hash-chained audit events, role-gated mutations.
-- **Ops:** Docker Compose for local Postgres/Neo4j/Ollama/n8n, Render Docker blueprint for the API, Vercel for the web app.
+- **Ops:** Docker Compose for local Postgres/Neo4j/Ollama/n8n, Render Docker blueprint for the API, Netlify for the primary web app, Vercel as the secondary fallback.
 
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for detail.
 
@@ -202,7 +202,7 @@ cd apps/api && uv run python -m app.db.seed
 - Rate limits are process-local (suitable for the single Render instance); browser tokens are stored in local storage rather than HttpOnly cookies.
 - Live source connectors are not implemented; `DATA_MODE=live` is unsupported and source sync replays fixtures.
 - Optional BGE-M3 embeddings, Docling, RAGAS, and Phoenix are not required for the demo path.
-- Cloud deployment is live for the API and web build; some networks need a DNS workaround for Vercel’s edge IPs. See [`docs/CLOUD_DEPLOYMENT_STATUS.md`](docs/CLOUD_DEPLOYMENT_STATUS.md).
+- Cloud deployment is live for the API and web build. Netlify is the primary web origin; Vercel remains a secondary fallback and still has DNS variability on some networks. The Netlify CORS cutover is pending, so the Vercel path is the currently verified browser login until Render is updated. See [`docs/CLOUD_DEPLOYMENT_STATUS.md`](docs/CLOUD_DEPLOYMENT_STATUS.md).
 
 ---
 
@@ -247,7 +247,7 @@ See [`docs/MCP.md`](docs/MCP.md).
 | [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) | Source inventory and access notes |
 | [`docs/SETUP.md`](docs/SETUP.md) | Local setup, seed baseline, commands, troubleshooting |
 | [`docs/ENVIRONMENT.md`](docs/ENVIRONMENT.md) | Variable reference, auth/storage/rate-limit modes |
-| [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Local, Render, Vercel, Supabase deployment |
+| [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Local, Render, Netlify, Vercel, Supabase deployment |
 | [`docs/PRODUCTION.md`](docs/PRODUCTION.md) | Production-pilot operations, Supabase Auth, credentials, hosted QA |
 | [`docs/RUNBOOK.md`](docs/RUNBOOK.md) | Deploy, rollback, backup, key rotation, incidents |
 | [`docs/API.md`](docs/API.md) | Endpoint reference, auth, errors, rate limits |
@@ -256,7 +256,7 @@ See [`docs/MCP.md`](docs/MCP.md).
 | [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) | What is not built or not enabled, and why |
 | [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md) | 2–3 minute demo shot list and narration |
 | [`docs/PITCH_DECK.md`](docs/PITCH_DECK.md) | 10-slide pitch outline |
-| [`docs/CLOUD_DEPLOYMENT_STATUS.md`](docs/CLOUD_DEPLOYMENT_STATUS.md) | Live URLs, hosted env vars, Vercel edge-IP workaround |
+| [`docs/CLOUD_DEPLOYMENT_STATUS.md`](docs/CLOUD_DEPLOYMENT_STATUS.md) | Live URLs, hosted env vars, Netlify primary and Vercel fallback |
 | [`docs/MCP.md`](docs/MCP.md) | Read-only MCP usage |
 | [`docs/SUBMISSION.md`](docs/SUBMISSION.md) | Judge runbook, submission copy, asset checklist |
 | [`docs/BUILD_LOG.md`](docs/BUILD_LOG.md) | Build level, prompts, models, manual changes |
@@ -276,6 +276,6 @@ The base implementation was produced by an AI coding agent from a single master 
 Event: https://cloudcampbd.com/ai-builders-congress  
 Repository: https://github.com/A7reus/Chowkidar
 
-- **Live production pilot:** <https://chowkidar-wheat.vercel.app/> (Supabase email/password; some networks need the Vercel DNS workaround)
+- **Live production pilot:** <https://ch0wkidar.netlify.app/> (Netlify primary; Supabase email/password; CORS cutover pending). Verified browser fallback: <https://chowkidar-wheat.vercel.app/> (Vercel DNS may vary on some networks).
 - **API:** <https://chowkidar-api.onrender.com/>
 - **Video:** pending recording.

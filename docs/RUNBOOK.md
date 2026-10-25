@@ -1,8 +1,9 @@
 # Chowkidar — Operations runbook
 
-**Scope:** the Render API + Vercel web + Supabase production pilot. Supabase
-email/password auth and durable Postgres reports are live. The cutover, QA
-evidence, and credential handling are in [`PRODUCTION.md`](PRODUCTION.md).
+**Scope:** the Render API + Netlify primary web + Vercel secondary web +
+Supabase production pilot. Supabase email/password auth and durable Postgres
+reports are live. The cutover, QA evidence, and credential handling are in
+[`PRODUCTION.md`](PRODUCTION.md).
 
 ---
 
@@ -11,6 +12,7 @@ evidence, and credential handling are in [`PRODUCTION.md`](PRODUCTION.md).
 ```bash
 curl -sS https://chowkidar-api.onrender.com/healthz | jq
 curl -sS https://chowkidar-api.onrender.com/api/v1/auth/config | jq
+curl -sSI https://ch0wkidar.netlify.app/
 curl -sSI https://chowkidar-wheat.vercel.app/
 ```
 
@@ -46,13 +48,22 @@ Render logs before retrying.
   dashboard.
 - Cold start after idle: 30–60 seconds. Warm the API before a demo.
 
-### Web (Vercel)
+### Web (Netlify primary)
 
-- Project root: `apps/web`.
+- Netlify site: `https://ch0wkidar.netlify.app/`.
+- Repository root base, package directory `apps/web`; config in `netlify.toml`.
 - Required env: `NEXT_PUBLIC_API_URL=https://chowkidar-api.onrender.com`.
 - `NEXT_PUBLIC_*` is inlined at build time; redeploy after changing it.
+- Netlify Free charges 15 credits per production deploy; avoid unnecessary
+  redeploys. Docs-only pushes are skipped by `netlify.toml`.
+
+### Web (Vercel secondary)
+
+- Project root: `apps/web`; config in `apps/web/vercel.json`.
+- Required env: `NEXT_PUBLIC_API_URL=https://chowkidar-api.onrender.com`.
+- Vercel is a fallback only; it is not the canonical `WEB_URL`.
 - If the API origin changes, update Render’s `CORS_ORIGINS` and `WEB_URL` and
-  redeploy the API.
+  redeploy the API. Keep both web origins in `CORS_ORIGINS`.
 
 ### Database migrations
 
@@ -72,11 +83,14 @@ intend to replace it.
 
 1. Render → service → **Deploys** → choose the last known-good deploy →
    **Redeploy**.
-2. Vercel → project → **Deployments** → choose the last good build → **Promote**.
-3. If a migration is implicated, stop and restore the database from backup
+2. Netlify → site → **Deploys** → choose the last good production deploy →
+   **Publish deploy** (or roll back in the Netlify UI).
+3. Vercel → project → **Deployments** → choose the last good build → **Promote**
+   if the fallback is affected.
+4. If a migration is implicated, stop and restore the database from backup
    before rolling back the application. Do not run a downgrade on production
    without a tested backup.
-4. If production auth is broken, roll back the API or fix the Supabase env. Do
+5. If production auth is broken, roll back the API or fix the Supabase env. Do
    not re-enable demo auth on a deployment that may contain real data.
 
 ---
@@ -192,6 +206,8 @@ real tenant data.
 - Check `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and the project's Email provider.
 - A `401` is invalid credentials; a `403` is an authenticated but unprovisioned
   user; a `503` is an upstream Supabase/network failure.
+- If the browser reports a CORS error, verify the page origin is in Render’s
+  `CORS_ORIGINS`. The current allowlist must include both Netlify and Vercel.
 - Check the Render logs for `SupabaseAuthError` messages. Never log passwords or
   tokens.
 
@@ -211,8 +227,16 @@ real tenant data.
 - The current chain only covers application-path writes; external anchoring is a
   backlog item.
 
+### Netlify URL unreachable
+
+- Netlify is the primary origin. Check the Netlify deploy status and DNS.
+- If the site is down, switch to the Vercel fallback and confirm its origin is
+  still in Render’s `CORS_ORIGINS`.
+- Do not change `WEB_URL`; it remains the canonical Netlify origin.
+
 ### Vercel URL unreachable
 
+- Vercel is the secondary fallback; Netlify remains primary.
 - Check DNS resolution and the Vercel deployment status.
 - If the resolver returns unreachable Vercel edge IPs, try Google DNS or a
   mobile hotspot. See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md).
@@ -232,7 +256,9 @@ real tenant data.
 
 - [x] `AUTH_MODE=supabase`, `DEMO_MODE=false` on any deployment with real data.
 - [x] Service-role key exists only in the API environment.
-- [x] `CORS_ORIGINS` is an exact origin list, not `*`.
+- [x] `CORS_ORIGINS` is an exact origin list, not `*`; it must include both
+      `https://ch0wkidar.netlify.app` and
+      `https://chowkidar-wheat.vercel.app`.
 - [x] Report bytes are in Postgres and downloads go through the API; the
       optional Supabase Storage bucket remains private.
 - [x] No secrets in git or public API responses; the deployed browser bundle was

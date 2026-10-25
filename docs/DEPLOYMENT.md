@@ -1,15 +1,19 @@
 # Chowkidar — Deployment
 
-**Status (2026-10-24):** the Supabase database is provisioned, migrated, and
-seeded. The Render API and Vercel web app are live as a **production pilot**:
-Supabase email/password auth (`AUTH_MODE=supabase`, `DEMO_MODE=false`), four
-provisioned accounts, demo login disabled, and durable Postgres report storage.
-Hosted API and browser QA passed; see [`PRODUCTION.md`](PRODUCTION.md) and
+**Status (2026-10-25):** the Supabase database is provisioned, migrated, and
+seeded. The Render API and both web builds are live as a **production pilot**:
+Netlify is the primary web origin, Vercel is the secondary fallback, and
+Supabase email/password auth (`AUTH_MODE=supabase`, `DEMO_MODE=false`) is
+enabled with four provisioned accounts, demo login disabled, and durable
+Postgres report storage. The prior hosted API/browser QA passed against Vercel;
+Netlify browser QA is pending the Render CORS cutover. See
+[`PRODUCTION.md`](PRODUCTION.md) and
 [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md). This is a
 single-workspace pilot, not a commercial multi-tenant deployment.
 
-**Target region:** Supabase `ap-northeast-1` (Tokyo); Render `singapore`; Vercel
-global edge. The cross-region API/database hop is acceptable for the pilot.
+**Target region:** Supabase `ap-northeast-1` (Tokyo); Render `singapore`;
+Netlify and Vercel global edge. The cross-region API/database hop is acceptable
+for the pilot.
 
 ---
 
@@ -17,7 +21,8 @@ global edge. The cross-region API/database hop is acceptable for the pilot.
 
 | Component | Platform | Notes |
 |---|---|---|
-| Web console | Vercel | Root directory `apps/web` |
+| Web console (primary) | Netlify | Repository root base, package directory `apps/web` |
+| Web console (secondary) | Vercel | Root directory `apps/web` |
 | API | Render (Docker) | `infra/render.yaml`, health check `/healthz` |
 | Database | Supabase Postgres | pgvector extension required |
 | Reports | Postgres (`STORAGE_BACKEND=database`) or Supabase Storage | Durable; local disk remains for offline demos |
@@ -41,7 +46,8 @@ Create accounts and collect:
 - A Supabase project with pgvector enabled and a **Session pooler** connection
   string.
 - A Render account (free plan).
-- A Vercel Hobby account.
+- A Netlify account (free plan) for the primary web app.
+- A Vercel Hobby account for the secondary fallback.
 - For production auth: the Supabase project URL, anon key, and service-role key.
 - Optional: Neo4j Aura URI/user/password, Sentry DSN, PostHog key, Gemini and
   Groq API keys.
@@ -94,7 +100,8 @@ variables. The service-role key belongs only on the API. The local `.env` and
 ### 3.2 Auth and Storage (production path)
 
 1. Enable the Email provider under **Authentication → Providers**.
-2. Set the Site URL and redirect allow list to the final web origin.
+2. Set the Site URL to the primary Netlify origin and add both the Netlify and
+   Vercel origins to the redirect allow list if email links are enabled.
 3. Run the provisioning script from `apps/api` with the service-role key and the
    production `DATABASE_URL`:
 
@@ -132,15 +139,16 @@ The detailed checklist, limitations, and browser QA matrix are in
    | Variable | Value |
    |---|---|
    | `DATABASE_URL` | Supabase **Session pooler** connection string |
-   | `CORS_ORIGINS` | `https://<your-vercel-domain>` (comma-separated for additional origins) |
-   | `WEB_URL` | Same as the primary web origin |
+   | `CORS_ORIGINS` | `https://ch0wkidar.netlify.app,https://chowkidar-wheat.vercel.app` |
+   | `WEB_URL` | `https://ch0wkidar.netlify.app` (single canonical origin) |
    | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | Required for production auth; enter in the dashboard, never in git |
    | `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD` | Leave blank; optional Aura credentials |
    | `GEMINI_API_KEY`, `GROQ_API_KEY` | Leave blank for mock mode; optional live mode |
    | `SENTRY_DSN`, `POSTHOG_KEY` | Leave blank; optional |
 
-   `CORS_ORIGINS` accepts a comma-separated list of exact origins. Do not use
-   `*`, a trailing slash, or a path.
+   `CORS_ORIGINS` accepts a comma-separated list of exact origins. `WEB_URL` is
+   the canonical primary origin, not a list. Do not use `*`, a trailing slash,
+   or a path in either value.
 
 4. The blueprint uses:
    - Docker context `.`
@@ -157,9 +165,9 @@ The detailed checklist, limitations, and browser QA matrix are in
    curl https://<api-domain>/docs
    ```
 
-6. Copy the API URL. After Vercel is live, update `CORS_ORIGINS` and `WEB_URL` to
-   the exact Vercel production origin. Saving the environment triggers a
-   redeploy.
+6. Copy the API URL. After the web apps are live, set `CORS_ORIGINS` to the
+   comma-separated Netlify and Vercel origins and `WEB_URL` to the Netlify
+   origin. Saving the environment triggers a redeploy.
 
 ### Production auth on Render
 
@@ -175,7 +183,37 @@ public key. See [`PRODUCTION.md`](PRODUCTION.md) for provisioning and QA.
 
 ---
 
-## 5. Vercel (web)
+## 5. Netlify (primary web)
+
+The repository root contains `netlify.toml`. Netlify builds the web package from
+the pnpm workspace and installs its Next.js/OpenNext adapter automatically.
+
+1. In Netlify, choose **Add new project → Import an existing project** and
+   select the GitHub repository.
+2. Use branch `main`.
+3. Leave **Base directory** empty (repository root).
+4. Set **Package directory** to `apps/web`. This UI-only setting is what makes
+   Netlify detect Next.js correctly.
+5. `netlify.toml` supplies the rest:
+   - Build command: `pnpm --filter @chowkidar/web build`
+   - Publish directory: `apps/web/.next`
+   - Node 22
+   - `PNPM_FLAGS=--shamefully-hoist`
+   - `NEXT_PUBLIC_API_URL=https://chowkidar-api.onrender.com`
+6. Deploy to production, not a deploy preview. Copy the exact
+   `https://<site>.netlify.app` URL.
+7. In Render, set `CORS_ORIGINS` to the comma-separated Netlify and Vercel
+   origins, and `WEB_URL` to the Netlify origin. Redeploy Render and wait for
+   `/healthz` to pass.
+8. Open the Netlify URL and verify the login page. The hosted pilot shows
+   email/password; a local `AUTH_MODE=dev` deployment shows the four demo role
+   cards.
+
+Netlify Free uses credits. A production deploy costs 15 credits, so avoid
+unnecessary redeploys. The `ignore` rule in `netlify.toml` skips docs-only
+pushes, but always forces the first build.
+
+### 5.1 Vercel (secondary fallback)
 
 1. Import the repository into a Vercel Hobby project.
 2. Set **Root Directory** to `apps/web`.
@@ -194,20 +232,20 @@ public key. See [`PRODUCTION.md`](PRODUCTION.md) for provisioning and QA.
    redeploy. Supabase keys belong only on the API.
 
 6. Deploy. Copy the exact production domain, not a preview URL.
-7. Return to Render and set `CORS_ORIGINS` and `WEB_URL` to that domain. Redeploy
-   Render and wait for `/healthz` to pass.
-8. Open the Vercel URL and verify the login page. The hosted pilot shows
-   email/password; a local `AUTH_MODE=dev` deployment shows the four demo role
-   cards.
+7. Keep the Vercel origin in Render's `CORS_ORIGINS`. It does not need to be
+   `WEB_URL`; Netlify is the canonical primary.
+8. Vercel remains a fallback only. If its DNS is unreachable, use the
+   documented workaround or a custom domain.
 
 `apps/web/vercel.json` pins the framework preset. If your Vercel workspace
 installs from the repo root instead, leave the default install command; pnpm
 resolves the workspace.
 
-### 5.1 Optional Render web fallback
+### 5.2 Optional Render web fallback
 
 `infra/render.yaml` also defines `chowkidar-web`, a free Node service that runs
-the Next.js standalone build. It is not required when Vercel is reachable.
+the Next.js standalone build. It is not required when Netlify or Vercel is
+reachable.
 
 - Build: installs the workspace, builds `@chowkidar/web`, and copies
   `.next/static` into the standalone output.
@@ -253,7 +291,9 @@ an account whose Supabase UUID or email is present in the local `users` table.
 
 ## 7. Post-deploy smoke checklist
 
-Current production pilot (completed on 2026-10-24 at revision `fcd7fd8`):
+Prior production pilot QA against Vercel (completed on 2026-10-24 at revision
+`fcd7fd8`). Netlify is now primary; rerun the matrix after the Render CORS
+cutover:
 
 - [x] `/healthz` returns `status: ok`, `database: ok`, `auth_mode: supabase`,
       `demo_mode: false`.
@@ -270,7 +310,9 @@ Current production pilot (completed on 2026-10-24 at revision `fcd7fd8`):
 - [x] Evals page shows 7/7 and five gates for analyst/admin.
 - [x] Graph renders all 30 nodes.
 - [x] CORS allows the Vercel origin.
-- [x] Browser QA found no console errors or `5xx` responses.
+- [ ] CORS allows the Netlify origin. **Pending the Render `CORS_ORIGINS` update.**
+- [x] Browser QA found no console errors or `5xx` responses on Vercel.
+- [ ] Netlify primary browser QA after the CORS update.
 - [x] No secrets appear in public responses or git history.
 
 Local demo mode keeps the one-click role cards and `AUTH_MODE=dev`; use the
@@ -304,8 +346,9 @@ local seed baseline for offline judging. The full production matrix is in
 | No Neo4j Aura | Graph uses relational demo data |
 | No Sentry/PostHog keys | Observability remains local/optional |
 | No legal/compliance advisor | Accepted constraint; conservative design and human approval |
-| Vercel DNS variability | Some networks may need a custom domain; see cloud status |
-| Render web fallback | Currently `502`; optional while Vercel is reachable |
+| Netlify CORS cutover | Netlify is live but cannot call the API until Render `CORS_ORIGINS` includes it |
+| Vercel DNS variability | Secondary fallback only; some networks may need a custom domain |
+| Render web fallback | Currently `502`; optional while Netlify and Vercel are reachable |
 
 ---
 

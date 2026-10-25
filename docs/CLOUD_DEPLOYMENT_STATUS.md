@@ -1,15 +1,15 @@
 # Chowkidar — Cloud Deployment Status
 
-- **Updated:** 2026-10-24
-- **Scope:** Supabase Free + Render Free API + Vercel Hobby web
-- **Status:** The API and web app are live as a **production pilot**. Supabase
+- **Updated:** 2026-10-25
+- **Scope:** Supabase Free + Render Free API + Netlify Free primary web + Vercel Hobby secondary web
+- **Status:** The API and both web builds are live as a **production pilot**.
+  Netlify is the primary web origin at <https://ch0wkidar.netlify.app/>. Vercel
+  remains a secondary fallback at <https://chowkidar-wheat.vercel.app/>. Supabase
   email/password auth is enabled, four pilot accounts are provisioned, demo
-  login returns `403`, and reports are stored in Postgres. Hosted API and
-  browser QA passed against the real Supabase accounts; the runtime was verified
-  at revision `fcd7fd8`. Later docs-only commits may advance the reported
-  revision without changing runtime behavior. Vercel DNS is still variable on
-  some networks. This is not a claim of commercial SaaS readiness; see
-  [`LIMITATIONS.md`](LIMITATIONS.md).
+  login returns `403`, and reports are stored in Postgres. The Netlify CORS
+  cutover is pending: Render currently allows only the Vercel origin, so the
+  Netlify login cannot call the API until `CORS_ORIGINS` is updated. This is not
+  a claim of commercial SaaS readiness; see [`LIMITATIONS.md`](LIMITATIONS.md).
 
 ---
 
@@ -17,11 +17,12 @@
 
 | Surface | URL | Status |
 |---|---|---|
+| Web — primary | <https://ch0wkidar.netlify.app/> | UI live; API CORS cutover pending |
+| Web — secondary | <https://chowkidar-wheat.vercel.app/> | Live; DNS reachability varies by resolver |
 | API | <https://chowkidar-api.onrender.com/> | Live |
 | API health | <https://chowkidar-api.onrender.com/healthz> | Live: database `ok`, Supabase auth |
 | API docs | <https://chowkidar-api.onrender.com/docs> | Live |
-| Web | <https://chowkidar-wheat.vercel.app/> | Live; DNS reachability varies by resolver |
-| Web fallback | `https://chowkidar-web.onrender.com` | Service exists; currently `502` — optional |
+| Web fallback 2 | `https://chowkidar-web.onrender.com` | Service exists; currently `502` — optional |
 | Repository | <https://github.com/A7reus/Chowkidar> | CI green on `main` |
 
 The Render API service is on the **free** plan: 512 MB, no persistent disk, and
@@ -37,7 +38,7 @@ cold-start behavior.
 
 - `GET /healthz` returns `status: ok`, `database: ok`, `auth_mode: supabase`,
   `demo_mode: false`, `llm_mode: mock`, `data_mode: fixture`, and a revision.
-  The production QA run was performed at revision `fcd7fd8b5975`.
+  The current runtime was verified at revision `8fdd413a4222`.
 - `GET /api/v1/auth/config` returns `password_auth: true`, `demo_mode: false`,
   and an empty `demo_users` list.
 - `POST /api/v1/auth/demo-login` returns `403` with `Demo login is disabled`.
@@ -52,26 +53,20 @@ cold-start behavior.
 - Protected endpoints return `401` for missing or invalid tokens. `/api/v1/meta`
   is public by design.
 
-### Authorization and browser QA
+### Browser QA
 
-- Role restrictions are enforced by the API: viewer approval is `403`;
-  viewer/approver report generation is `403`; analyst audit verification is
-  `403`; admin audit verification is `200`.
-- Hosted desktop browser QA passed for the admin: managed email/password login,
-  dashboard, risks, approvals, signals, sources, reports, graph, search, evals,
-  audit verification, and `/settings`.
-- Hosted viewer QA passed: read-only badge, disabled report generation, no demo
-  role switcher, and the managed-access note instead of a demo role-switch
-  action.
-- The sidebar shows **Pilot**, not **Demo**. The login page shows **Secure
-  workspace** and **Hosted workspace**; demo role cards are absent.
-- The admin and viewer browser flows completed without uncaught page errors,
-  console errors, or `5xx` responses.
+- The prior hosted production-auth Playwright run passed 2/2 against Vercel with
+  the real admin and viewer accounts. That run covered managed login, dashboard,
+  risks, approvals, signals, sources, reports, graph, search, evals, audit
+  verification, `/settings`, viewer read-only state, mobile layout, and console
+  errors.
+- The Netlify production page is live and returns the real login page with
+  **Secure workspace** and no demo role cards.
+- Netlify browser QA is **pending** until the Render CORS origin is updated.
+  Current preflight from `https://ch0wkidar.netlify.app` returns `400`
+  `Disallowed CORS origin`; Vercel preflight still returns `200`.
 - The deployed Vercel JavaScript chunks were scanned; no Supabase secret,
   service-role key, database URI, or pilot password appeared in the bundle.
-- Mobile smoke check at 390 px passed with no dashboard horizontal overflow.
-- CORS preflight from `https://chowkidar-wheat.vercel.app` returns `200` with the
-  exact origin.
 - Public health, auth-config, and OpenAPI responses contain no service keys or
   bearer tokens.
 
@@ -98,18 +93,21 @@ cold-start behavior.
 
 ### CI and local verification
 
-- CI is green for `fcd7fd8` (API and web jobs).
+- CI is green for the Netlify migration commits; the latest checked commit is
+  `8fdd413` (API and web jobs).
 - `make check` passes: 57 API tests and 8 web tests.
 - Local Playwright demo smoke passes 4/4.
-- The hosted production-auth Playwright run passed 2/2 with the real accounts.
 
 Baseline confirmed on the hosted API: 8 risks, 3 critical, 4 pending approvals.
 
 ---
 
-## 3. Vercel “won’t load” issue
+## 3. Hosting roles and DNS
 
-This is **not** a failed build and not a CORS/API problem.
+Netlify is the **primary** web origin. Vercel is the **secondary** fallback.
+Both frontends point at the same Render API and use the same Supabase project.
+
+### Vercel fallback DNS issue
 
 On 2026-10-24, `chowkidar-wheat.vercel.app` sometimes resolved to:
 
@@ -129,7 +127,7 @@ deployment is reachable through older Vercel edge IPs:
 ```
 
 It is also reachable through `64.29.17.195`, which was used for the final
-production browser QA with a Chromium host-resolver override:
+Vercel browser QA with a Chromium host-resolver override:
 
 ```bash
 curl -sS -I \
@@ -138,55 +136,52 @@ curl -sS -I \
 ```
 
 The default resolver on the QA machine still returned the unreachable `.3`
-addresses at times, so judges may need one of the workarounds below.
-
-### Workarounds
+addresses at times. Because Netlify is now primary, judges should use the
+Netlify URL first. If Netlify is unavailable, use one of the Vercel workarounds:
 
 1. **Quick local check:** switch DNS to Google `8.8.8.8` / `8.8.4.4`, flush the
    DNS cache, or use a mobile hotspot/VPN.
 2. **Judge-proof option:** add a custom domain to the Vercel project and point
-   its CNAME at `cname.vercel-dns.com`. `cname.vercel-dns.com` currently resolves
-   to `76.76.21.142`, which is reachable. After adding the domain, update
-   Render’s `CORS_ORIGINS` and `WEB_URL` to the new origin and redeploy.
-3. **Free fallback (optional):** the Render blueprint includes `chowkidar-web`,
-   a Node service that runs the Next.js standalone build. The service was
-   created, but on 2026-10-24 its root returned `502`; check its Render build logs
-   before relying on it. Free services sleep after inactivity.
+   its CNAME at `cname.vercel-dns.com`. After adding the domain, add that exact
+   origin to Render's `CORS_ORIGINS` and redeploy.
 
-Do not change the API URL or CORS while testing the DNS workaround; they are
-already correct.
+Do not change the API URL while testing a fallback. Both web origins must remain
+in `CORS_ORIGINS`.
 
 ---
 
 ## 4. Environment variables
 
-### Vercel — Production
+### Netlify — primary web
+
+The site is built from the repository root with **package directory**
+`apps/web` and **base directory** empty. `netlify.toml` supplies the build
+command, publish directory, Node version, pnpm hoisting, and public API URL.
 
 | Variable | Value |
 |---|---|
 | `NEXT_PUBLIC_API_URL` | `https://chowkidar-api.onrender.com` |
 
-No Supabase keys, database secrets, or Groq/Gemini keys are needed by the Vercel
-frontend. `NEXT_PUBLIC_*` values are public and are inlined at build time;
-changing one requires a redeploy.
+No Supabase keys, database secrets, or Groq/Gemini keys belong on Netlify.
+`NEXT_PUBLIC_*` values are public and inlined at build time; changing one
+requires a redeploy.
 
-### Render — optional web fallback (currently 502)
+### Vercel — secondary web
 
 | Variable | Value |
 |---|---|
 | `NEXT_PUBLIC_API_URL` | `https://chowkidar-api.onrender.com` |
-| `NODE_VERSION` | `22` |
 
-The fallback build and standalone start path were verified locally; the first
-Render deployment is currently returning `502`. It uses no database credentials.
+Vercel uses root directory `apps/web` and `apps/web/vercel.json`. It remains
+configured as a fallback; no Supabase or database secrets belong there.
 
 ### Render — API
 
 | Variable | Value |
 |---|---|
 | `DATABASE_URL` | Supabase **Session pooler** URI; secret, dashboard only |
-| `CORS_ORIGINS` | `https://chowkidar-wheat.vercel.app` |
-| `WEB_URL` | `https://chowkidar-wheat.vercel.app` |
+| `CORS_ORIGINS` | `https://ch0wkidar.netlify.app,https://chowkidar-wheat.vercel.app` |
+| `WEB_URL` | `https://ch0wkidar.netlify.app` |
 | `APP_ENV` | `production` |
 | `AUTH_MODE` | `supabase` |
 | `DEMO_MODE` | `false` |
@@ -204,6 +199,10 @@ Render deployment is currently returning `502`. It uses no database credentials.
 | `UPLOAD_STORAGE_DIR` | `/tmp/uploads` |
 | `NEO4J_*`, `GEMINI_API_KEY`, `GROQ_API_KEY`, `SENTRY_DSN`, `POSTHOG_KEY` | Blank for the pilot |
 
+`CORS_ORIGINS` is a comma-separated list of exact origins. `WEB_URL` is a single
+canonical origin, not a list; it stays on Netlify. Do not use `*`, a trailing
+slash, or a path in either value.
+
 ### Local `.env`
 
 Local development keeps `API_URL`, `WEB_URL`, `NEXT_PUBLIC_API_URL`, and
@@ -219,6 +218,10 @@ placeholders, never the Supabase password/URI, JWTs, or provider keys.
 
 ## 5. Free-tier limitations
 
+- Netlify Free has 300 credits/month; a production deploy costs 15 credits, so
+  avoid repeated production redeploys. `netlify.toml` skips docs-only pushes.
+- Netlify Free includes 20 GB bandwidth and 2 credits per 10,000 requests;
+  judging traffic should fit, but monitor the team usage page.
 - Render free services sleep after inactivity; judges may see a cold start.
 - Render free storage is ephemeral, but hosted reports are stored in Postgres.
 - Supabase Free projects may pause after a period of inactivity; restore the
@@ -237,10 +240,13 @@ placeholders, never the Supabase password/URI, JWTs, or provider keys.
 
 ## 6. Next actions
 
-1. Record the 2–3 minute demo video with the live Supabase login.
-2. Confirm the final Figma/design link and the team-diversity facts.
-3. Rotate the Supabase database password; the current one is weak and was shared
-   during setup. Update Render’s `DATABASE_URL` after rotation.
-4. Optional: add a custom domain to remove the Vercel DNS variability.
-5. Optional: fix or remove the Render web fallback.
-6. Fill and submit the official form only after finalization is complete.
+1. Update Render's `CORS_ORIGINS` and `WEB_URL` to the values in section 4,
+   then redeploy the API and confirm both origins pass preflight.
+2. Run the production Playwright QA against the Netlify URL with the real
+   admin/viewer accounts; update this document with the result.
+3. Record the 2–3 minute demo video with the live Supabase login.
+4. Confirm the final Figma/design link and the team-diversity facts.
+5. Rotate the Supabase database password; the current one is weak and was shared
+   during setup. Update Render's `DATABASE_URL` after rotation.
+6. Optional: fix or remove the Render web fallback.
+7. Fill and submit the official form only after finalization is complete.

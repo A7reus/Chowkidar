@@ -1,7 +1,7 @@
 # Chowkidar — Build Log
 
-**Last updated:** 2026-10-24
-**Status:** Base build complete; local and hosted QA passed. The hosted API and web app are live as a production pilot with Supabase email/password auth and durable Postgres reports. Vercel edge-IP variability is documented in [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md).
+**Last updated:** 2026-10-25
+**Status:** Base build complete; local QA and hosted QA against Vercel passed. The hosted API and both web builds are live as a production pilot with Supabase email/password auth and durable Postgres reports. Netlify is now the primary web origin; Vercel is the secondary fallback. Netlify browser QA is pending the Render CORS cutover. See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md).
 **Purpose:** Record how the build was produced, especially the master prompt execution, confirmation triggers, and manual changes. This supports the submission's "Build Level" and "Prompt Library" fields.
 
 ---
@@ -33,7 +33,7 @@
 | Lint | Ruff clean; ESLint clean |
 | Evals | 7/7 golden cases; five metrics at 1.0 in mock mode |
 | MCP | Read-only FastMCP server implemented and manually exercised |
-| Deployment | Live production pilot: Render API + Vercel web + Supabase Auth/Postgres; runtime QA at `fcd7fd8` |
+| Deployment | Live production pilot: Render API + Netlify primary web + Vercel secondary web + Supabase Auth/Postgres; prior runtime QA at `fcd7fd8`; Netlify CORS cutover pending |
 
 ### Verified demo baseline
 
@@ -159,6 +159,7 @@ The deterministic mock path (`app/agents/mock.py`) is the default for the demo a
 | 2026-10-24 | `apps/web/src/components/common/access-denied.tsx`, auth UI, messages, reports/evals/search/sources copy | Hide demo role-switch controls for managed accounts and replace stale demo-only wording | Managed viewers were seeing a demo action that would fail in production | AI agent + QA |
 | 2026-10-24 | `apps/api/tests/test_config.py` | Construct isolated settings with `_env_file=None` | Local `.env` Supabase values made config tests order/environment-dependent | AI agent + QA |
 | 2026-10-24 | `infra/render.yaml`, `.env.example`, `README.md`, `docs/*` | Record production auth as the hosted default and refresh deployment, production, status, limitation, and submission docs | Keep repository docs consistent with the live pilot | AI agent + QA |
+| 2026-10-25 | `netlify.toml`, `apps/web/next.config.ts`, `.gitignore`, `README.md`, `.env.example`, `docs/*` | Add Netlify primary build config, retain Vercel as the secondary fallback, and document the dual-origin CORS values and Netlify credit limits | Netlify-primary hosting without discarding the working Vercel deploy | AI agent + QA |
 
 ---
 
@@ -174,7 +175,9 @@ The deterministic mock path (`app/agents/mock.py`) is the default for the demo a
 | Web unit | `pnpm test` | 8 passed |
 | Web build | `pnpm build` | Pass; 15 routes |
 | Browser smoke | `pnpm test:e2e` | 4 passed locally in demo mode |
-| Hosted production browser QA | Playwright against Vercel + hosted API | 2 passed with real Supabase admin/viewer accounts |
+| Hosted production browser QA (Vercel) | Playwright against Vercel + hosted API | 2 passed with real Supabase admin/viewer accounts |
+| Hosted web deploy (Netlify) | Production build + `/login` request | Live; real login page renders; browser QA pending CORS |
+| Hosted CORS | Preflight from both web origins | Vercel `200`; Netlify `400` until Render `CORS_ORIGINS` is updated |
 | Hosted API auth QA | Login/refresh/role checks | Four accounts passed; wrong password `401`; demo login `403`; unprovisioned user `403` |
 | Hosted report persistence | Generate, redeploy, download | PDF/JSON/Markdown checksums matched after Render redeploy |
 | Hosted rate limit | Burst login requests | `429` with `Retry-After` |
@@ -207,14 +210,14 @@ Manual visual QA covered every route at 1440×1000. Known cosmetic trade-off: th
 
 ## 9. Known gaps
 
-- Public repository is live at <https://github.com/A7reus/Chowkidar>; CI is green at `fcd7fd8`.
-- Render API and Vercel web are live. Some networks cannot reach Vercel’s new edge IPs; see `CLOUD_DEPLOYMENT_STATUS.md`.
-- Supabase Auth is **enabled on the live service** with four provisioned accounts, local role mapping, and demo login disabled. Hosted auth, refresh, role, and browser QA passed.
+- Public repository is live at <https://github.com/A7reus/Chowkidar>; CI is green at `8fdd413`.
+- Render API, Netlify primary web, and Vercel secondary web are live. Netlify CORS is pending the Render environment update; some networks cannot reach Vercel’s new edge IPs, which now affects only the fallback. See `CLOUD_DEPLOYMENT_STATUS.md`.
+- Supabase Auth is **enabled on the live service** with four provisioned accounts, local role mapping, and demo login disabled. Hosted auth, refresh, role, and browser QA passed against Vercel; Netlify rerun is pending.
 - Report storage is durable on the hosted API (`STORAGE_BACKEND=database`) and survived a Render redeploy; Supabase Storage remains an optional adapter. The previous image used ephemeral `/tmp`.
 - Rate limits are process-local (single Render instance).
 - Browser tokens are stored in local storage; HttpOnly cookies are a hardening backlog item.
 - The Supabase database password is weak and rotation is pending.
-- Vercel default DNS is variable on some networks; the final hosted QA used a reachable Vercel edge IP.
+- Vercel default DNS is variable on some networks; the prior hosted QA used a reachable Vercel edge IP. Netlify is now primary, so this affects only the fallback.
 - Live source connectors are not implemented; `DATA_MODE=live` remains unsupported.
 - BGE-M3, Docling, RAGAS, and Phoenix are optional and not required for the demo path.
 - Golden set is small (7 cases) and synthetic.

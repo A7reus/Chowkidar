@@ -1,7 +1,7 @@
 # Chowkidar — Architecture
 
-**Status:** local-first implementation validated; hosted API and web build are live. Some networks need the Vercel edge-IP workaround in [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md).
-**Last updated:** 2026-10-23
+**Status:** local-first implementation validated; hosted API and web builds are live. Netlify is the primary web origin; Vercel remains a secondary fallback. Netlify browser login is pending the Render CORS cutover. See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md).
+**Last updated:** 2026-10-25
 
 ---
 
@@ -9,7 +9,7 @@
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
-│ Next.js console (Vercel)                                           │
+│ Next.js console (Netlify primary, Vercel fallback)                 │
 │ Dashboard · Signals · Risks · Approvals · Reports · Graph · Search │
 │ Audit · Evals · i18n (EN/BN) · role-aware navigation               │
 └───────────────────────────────┬────────────────────────────────────┘
@@ -278,8 +278,9 @@ Current mock-mode result: **7/7 cases**, all metrics **1.0**. This is a demo-sca
 
 | Layer | Target | Status |
 |---|---|---|
-| Web | Vercel Hobby, `apps/web` root | Live production pilot; Vercel DNS variability caveat |
-| Web fallback | Render Node free, Next.js standalone | Optional; currently `502`, check logs |
+| Web | Netlify Free, package directory `apps/web` | Live production pilot; primary origin |
+| Web fallback | Vercel Hobby, `apps/web` root | Live secondary; DNS variability caveat on some networks |
+| Web fallback 2 | Render Node free, Next.js standalone | Optional; currently `502`, check logs |
 | API | Render Docker free, Singapore; `STORAGE_BACKEND=database` | Live: `/healthz` healthy, `auth_mode=supabase`, `demo_mode=false` |
 | Database | Supabase Postgres + pgvector, Tokyo | Live: migrated and seeded |
 | Auth | Supabase Auth proxy | Live: email/password, JWKS verification, four provisioned accounts, demo login disabled |

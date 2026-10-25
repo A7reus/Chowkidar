@@ -35,10 +35,10 @@
 | Not legal advice | API root, UI, reports, README, methodology resource |
 
 - **Repository URL:** <https://github.com/A7reus/Chowkidar>
-- **Live pilot URL:** <https://chowkidar-wheat.vercel.app/> — production-pilot configuration with Supabase email/password auth, four managed accounts, and demo login disabled. Some networks need the Vercel edge-IP workaround in [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md).
+- **Live pilot URL:** <https://ch0wkidar.netlify.app/> — Netlify primary, with production-pilot configuration, Supabase email/password auth, four managed accounts, and demo login disabled. Netlify CORS cutover is pending; the verified browser fallback is <https://chowkidar-wheat.vercel.app/> (Vercel DNS may vary on some networks; see [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md)).
 - **API URL:** <https://chowkidar-api.onrender.com/>
 - **Hosted access:** Supabase accounts use the emails `admin@chowkidar.app`, `analyst@chowkidar.app`, `approver@chowkidar.app`, and `viewer@chowkidar.app`. Passwords are held in the private, gitignored access note and must be supplied to judges only through the form's private access field or another controlled channel.
-- **Production status:** live and verified at revision `fcd7fd8`: `/healthz` reports `auth_mode=supabase`, `demo_mode=false`, `database=ok`; hosted browser QA passed for admin and viewer; reports survived a Render redeploy with matching SHA-256. This is a single-workspace pilot, not commercial SaaS readiness.
+- **Production status:** live as a production pilot. Prior hosted QA at revision `fcd7fd8` passed against Vercel: `/healthz` reports `auth_mode=supabase`, `demo_mode=false`, `database=ok`; browser QA passed for admin and viewer; reports survived a Render redeploy with matching SHA-256. Netlify is now primary; its browser QA is pending the Render CORS update. This is a single-workspace pilot, not commercial SaaS readiness.
 - **Video URL:** _to be added after recording — required for the official form_
 
 > The official form and MCP knowledge base both reward a public live demo and a 2–3 minute video. A local-only demo is not enough for maximum preliminary score. See [`COMPETITION_CONTEXT.md`](COMPETITION_CONTEXT.md) for the captured form, scoring signals, and the authoritative domain list.
@@ -162,7 +162,7 @@ Pilot with an RMG exporter and a compliance reviewer; add live source scheduling
 - The hosted app is a **single-workspace production pilot**, not demo mode: `AUTH_MODE=supabase`, `DEMO_MODE=false`, four provisioned accounts, demo login `403`. It is not a multi-tenant commercial deployment.
 - Reports use Postgres on the hosted API, with private Supabase Storage as an optional adapter. Local `/tmp` reports are not durable.
 - Rate limits are process-local; browser tokens are in local storage rather than HttpOnly cookies. The current Supabase database password is weak and rotation is pending.
-- Vercel default DNS is variable on some networks; use the documented edge-IP workaround or a custom domain.
+- Netlify is primary; the Vercel secondary fallback has DNS variability on some networks. Use the documented edge-IP workaround or a custom domain if the fallback is needed.
 - BGE-M3, Docling, RAGAS, Phoenix, Neo4j, and n8n are optional and not on the hosted pilot path.
 - Golden set is small and synthetic (7 cases). No real exporter data or accuracy benchmark.
 - No legal/compliance advisor reviewed the content. No legal advice is provided; every finding is a reviewable signal.
@@ -178,14 +178,16 @@ Pilot with an RMG exporter and a compliance reviewer; add live source scheduling
 - [x] Screenshots in [`docs/assets`](assets).
 - [x] README, architecture, deployment, MCP, and build log.
 - [x] API tests, web tests, and Playwright smoke.
-- [x] Docker image and Render/Vercel configs.
+- [x] Docker image and Render/Netlify/Vercel configs.
 - [x] GitHub remote and public repository URL.
 - [x] Supabase project and database; migrated and seeded.
 - [x] Render API deploy.
-- [x] Vercel web deploy.
+- [x] Netlify primary web deploy.
+- [x] Vercel secondary web deploy.
 - [x] Supabase Auth enabled with four provisioned accounts; demo login disabled.
-- [x] Production-mode live URL verified through the hosted browser QA matrix.
-- [x] Hosted role restrictions, rate limiting, audit verification, report downloads, and mobile layout checked.
+- [x] Production-mode live URL verified through the hosted browser QA matrix against Vercel.
+- [ ] Netlify primary browser QA after the Render CORS cutover.
+- [x] Hosted role restrictions, rate limiting, audit verification, report downloads, and mobile layout checked against Vercel.
 - [x] Durable reports verified across a Render redeploy with matching checksums.
 - [x] CI green and local `make check` passing after the hosted fixes.
 - [ ] Two-to-three-minute demo video recorded and linked.

@@ -1,11 +1,12 @@
 # Production pilot path
 
-**Status:** **live and verified.** The hosted API runs with Supabase
+**Status:** **live as a production pilot.** The hosted API runs with Supabase
 email/password auth (`AUTH_MODE=supabase`, `DEMO_MODE=false`), four pilot accounts
-are provisioned, demo login is disabled, and reports are stored in Postgres. The
-hosted API and browser QA matrix in section 3 passed against the live service;
-the runtime was verified at revision `fcd7fd8`. This is a single-workspace
-production pilot, not a commercial customer deployment.
+are provisioned, demo login is disabled, and reports are stored in Postgres.
+Netlify is the primary web origin; Vercel is the secondary fallback. The prior
+hosted API and browser QA matrix in section 3 passed against Vercel at revision
+`fcd7fd8`. Netlify browser QA is pending the Render CORS cutover. This is a
+single-workspace production pilot, not a commercial customer deployment.
 
 This document defines “production-ready” for Chowkidar's preliminary round as
 the production path required by `prompts/MASTER_PROMPT.md`: real authentication,
@@ -50,20 +51,22 @@ operations, legal review, or live source connectors).
 | Item | Value |
 |---|---|
 | API | `https://chowkidar-api.onrender.com` |
-| Web | `https://chowkidar-wheat.vercel.app` |
+| Web — primary | `https://ch0wkidar.netlify.app` |
+| Web — secondary | `https://chowkidar-wheat.vercel.app` |
 | Auth | Supabase email/password; `AUTH_MODE=supabase`, `DEMO_MODE=false` |
 | Accounts | `admin@chowkidar.app`, `analyst@chowkidar.app`, `approver@chowkidar.app`, `viewer@chowkidar.app` |
 | Credentials | Gitignored `docs/private/supabase-credentials.local.md`, mode `600` |
 | Report storage | Postgres (`STORAGE_BACKEND=database`) |
-| Runtime QA | Revision `fcd7fd8`; API, role, report, browser, mobile, CORS, and rate-limit checks passed. Later docs-only commits may advance the reported revision. |
-| Remaining external constraint | Vercel default DNS is variable on some networks; see [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md) |
+| Runtime QA | Prior Vercel run at revision `fcd7fd8`; API, role, report, browser, mobile, CORS, and rate-limit checks passed. Netlify browser QA is pending the Render CORS update. Later docs-only commits may advance the reported revision. |
+| Remaining external constraints | Netlify CORS cutover pending; Vercel default DNS is variable on some networks. See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md). |
 
 ---
 
 ## 2. Hosted cutover checklist
 
-> The current pilot completed sections 2.1–2.4 on 2026-10-24. Keep this checklist
-> as the reproducible cutover and key-rotation runbook for a future deployment.
+> The current pilot completed sections 2.1–2.4 on 2026-10-24. The Netlify-primary
+> CORS cutover is in progress. Keep this checklist as the reproducible cutover
+> and key-rotation runbook for a future deployment.
 
 ### 2.1 Collect secrets
 
@@ -100,9 +103,10 @@ openssl rand -hex 32
 1. Enable the Email provider under **Authentication → Providers**.
 2. For the pilot, either keep “Confirm email” off or let the provisioning script
    create already-confirmed users. The script sets `email_confirm: true`.
-3. Set the Site URL to the final web origin, for example
-   `https://chowkidar-wheat.vercel.app`.
-4. Add the same origin to the redirect allow list if email links are enabled.
+3. Set the Site URL to the primary web origin:
+   `https://ch0wkidar.netlify.app`.
+4. Add both the Netlify and Vercel origins to the redirect allow list if email
+   links are enabled.
 
 The current project has the Email provider enabled and uses ES256/JWKS. The
 access tokens are validated against the project JWKS; no HS256 secret is set.
@@ -175,21 +179,32 @@ MUTATION_RATE_LIMIT_PER_MINUTE=30
 ```
 
 If `STORAGE_BACKEND` is omitted, `APP_ENV=production` defaults it to `database`
-so reports survive restarts. Keep `CORS_ORIGINS` exactly equal to the Vercel
-origin (comma-separated if a custom domain is added). The API container runs `alembic upgrade head` at boot;
-the report-storage migration must be present before the first production report.
+so reports survive restarts. Set the web origins exactly:
 
-### 2.5 Vercel web environment
+```dotenv
+CORS_ORIGINS=https://ch0wkidar.netlify.app,https://chowkidar-wheat.vercel.app
+WEB_URL=https://ch0wkidar.netlify.app
+```
 
-No Supabase keys belong on Vercel. It only needs:
+`CORS_ORIGINS` is a comma-separated exact-origin list. `WEB_URL` is a single
+canonical origin, not a list; keep it on Netlify. The API container runs
+`alembic upgrade head` at boot; the report-storage migration must be present
+before the first production report.
+
+### 2.5 Web environments
+
+Netlify is primary; Vercel is the secondary fallback. Neither needs Supabase
+keys. Both need only:
 
 ```dotenv
 NEXT_PUBLIC_API_URL=https://chowkidar-api.onrender.com
 ```
 
-Redeploy Vercel after changing a `NEXT_PUBLIC_*` value because it is inlined at
-build time. The login page discovers demo vs password mode from the API at
-runtime.
+Netlify builds from the repository root with package directory `apps/web` and
+uses `netlify.toml`. Vercel uses root directory `apps/web` and
+`apps/web/vercel.json`. Redeploy after changing a `NEXT_PUBLIC_*` value because
+it is inlined at build time. The login page discovers demo vs password mode from
+the API at runtime.
 
 ### 2.6 Optional Supabase Storage
 
@@ -210,7 +225,9 @@ fresh synthetic demo deployment.
 
 ## 3. Hosted QA matrix
 
-Completed against the live URLs on 2026-10-24 at runtime revision `fcd7fd8`:
+Completed against Vercel and the hosted API on 2026-10-24 at runtime revision
+`fcd7fd8`. Netlify is now primary; rerun this matrix against Netlify after the
+Render `CORS_ORIGINS` update and record the result here.
 
 - [x] `/healthz` returns `status: ok`, `database: ok`, `auth_mode: supabase`,
       `demo_mode: false`.
@@ -229,7 +246,9 @@ Completed against the live URLs on 2026-10-24 at runtime revision `fcd7fd8`:
 - [x] `/settings` shows the correct profile, auth mode, data/LLM/storage modes,
       and sign-out.
 - [x] Mobile layout at 390 px works; no dashboard horizontal overflow.
-- [x] CORS preflight from the final web origin succeeds.
+- [x] CORS preflight from Vercel succeeds.
+- [ ] CORS preflight from Netlify succeeds. **Pending the Render
+      `CORS_ORIGINS` update.**
 - [x] No secrets appear in the browser bundle, public responses, or git.
 - [x] Rate limit returns `429` with `Retry-After` after the configured burst.
 

@@ -28,8 +28,10 @@ services:
         value: mock
       - key: DATABASE_URL
         sync: false
+      # Comma-separated exact origins; include both Netlify and Vercel.
       - key: CORS_ORIGINS
         sync: false
+      # Single canonical primary origin; keep this on Netlify, not a list.
       - key: WEB_URL
         sync: false
       - key: LOCAL_STORAGE_DIR

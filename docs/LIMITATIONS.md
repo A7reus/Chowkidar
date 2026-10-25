@@ -1,6 +1,7 @@
 # Chowkidar — Limitations
 
-**Last updated:** 2026-10-24  
+**Last updated:** 2026-10-25
+
 **Status:** Honest inventory for the preliminary submission. This file takes
 precedence over any optimistic wording elsewhere.
 
@@ -15,10 +16,12 @@ calibrate the claims.
 ## 1. Live deployment status
 
 - **The hosted app is a production pilot, not demo mode.**
-  `https://chowkidar-wheat.vercel.app/` runs against `AUTH_MODE=supabase` and
-  `DEMO_MODE=false`. Email/password login, token refresh, local-role mapping,
-  demo lockout, and four provisioned pilot accounts are live. Demo login
-  returns `403`.
+  `https://ch0wkidar.netlify.app/` is the primary origin and runs against
+  `AUTH_MODE=supabase` and `DEMO_MODE=false`. Email/password login, token
+  refresh, local-role mapping, demo lockout, and four provisioned pilot accounts
+  are live. Demo login returns `403`. `https://chowkidar-wheat.vercel.app/`
+  remains a secondary fallback. The Netlify origin is not yet in Render's CORS
+  allowlist; until it is, use the Vercel fallback for browser login.
 - **The hosted pilot is still a single-workspace deployment.** It has no
   multi-tenancy, RLS, MFA, SSO, or customer administration. It is not a
   commercial production environment.
@@ -28,11 +31,10 @@ calibrate the claims.
   enabled.
 - **Render Free sleeps** after inactivity; the first request can take 30–60
   seconds. **Supabase Free can pause**; it must be restored before a demo.
-- **Vercel DNS is variable on some networks.** On 2026-10-24 the default
-  resolver sometimes returned unreachable edge IPs; the final browser QA used a
-  reachable Vercel edge IP. A custom domain or the documented workaround may be
-  needed. The Render web fallback returned `502` and is not a reliable backup
-  yet.
+- **The secondary Vercel fallback still has DNS variability on some networks.**
+  On 2026-10-24 the default resolver sometimes returned unreachable Vercel edge
+  IPs. Netlify is now primary, so this affects only the fallback path. The Render
+  web fallback returned `502` and is not a reliable backup yet.
 - **The Supabase database password is still weak** and rotation is pending.
 - **No demo video, final Figma/design link, or completed submission form** exists
   yet. The form has deliberately not been filled.
@@ -137,7 +139,7 @@ calibrate the claims.
   scenario.** This is an accepted constraint for the preliminary round.
 - **No privacy policy, terms of service, DPA, or data-retention policy** for real
   users.
-- **No data-residency review** beyond the current Supabase/Render/Vercel regions.
+- **No data-residency review** beyond the current Supabase/Render/Netlify/Vercel regions.
 - **Supplier-risk signals can harm reputations if treated as findings.** The UI
   uses signal/risk/needs-review language and requires human verification, but
   this is not a complete due-process safeguard.

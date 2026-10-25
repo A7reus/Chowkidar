@@ -251,7 +251,7 @@ The guide tells participants to:
 
 - Upload a crisp 2–3 minute YouTube video showing real working software.
 - Make the GitHub repository public with a complete README and setup steps.
-- Deploy to Vercel/Render/Railway and include Figma/design links.
+- Deploy to Netlify/Vercel/Render/Railway and include Figma/design links.
 - Ensure the single master prompt covers all eight modules.
 - Meet every character minimum.
 - Check off all used LLMs, RAG methods, frontend builders, workflow tools, and agent frameworks.
@@ -445,11 +445,11 @@ This is the short version. The detailed limitations are in `docs/ARCHITECTURE.md
 | n8n workflow | Compose service and scaffolding exist; not part of the demo path | **No** until wired and demonstrated |
 | Fine-tuning / LoRA | Not implemented | **No** |
 | Contextual RAG, semantic chunking, Graph RAG, late interaction | Not implemented | **No** |
-| Supabase Auth hosted login | Enabled on the live API: password/refresh/logout proxy, JWKS verification, local role mapping, four provisioned accounts, demo login disabled; hosted auth and browser QA passed | **Yes, for the single-workspace pilot** |
+| Supabase Auth hosted login | Enabled on the live API: password/refresh/logout proxy, JWKS verification, local role mapping, four provisioned accounts, demo login disabled; hosted auth and browser QA passed against Vercel; Netlify rerun pending CORS | **Yes, for the single-workspace pilot** |
 | Supabase Storage + database reports | Database storage is active on the hosted API; private bucket adapter exists with Postgres fallback | **Yes for durable reports; Supabase Storage bucket not enabled** |
 | Neo4j graph projection | Not wired; graph UI reads Postgres | **No** |
 | Multi-tenant isolation, SSO, billing, SOC 2, legal review | Not implemented | **No** |
-| Public deployment | Render API + Vercel web live as a Supabase-authenticated production pilot; Vercel edge-IP workaround needed on some networks | **Yes as a single-workspace pilot; not commercial SaaS readiness** |
+| Public deployment | Render API + Netlify web primary, Vercel secondary fallback, live as a Supabase-authenticated production pilot; Netlify CORS cutover pending; Vercel edge-IP workaround may be needed on some networks | **Yes as a single-workspace pilot; not commercial SaaS readiness** |
 
 ### Why this matters
 
@@ -467,7 +467,7 @@ These are ranked by score and credibility per unit of work. They do **not** requ
 
 ### Must do
 
-1. **Keep the live pilot healthy.** The app is deployed on Vercel + Render + Supabase with production auth and hosted QA complete. If the Vercel DNS issue affects judges, add a custom domain and update CORS.
+1. **Keep the live pilot healthy.** The app is deployed on Netlify (primary) + Vercel (secondary) + Render + Supabase with production auth. Update Render CORS for both web origins, and use the Vercel fallback if Netlify is unreachable.
 2. **Record the 2–3 minute YouTube demo.** Show the real Supabase login, one critical risk with evidence, approver decision, audit verification, and report generation.
 3. **Fill every form field with existing evidence.** The text fields are worth many points and cost only careful writing.
 4. **Add the GitHub URL, live URL, video URL, and private hosted access note.**
@@ -496,7 +496,7 @@ These cannot be answered from the repository:
 - Registered team size and member names.
 - NRB status for any member.
 - Female-member status for the team-diversity bonus.
-- Cloud accounts: Supabase, Render, and Vercel are configured. Neo4j Aura, Sentry, and PostHog remain optional and unconfigured.
+- Cloud accounts: Supabase, Render, Netlify, and Vercel are configured. Neo4j Aura, Sentry, and PostHog remain optional and unconfigured.
 - Whether a Figma/design file exists, or whether an architecture diagram can serve as the design link.
 - YouTube channel access for uploading the demo.
 - Permission to install/run Ollama and n8n for extra truthful checkboxes.
@@ -507,7 +507,7 @@ These cannot be answered from the repository:
 
 - `docs/SUBMISSION.md` — submission packet, demo script, form copy, asset checklist.
 - `docs/ARCHITECTURE.md` — system design and boundaries.
-- `docs/DEPLOYMENT.md` — Render/Vercel/Supabase deployment steps.
+- `docs/DEPLOYMENT.md` — Render/Netlify/Vercel/Supabase deployment steps.
 - `docs/ENVIRONMENT.md` — exact local/live environment matrix.
 - `docs/MCP.md` — Chowkidar’s own read-only MCP server.
 - `docs/BUILD_LOG.md` — AI build provenance and manual changes.
