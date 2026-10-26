@@ -296,9 +296,10 @@ Verified cutover state:
    `next_run_time=None` was passed explicitly. The fix omits that argument and
    exposes `scheduler_next_run_at`; `apps/api/tests/test_scheduler.py` covers
    both branches. The fix is deployed at revision `94c2a19f91c4`, and both
-   `/healthz` and `/api/v1/meta` report
-   `scheduler_next_run_at=2026-10-26T09:17:40Z`, confirming the job is armed.
-   The first cycle has not been observed yet.
+   `/healthz` and `/api/v1/meta` report a non-null next-run time, confirming the
+   job is armed. Every deploy restarts the process and re-arms the interval, so
+   docs-only pushes move `scheduler_next_run_at` forward. The first cycle has not
+   been observed yet.
 
 Remaining steps when provider keys are available:
 

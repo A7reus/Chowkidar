@@ -102,8 +102,10 @@ intend to replace it.
   `next_run_time=None` explicitly, which pauses the job.
 - The scheduler and manual sync use the same service path. The job is
   process-local, so it does not coordinate across multiple Render instances.
-  Render Free spin-down also pauses the in-process scheduler; use an always-on
-  instance or an external scheduler for reliable production ingestion.
+  Every deploy or restart re-creates the job and resets the interval; with
+  `SCHEDULER_RUN_ON_START=false`, the first run is one full interval after the
+  restart. Render Free spin-down also pauses the in-process scheduler; use an
+  always-on instance or an external scheduler for reliable production ingestion.
 - Check `/healthz` or `/api/v1/meta` for `scheduler_next_run_at`; `null` means
   the job is paused or absent. A non-null timestamp confirms arming, and
   `last_synced_at` confirms an actual cycle.
