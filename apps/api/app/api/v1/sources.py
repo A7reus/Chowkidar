@@ -36,4 +36,11 @@ async def sync(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Source not found")
     result = await sync_source(session, source, user)
     await session.commit()
+    if result.mode == "live_failed":
+        # The failed run and its audit entry are persisted before returning an
+        # error, so the UI never shows a stale healthy state after a failure.
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=result.message,
+        )
     return result

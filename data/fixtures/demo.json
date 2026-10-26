@@ -278,6 +278,8 @@
       "url": "https://www.bb.org.bd/mediaroom/circulars/circulars.php",
       "cadence": "every 6 hours",
       "status": "healthy",
+      "connector_key": "fixture",
+      "connector_config": {},
       "last_synced_hours_ago": 2
     },
     {
@@ -289,6 +291,8 @@
       "url": "https://eur-lex.europa.eu/",
       "cadence": "daily",
       "status": "healthy",
+      "connector_key": "fixture",
+      "connector_config": {},
       "last_synced_hours_ago": 20
     },
     {
@@ -300,6 +304,8 @@
       "url": "https://www.dhs.gov/uflpa-entity-list",
       "cadence": "daily",
       "status": "healthy",
+      "connector_key": "fixture",
+      "connector_config": {},
       "last_synced_hours_ago": 20
     },
     {
@@ -311,8 +317,31 @@
       "url": "https://api.gdeltproject.org/api/v2/doc/doc?query=chattogram%20port%20strike",
       "cadence": "hourly",
       "status": "degraded",
+      "connector_key": "gdelt",
+      "connector_config": {
+        "query": "\"forced labour\" OR \"supply chain\" OR \"export controls\"",
+        "timespan": "7d",
+        "max_records": 10
+      },
       "last_synced_hours_ago": 6,
       "last_error": "Rate limit; using cached results"
+    },
+    {
+      "key": "us_federal_register",
+      "name": "US Federal Register — Trade & supply-chain rules",
+      "stream_key": "us_federal_register",
+      "source_type": "regulatory",
+      "jurisdiction": "US",
+      "url": "https://www.federalregister.gov/api/v1/documents.json",
+      "cadence": "daily",
+      "status": "healthy",
+      "connector_key": "federal_register",
+      "connector_config": {
+        "term": "export controls",
+        "per_page": 20,
+        "document_type": "RULE"
+      },
+      "last_synced_hours_ago": 14
     }
   ],
   "signals": [
@@ -374,6 +403,28 @@
         "stream": "UFLPA / sanctions",
         "demo": true,
         "quote": "The newly listed entities are connected to the production and sale of goods made in Xinjiang or with the forced labor of Uyghurs and other groups specified in the UFLPA, and include cotton and garments."
+      }
+    },
+    {
+      "key": "fr_entity_list_revision",
+      "source_key": "us_federal_register",
+      "external_id": "fr-2026-17231",
+      "title": "BIS revises the Entity List for a Hong Kong electronics distributor",
+      "summary": "The Bureau of Industry and Security amended the Export Administration Regulations by removing two addresses associated with Arrow Electronics (Hong Kong) Co., Ltd. from the Entity List under China.",
+      "raw_text": "Revisions to the Entity List\n\nIn this rule, the Bureau of Industry and Security (BIS) revises the Export Administration Regulations (EAR) by removing two addresses associated with Arrow Electronics (Hong Kong) Co., Ltd. from the Entity List under the destination of China, People's Republic of (China). This determination follows the removal from the Entity List of Arrow China Electronics Trading Co., Ltd., and the removal of six aliases for Arrow Electronics (Hong Kong) Co., Ltd. in November 2025.\n\nThis excerpt is a short quotation from a public Federal Register document for the Chowkidar prototype. Verify against the official rule before acting.",
+      "url": "https://www.federalregister.gov/documents/2026/08/24/2026-17231/revisions-to-the-entity-list",
+      "jurisdiction": "US",
+      "signal_type": "regulatory",
+      "severity": "high",
+      "published_at": "2026-08-24T00:00:00-04:00",
+      "ingested_days_ago": 3,
+      "status": "processed",
+      "metadata": {
+        "stream": "US Federal Register",
+        "demo": true,
+        "document_number": "2026-17231",
+        "connector": "federal_register",
+        "quote": "In this rule, the Bureau of Industry and Security (BIS) revises the Export Administration Regulations (EAR) by removing two addresses associated with Arrow Electronics (Hong Kong) Co., Ltd. from the Entity List under the destination of China, People's Republic of (China)."
       }
     },
     {

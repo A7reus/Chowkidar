@@ -1,7 +1,7 @@
 # Chowkidar — Build Log
 
-**Last updated:** 2026-10-25
-**Status:** Base build complete; local QA and hosted QA against Netlify and Vercel passed. The hosted API and both web builds are live as a production pilot with Supabase email/password auth and durable Postgres reports. Netlify is the primary web origin and passed production browser QA 2/2; Vercel is the secondary fallback. See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md).
+**Last updated:** 2026-10-26
+**Status:** Base build complete; local QA and hosted QA against Netlify and Vercel passed. The hosted API and both web builds are live as a production pilot with Supabase email/password auth and durable Postgres reports. Netlify is the primary web origin and passed production browser QA 2/2; Vercel is the secondary fallback. Live GDELT/Federal Register connectors, hybrid LLM mode, the bounded repair loop, and the scheduler are implemented and locally verified, but the hosted Render service still reports `mock`/`fixture` until the cutover. See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md) and [`GAP_ANALYSIS.md`](GAP_ANALYSIS.md).
 **Purpose:** Record how the build was produced, especially the master prompt execution, confirmation triggers, and manual changes. This supports the submission's "Build Level" and "Prompt Library" fields.
 
 ---
@@ -27,13 +27,13 @@
 | Repo scaffold | Complete |
 | Backend | Complete: FastAPI, SQLAlchemy, Alembic, LangGraph, RAG, reports, audit, MCP |
 | Frontend | Complete: 12 routes, role-aware UI, EN/BN chrome, graph, search, evals |
-| Database | Local Postgres + pgvector seeded; hosted Supabase migrated and seeded; 8 risks, 12 signals, 21 actions, 11 audit events |
-| Tests | API 57 passing; web unit 8 passing; local Playwright 4 passing; hosted production Playwright 2/2 Netlify (prior 2/2 Vercel) |
+| Database | Local Postgres + pgvector seeded; hosted Supabase migrated and seeded; 8 risks, 13 signals, 21 actions, 12 audit events |
+| Tests | API 75 passing; web unit 8 passing; local Playwright 4 passing; hosted production Playwright 2/2 Netlify (prior 2/2 Vercel) |
 | Type checks | Pyright 0 errors; `tsc` clean |
 | Lint | Ruff clean; ESLint clean |
-| Evals | 7/7 golden cases; five metrics at 1.0 in mock mode |
+| Evals | 7/7 golden cases; five metrics at 1.0 on the deterministic path |
 | MCP | Read-only FastMCP server implemented and manually exercised |
-| Deployment | Live production pilot: Render API + Netlify primary web + Vercel secondary web + Supabase Auth/Postgres; Netlify QA at `d70e493db510`, prior Vercel QA at `fcd7fd8` |
+| Deployment | Live production pilot: Render API + Netlify primary web + Vercel secondary web + Supabase Auth/Postgres; most recent hosted health check at `2bfaed71372c`; connector/hybrid cutover pending |
 
 ### Verified demo baseline
 
@@ -41,14 +41,14 @@
 companies: 1
 users: 4
 suppliers: 8
-sources: 4
-signals: 12
+sources: 5
+signals: 13
 obligations: 11
 risks: 8             (3 critical, 3 high, 1 medium, 1 low)
 actions: 21
 approvals: 5         (4 pending)
-audit_events: 11
-evidence_chunks: 12
+audit_events: 12
+evidence_chunks: 13
 ```
 
 ---
@@ -120,12 +120,12 @@ The runtime prompts live in `apps/api/app/agents/prompts.py`, not in separate ma
 
 | Agent | Prompt constant | Version | Model (live mode) | Last eval |
 |---|---|---|---|---|
-| Extractor | `EXTRACTION_SYSTEM` | 2026-10-23.1 | Gemini Flash, fallback Groq | 7/7 golden cases |
-| Remediation planner | `REMEDIATION_SYSTEM` | 2026-10-23.1 | Groq Llama, fallback Gemini Flash | 7/7 |
-| Evidence verifier | `VERIFIER_SYSTEM` | 2026-10-23.1 | Gemini Pro, fallback Gemini Flash | 7/7 deterministic gates |
-| Rationale writer | `RATIONALE_SYSTEM` | 2026-10-23.1 | Groq Llama, fallback Gemini Flash | 7/7 |
+| Extractor | `EXTRACTION_SYSTEM` | 2026-10-23.1 | Gemini 3.5 Flash, fallback Groq | 7/7 golden cases |
+| Remediation planner | `REMEDIATION_SYSTEM` | 2026-10-23.1 | Groq `gpt-oss-120b`, fallback Gemini 3.5 Flash | 7/7 |
+| Evidence verifier | `VERIFIER_SYSTEM` | 2026-10-23.1 | Gemini Pro slot (3.5 Flash default), fallback Gemini 3.5 Flash | 7/7 deterministic gates |
+| Rationale writer | `RATIONALE_SYSTEM` | 2026-10-23.1 | Groq `gpt-oss-120b`, fallback Gemini 3.5 Flash | 7/7 |
 
-The deterministic mock path (`app/agents/mock.py`) is the default for the demo and is what produced the verified 7/7 result. Live mode was smoke-tested against the configured providers.
+The deterministic mock path (`app/agents/mock.py`) is the default for the demo and is what produced the verified 7/7 result. Hybrid mode was smoke-tested locally with Gemini 3.5 Flash and Groq; live models are not benchmarked by the golden set. The verifier now routes unresolved risks through one bounded repair cycle before persistence.
 
 ---
 
@@ -161,6 +161,10 @@ The deterministic mock path (`app/agents/mock.py`) is the default for the demo a
 | 2026-10-24 | `infra/render.yaml`, `.env.example`, `README.md`, `docs/*` | Record production auth as the hosted default and refresh deployment, production, status, limitation, and submission docs | Keep repository docs consistent with the live pilot | AI agent + QA |
 | 2026-10-25 | `netlify.toml`, `apps/web/next.config.ts`, `.gitignore`, `README.md`, `.env.example`, `docs/*` | Add Netlify primary build config, retain Vercel as the secondary fallback, and document the dual-origin CORS values and Netlify credit limits | Netlify-primary hosting without discarding the working Vercel deploy | AI agent + QA |
 | 2026-10-25 | Render environment + `docs/*` | Set `CORS_ORIGINS` to both web origins and `WEB_URL` to Netlify; run Netlify production Playwright QA (2/2), auth refresh, role restrictions, PDF checksum/download headers, and both-origin preflight | Complete the Netlify-primary cutover and record evidence | AI agent + QA |
+| 2026-10-26 | `apps/api/app/connectors/*`, `services/sources.py`, `services/scheduler.py`, `api/v1/sources.py`, migration `9c1e4f2a7b10`, fixtures, tests | Add GDELT + US Federal Register live connectors, `fixture|live|hybrid` modes, dedupe, source mode/error fields, honest fallback labels, and the APScheduler job | Close the challenge-critical live-monitoring gap without breaking fixture demos | AI agent + QA |
+| 2026-10-26 | `apps/api/app/agents/llm.py`, `core/config.py`, health/meta routes, tests | Add `mock|live|hybrid` LLM mode, provider cooldown, sanitized errors, live-readiness fields, and 3.5 Flash defaults | Make real inference possible while keeping deterministic fallback | AI agent + QA |
+| 2026-10-26 | `apps/api/app/agents/pipeline.py`, `services/pipeline.py`, tests | Add conditional `verify → repair|persist`, one bounded repair cycle, verbatim evidence re-retrieval, routing metadata, and `repair_attempts` | Make the agentic claim truthful and inspectable | AI agent + QA |
+| 2026-10-26 | `apps/web` sources/dashboard, OpenAPI types, messages, `infra/render.yaml`, `.env.example`, `docs/*` | Five-stream source UI with mode badges, repair stage, hybrid/scheduler Render config, and reconciled current-state docs | Keep the UI and claims aligned with the implementation | AI agent + QA |
 
 ---
 
@@ -170,7 +174,7 @@ The deterministic mock path (`app/agents/mock.py`) is the default for the demo a
 |---|---|---|
 | API lint | `uv run ruff check app tests` | Pass |
 | API types | `uv run pyright` | 0 errors |
-| API tests | `uv run pytest` | 57 passed |
+| API tests | `uv run pytest` | 75 passed |
 | Web lint | `pnpm lint` | Pass |
 | Web types | `pnpm typecheck` | Pass |
 | Web unit | `pnpm test` | 8 passed |
@@ -222,8 +226,8 @@ Manual visual QA covered every route at 1440×1000. Known cosmetic trade-off: th
 - Browser tokens are stored in local storage; HttpOnly cookies are a hardening backlog item.
 - The Supabase database password is weak and rotation is pending.
 - Vercel default DNS is variable on some networks; the prior hosted QA used a reachable Vercel edge IP. Netlify is now primary, so this affects only the fallback.
-- Live source connectors are not implemented; `DATA_MODE=live` remains unsupported.
+- Live GDELT and US Federal Register connectors are implemented and locally verified; Bangladesh Bank, EUR-Lex, and UFLPA remain fixture-backed. GDELT is externally rate-limited and falls back with a visible label. The hosted Render service still reports `DATA_MODE=fixture` and `LLM_MODE=mock` until the cutover.
 - BGE-M3, Docling, RAGAS, and Phoenix are optional and not required for the demo path.
-- Golden set is small (7 cases) and synthetic.
+- Golden set is small (7 cases) and synthetic; live models and the repair loop are not benchmarked.
 - No legal/compliance advisor reviewed the content.
-- No demo video or final Figma/design link yet; team-diversity facts are unconfirmed.
+- No demo video; the design artifact is [`DESIGN.md`](DESIGN.md), not a Figma file. Team-diversity facts are unconfirmed.

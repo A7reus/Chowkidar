@@ -1,7 +1,16 @@
 # AI Builders Congress 2026 — Domain & Project Strategy
 
+> **Historical document (2026-10-26):** This is the original 2026-10-23 strategy
+> and idea-selection record. It is retained for provenance, not as a description
+> of the current build. Several ideas here were deliberately narrowed or not
+> implemented — including graph RAG, three MCP servers, Cloudflare Tunnel,
+> RAGAS/DeepEval/Presidio/Llama Guard, and broad multi-agent autonomy. For the
+> authoritative capability boundary read [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md);
+> for implemented state read [`README.md`](README.md) and
+> [`docs/GAP_ANALYSIS.md`](docs/GAP_ANALYSIS.md).
+
 **Date:** 2026-10-23  
-**Status:** Decision draft — no product code yet  
+**Status:** Historical — superseded by the working pilot and `docs/LIMITATIONS.md`
 **Track:** Idea to Unicorn — Preliminary Submission  
 **Deadline:** 2026-10-31, 11:59 PM GMT+6 (Bangladesh Standard Time)
 

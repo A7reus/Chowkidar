@@ -152,6 +152,14 @@ async def seed() -> dict[str, int]:
                 url=source_data["url"],
                 cadence=source_data["cadence"],
                 status=source_data["status"],
+                connector_key=source_data.get("connector_key", "fixture"),
+                connector_config=source_data.get("connector_config", {}),
+                last_sync_mode="fixture",
+                last_signal_count=sum(
+                    1
+                    for item in fixture["signals"]
+                    if item["source_key"] == source_data["key"]
+                ),
                 last_synced_at=now
                 - timedelta(hours=source_data.get("last_synced_hours_ago", 1)),
                 last_error=source_data.get("last_error"),
@@ -364,16 +372,20 @@ async def seed() -> dict[str, int]:
         await session.flush()
 
         admin = DEMO_USERS[Role.ADMIN]
-        for source_key in ("bd_bank", "eu_eurlex", "us_uflpa", "gdelt"):
+        for source_key, source_id in source_ids.items():
+            source_data = next(
+                item for item in fixture["sources"] if item["key"] == source_key
+            )
             await record_audit(
                 session,
                 actor=admin,
                 action="source.sync",
                 entity_type="source",
-                entity_id=str(source_ids[source_key]),
+                entity_id=str(source_id),
                 payload={
                     "stream_key": source_key,
                     "source_name": source_names[source_key],
+                    "connector": source_data.get("connector_key", "fixture"),
                     "mode": "fixture",
                     "demo": True,
                 },

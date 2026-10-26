@@ -1,8 +1,8 @@
 # Chowkidar — Data Sources & Ingestion Notes
 
-**Last updated:** 2026-10-24
+**Last updated:** 2026-10-26
 
-**Status:** Design + fixture replay. Live connector clients are **not implemented**; `DATA_MODE=live` is unsupported.
+**Status:** Two live connectors implemented (GDELT + US Federal Register); three streams remain fixture-backed. `DATA_MODE=hybrid` is implemented and locally verified. `DATA_MODE=live` is implemented but externally rate-limited for GDELT; a hard failure is surfaced as `live_failed`.
 
 **Purpose:** Track source access, reliability, licensing, and demo usage. Update as connectors are tested.
 
@@ -18,7 +18,22 @@ Chowkidar needs **at least two distinct external data streams** plus internal co
 | Risk signals | GDELT news, OpenSanctions, UFLPA entity list | Detect supplier/counterparty risk and trigger due diligence |
 | Internal documents | Supplier list, policies, contracts, audit reports | Provide the company context for mapping and remediation |
 
-**What is actually wired:** the app has four distinct fixture-backed streams (Bangladesh Bank, EUR-Lex, UFLPA/DHS, GDELT) and 12 seeded signals. Source sync replays the fixture signal set. The catalog below is the design target for live connectors, not a claim that the live APIs are currently called. Internal documents are synthetic and clearly labeled.
+**What is actually wired:** five distinct streams. Bangladesh Bank, EUR-Lex, and UFLPA/DHS are fixture-backed. GDELT and the US Federal Register have real live connectors in `apps/api/app/connectors/`, with normalization, dedupe by `(source_id, external_id)`, evidence chunking, and honest mode labels. The seed contains 13 signals across the five streams. The catalog below distinguishes implemented connectors from design targets; it is not a claim that every listed API is called.
+
+**Live connector contract**
+
+| Connector | Endpoint | Key | Normalized fields | Known limits |
+|---|---|---|---|---|
+| `federal_register` | `https://www.federalregister.gov/api/v1/documents.json` | none | document number, title, abstract, publication date, URL, agencies | Filters by trade/supply-chain terms; 8 relevant rules in a local run |
+| `gdelt` | `https://api.gdeltproject.org/api/v2/doc/doc` | none | article URL, title, seen date, domain, source country, language | Public rate limit ~1 request / 5 s; returns `429` and rate-limit HTML; hybrid mode falls back to fixtures |
+
+**Ingestion modes**
+
+- `fixture`: replay the local fixture; label the run `fixture`.
+- `hybrid`: try the live connector; on failure, replay the fixture and label the run `fixture_fallback` with `status=degraded` and a sanitized `last_error`.
+- `live`: try the live connector; on failure, record `mode=live_failed`, `status=error`, and return `502` from the sync route.
+
+The in-process APScheduler job calls the same service path when `ENABLE_SCHEDULER=true`. n8n is optional and is not the pilot path.
 
 ---
 
@@ -72,6 +87,7 @@ Chowkidar needs **at least two distinct external data streams** plus internal co
 - Useful endpoints: `/documents.json`, `/documents/{id}.json`.
 - Filter by agency, type, publication date.
 - Cache responses; store raw JSON and parsed text.
+- **Implemented:** the connector requests recent `RULE` documents matching a term, filters by trade/supply-chain keywords at word boundaries, and normalizes the result. A local run returned 8 relevant rules; a second run created 0 new signals because of external-ID dedupe.
 
 ### EUR-Lex
 - Public; RSS feeds and SPARQL endpoint.
@@ -83,7 +99,8 @@ Chowkidar needs **at least two distinct external data streams** plus internal co
 - Base: `https://api.gdeltproject.org/api/v2/doc/doc`
 - Query by keyword/entity; JSON output.
 - Results can be noisy; deduplicate and classify relevance.
-- Cache queries; avoid high-frequency polling.
+- **Implemented:** the connector normalizes article URL/title/seen date/domain/country, dedupes by stable URL hash, and assigns a keyword-based severity.
+- **Rate limit:** the public endpoint enforces roughly one request every five seconds and may return `429` with an HTML rate-limit page. The connector retries once after five seconds; if it still fails, hybrid mode labels the run `fixture_fallback` and `status=degraded`. Do not poll it aggressively. A production deployment should use a scheduled, low-frequency query or a licensed feed.
 
 ### OpenSanctions
 - API: `https://api.opensanctions.org/`
@@ -115,7 +132,12 @@ Chowkidar needs **at least two distinct external data streams** plus internal co
 | `cadence` | hourly, daily, weekly, manual |
 | `active` | Boolean |
 | `auth` | none, api_key, oauth |
+| `connector_key` | `fixture`, `gdelt`, or `federal_register` |
+| `connector_config` | JSON: query/term, timespan, max records, document type |
 | `last_sync_at` | Timestamp |
+| `last_sync_mode` | fixture, live, fixture_fallback, live_failed |
+| `last_signal_count` | New signals created by the last run |
+| `last_error` | Sanitized error, or null |
 | `last_status` | success, partial, failed |
 | `notes` | Licensing/ToS notes |
 

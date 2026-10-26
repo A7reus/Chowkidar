@@ -1,4 +1,4 @@
-import { ArrowUpRight, Landmark, Newspaper, Scale, ShieldAlert } from "lucide-react";
+import { ArrowUpRight, FileText, Landmark, Newspaper, Scale, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 
 import { SectionHeading } from "@/components/common/page-header";
@@ -10,6 +10,7 @@ const sourceIcons: Record<string, React.ComponentType<{ className?: string }>> =
   eu_eurlex: Scale,
   us_uflpa: ShieldAlert,
   gdelt: Newspaper,
+  us_federal_register: FileText,
 };
 
 export function SourceHealthPanel({ sources }: { sources: SourceHealth[] }) {
@@ -62,7 +63,7 @@ export function SourceHealthPanel({ sources }: { sources: SourceHealth[] }) {
       </div>
       <div className="mt-auto flex items-center gap-2 border-t border-border-soft pt-3 text-[9px] text-muted-2">
         <span className="size-1.5 rounded-full bg-emerald-400" />
-        {sources.length} streams · scheduled by n8n
+        {sources.length} streams · live and fixture modes labelled
       </div>
     </div>
   );

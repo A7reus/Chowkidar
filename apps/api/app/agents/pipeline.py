@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import uuid
 from datetime import date
 from typing import Any, TypedDict, cast
@@ -43,6 +44,116 @@ class PipelineState(TypedDict, total=False):
     counts: dict[str, int]
     trace_id: str
     message: str
+    repair_attempts: int
+    routing: list[dict[str, Any]]
+
+
+def _normalize(text: str) -> str:
+    return " ".join(text.split()).strip().lower()
+
+
+def route_after_verify(state: PipelineState, max_attempts: int) -> str:
+    """Route to one bounded evidence-repair cycle or straight to persistence."""
+    if int(state.get("repair_attempts", 0)) >= max_attempts:
+        return "persist"
+    unresolved = any(
+        item.get("verification_status") != "verified" for item in state.get("verified", [])
+    )
+    return "repair" if unresolved else "persist"
+
+
+def repair_evidence(
+    risk: dict[str, Any],
+    signal: dict[str, Any],
+    chunk_contents: list[str],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    """Re-retrieve a verbatim quote and a valid citation for one risk.
+
+    This is deliberately deterministic: repair only changes evidence, never the
+    risk severity or the source text. If a verbatim quote cannot be found, the
+    risk remains unresolved and is persisted as ``needs_review``.
+    """
+    source_text = str(signal.get("raw_text") or "")
+    normalized_source = _normalize(source_text)
+    notes: list[str] = []
+    evidence = [dict(item) for item in risk.get("evidence") or []]
+
+    def is_verbatim(quote: str) -> bool:
+        normalized = _normalize(quote)
+        return bool(normalized) and normalized in normalized_source
+
+    valid_quote = next(
+        (
+            str(item.get("quote") or "")
+            for item in evidence
+            if is_verbatim(str(item.get("quote") or ""))
+        ),
+        "",
+    )
+    if not valid_quote:
+        candidates: list[str] = []
+        for item in evidence:
+            candidates.append(str(item.get("quote") or ""))
+        for content in chunk_contents:
+            piece = content.split("\n\n", 1)[-1] if content.startswith("Document:") else content
+            candidates.extend(
+                sentence.strip()
+                for sentence in re.split(r"(?<=[.!?])\s+", piece)
+                if sentence.strip()
+            )
+        candidates.extend(
+            sentence.strip()
+            for sentence in re.split(r"(?<=[.!?])\s+", source_text)
+            if sentence.strip()
+        )
+        candidates.append(str(signal.get("title") or ""))
+        valid_quote = next(
+            (candidate for candidate in candidates if is_verbatim(candidate) and len(candidate) >= 20),
+            "",
+        )
+        if not valid_quote and source_text:
+            valid_quote = source_text[:400].strip()
+        if valid_quote:
+            notes.append("Re-retrieved evidence and replaced a non-verbatim quote.")
+        else:
+            notes.append("No verbatim evidence quote could be re-retrieved.")
+
+    citation_url = next(
+        (
+            str(item.get("citation_url") or "")
+            for item in evidence
+            if str(item.get("citation_url") or "").startswith("http")
+        ),
+        "",
+    )
+    if not citation_url:
+        citation_url = str(signal.get("url") or "")
+        if citation_url.startswith("http"):
+            notes.append("Restored the source citation URL.")
+
+    if not valid_quote:
+        return evidence, notes
+
+    repaired = {
+        "quote": valid_quote,
+        "citation_url": citation_url,
+        "citation_label": str(
+            risk.get("citation_label")
+            or f"{signal.get('source_name') or 'Monitored source'} — {signal.get('title') or ''}"
+        ),
+        "confidence": max(
+            0.7,
+            max(
+                (float(item.get("confidence") or 0) for item in evidence),
+                default=0,
+            ),
+        ),
+        "supports": "supports",
+    }
+    if not evidence:
+        notes.append("Attached the first verbatim source quote as evidence.")
+    return [repaired], notes
+
 
 
 def _parse_date(value: Any) -> date | None:
@@ -62,7 +173,13 @@ class PipelineRunner:
         self.actor = actor
         self.settings = get_settings()
         self.llm = get_llm_client()
-        self.mode = "live" if mode == "live" and self.settings.llm_mode == "live" else "mock"
+        self.mode = (
+            "live"
+            if mode == "live"
+            and self.settings.llm_mode in {"live", "hybrid"}
+            and self.settings.llm_live_ready
+            else "mock"
+        )
 
     def _build_graph(self):
         graph = StateGraph(PipelineState)
@@ -72,6 +189,7 @@ class PipelineRunner:
         graph.add_node("score", self._score)
         graph.add_node("remediate", self._remediate)
         graph.add_node("verify", self._verify)
+        graph.add_node("repair", self._repair)
         graph.add_node("persist", self._persist)
         graph.set_entry_point("ingest")
         graph.add_edge("ingest", "extract")
@@ -79,9 +197,17 @@ class PipelineRunner:
         graph.add_edge("map", "score")
         graph.add_edge("score", "remediate")
         graph.add_edge("remediate", "verify")
-        graph.add_edge("verify", "persist")
+        graph.add_conditional_edges(
+            "verify",
+            self._route_after_verify,
+            {"repair": "repair", "persist": "persist"},
+        )
+        graph.add_edge("repair", "verify")
         graph.add_edge("persist", END)
         return graph.compile()
+
+    def _route_after_verify(self, state: PipelineState) -> str:
+        return route_after_verify(state, self.settings.pipeline_max_repair_attempts)
 
     async def run(
         self,
@@ -101,11 +227,16 @@ class PipelineRunner:
         return cast(PipelineState, result)
 
     async def _ingest(self, state: PipelineState) -> dict[str, Any]:
+        limit = (
+            self.settings.pipeline_live_max_signals
+            if self.mode == "live"
+            else self.settings.pipeline_max_signals
+        )
         stmt = (
             select(Signal)
             .options(selectinload(Signal.source), selectinload(Signal.supplier))
             .order_by(Signal.ingested_at.desc())
-            .limit(self.settings.pipeline_max_signals)
+            .limit(limit)
         )
         source_ids = state.get("source_ids")
         if source_ids:
@@ -275,7 +406,70 @@ class PipelineRunner:
                     "verification_confidence": result.confidence,
                 }
             )
-        return {"verified": verified}
+        routing = list(state.get("routing", []))
+        statuses: dict[str, int] = {}
+        for item in verified:
+            status = str(item.get("verification_status") or "unknown")
+            statuses[status] = statuses.get(status, 0) + 1
+        routing.append(
+            {
+                "node": "verify",
+                "attempt": int(state.get("repair_attempts", 0)),
+                "statuses": statuses,
+            }
+        )
+        return {"verified": verified, "routing": routing}
+
+    async def _repair(self, state: PipelineState) -> dict[str, Any]:
+        by_id = {signal["id"]: signal for signal in state.get("signals", [])}
+        attempt = int(state.get("repair_attempts", 0)) + 1
+        routing = list(state.get("routing", []))
+        repaired: list[dict[str, Any]] = []
+        for risk in state.get("verified", []):
+            if risk.get("verification_status") == "verified":
+                repaired.append(risk)
+                continue
+            signal = by_id.get(risk["signal_id"])
+            if signal is None:
+                repaired.append(risk)
+                continue
+            chunks = list(
+                (
+                    await self.session.execute(
+                        select(EvidenceChunk.content)
+                        .where(EvidenceChunk.signal_id == uuid.UUID(risk["signal_id"]))
+                        .limit(3)
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            evidence, notes = repair_evidence(risk, signal, chunks)
+            routing.append(
+                {
+                    "node": "repair",
+                    "attempt": attempt,
+                    "risk": risk.get("title"),
+                    "previous_status": risk.get("verification_status"),
+                    "notes": notes,
+                    "chunks_retrieved": len(chunks),
+                }
+            )
+            repaired.append(
+                {
+                    **risk,
+                    "evidence": evidence,
+                    "verification_notes": [
+                        *(risk.get("verification_notes") or []),
+                        *notes,
+                    ],
+                }
+            )
+        return {
+            "verified": repaired,
+            "repair_attempts": attempt,
+            "routing": routing,
+        }
 
     async def _persist(self, state: PipelineState) -> dict[str, Any]:
         company_id = (await self.session.execute(select(Company.id).limit(1))).scalar_one_or_none()
@@ -357,6 +551,12 @@ class PipelineRunner:
                             "prompt_version": PROMPT_VERSION,
                             "mode": self.mode,
                             "verification_notes": risk_data.get("verification_notes", []),
+                            "repair_attempts": int(state.get("repair_attempts", 0)),
+                            "routing": [
+                                event
+                                for event in state.get("routing", [])
+                                if event.get("risk") == risk_data["title"]
+                            ],
                         },
                     )
                     self.session.add(risk)

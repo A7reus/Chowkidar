@@ -49,8 +49,9 @@ responsible for decisions.
 
 - The pilot uses synthetic companies, suppliers, and documents. Do not treat the
   names as allegations about real entities.
-- PII redaction patterns cover email, phone, national ID, passport, and IBAN
-  paths that require it. This is not a complete DLP system.
+- PII redaction patterns cover email, phone, national ID, and passport in
+  evidence paths that require it. IBAN is **not** in the current pattern set.
+  This is not a complete DLP system.
 - API keys and database credentials live in server-side environment variables;
   the browser never receives the Supabase service-role key.
 - Supabase is the current hosted data processor. A production pilot should review
@@ -88,7 +89,9 @@ responsible for decisions.
 ## 7. Known limitations
 
 - No legal/compliance advisor reviewed the content.
-- No live source connectors; the demo replays synthetic fixtures.
+- Two live connectors exist (GDELT + US Federal Register); Bangladesh Bank,
+  EUR-Lex, and UFLPA remain synthetic fixture streams. GDELT is rate-limited and
+  may fall back to fixtures with a visible label.
 - The golden set is small and synthetic; mock-mode 1.0 is not a generalization
   claim.
 - No multi-tenant RLS, MFA, external audit anchoring, or HttpOnly cookie sessions
@@ -96,6 +99,8 @@ responsible for decisions.
 - Rate limiting is process-local; a multi-instance deployment needs a shared
   store.
 - Browser tokens are stored in local storage in the current client.
+- No customer interviews, LOIs, design partners, or revenue; the validation
+  evidence log is at zero.
 
 See [`LIMITATIONS.md`](LIMITATIONS.md) for the full list.
 

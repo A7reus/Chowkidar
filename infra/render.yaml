@@ -23,9 +23,19 @@ services:
       - key: DEV_JWT_SECRET
         generateValue: true
       - key: DATA_MODE
-        value: fixture
+        value: hybrid
       - key: LLM_MODE
-        value: mock
+        value: hybrid
+      - key: ENABLE_SCHEDULER
+        value: "true"
+      - key: SCHEDULER_INTERVAL_MINUTES
+        value: "60"
+      - key: SCHEDULER_RUN_ON_START
+        value: "false"
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
       - key: DATABASE_URL
         sync: false
       # Comma-separated exact origins; include both Netlify and Vercel.

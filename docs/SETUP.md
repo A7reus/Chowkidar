@@ -53,9 +53,9 @@ synthetic data to the baseline.
 ### Seed baseline
 
 ```
-1 company · 4 users · 8 suppliers · 4 sources · 12 signals
+1 company · 4 users · 8 suppliers · 5 sources · 13 signals
 11 obligations · 8 risks (3 critical, 3 high, 1 medium, 1 low)
-21 actions · 5 approvals (4 pending) · 11 audit events · 12 evidence chunks
+21 actions · 5 approvals (4 pending) · 12 audit events · 13 evidence chunks
 ```
 
 ### Demo accounts
@@ -111,6 +111,25 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 
 `NEXT_PUBLIC_API_URL` is read by the web app at build/start time. If you change
 it, restart the web server. The full variable reference is in
+[`ENVIRONMENT.md`](ENVIRONMENT.md).
+
+### Optional: live connectors and hybrid LLM
+
+The default demo is deterministic and needs no external credentials. To exercise
+the live path locally, set:
+
+```dotenv
+DATA_MODE=hybrid          # try GDELT / Federal Register, fall back to fixtures
+LLM_MODE=hybrid           # try Gemini/Groq, fall back deterministically
+GEMINI_API_KEY=<key>      # optional; required for Gemini
+GROQ_API_KEY=<key>        # optional; required for Groq
+ENABLE_SCHEDULER=false    # true to run the in-process sync job
+```
+
+`DATA_MODE=live` is stricter: a connector failure returns `502` and is recorded
+as `live_failed`. GDELT's public endpoint is rate-limited to roughly one request
+every five seconds; hybrid mode labels a rate-limited run `fixture_fallback` with
+`status=degraded`. See [`DATA_SOURCES.md`](DATA_SOURCES.md) and
 [`ENVIRONMENT.md`](ENVIRONMENT.md).
 
 ---

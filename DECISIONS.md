@@ -1,8 +1,8 @@
 # Chowkidar — Decision Log & Persistent Context
 
-**Last updated:** 2026-10-24
+**Last updated:** 2026-10-26
 
-**Status:** Active — base build complete; hosted demo live; production pilot cutover blocked on Supabase Auth keys and dashboard access
+**Status:** Active — base build complete; hosted production pilot live; connector/hybrid/repair work implemented locally, hosted cutover pending
 
 **Owner:** JU_StackMind  
 **Purpose:** Single source of truth for decisions, constraints, assumptions, and session history. Read this before starting any new work session.
@@ -87,7 +87,7 @@
 | Local runtime | **Ollama** | Local models and embeddings |
 | Evals | **RAGAS + custom golden set** | Source-grounded evaluation |
 | Observability | **Phoenix (Arize)** | Local-first tracing |
-| Orchestration | **n8n** | Connector scheduling; core agents in FastAPI |
+| Orchestration | **LangGraph + in-process APScheduler** | Agent workflow; connector scheduling. n8n remains optional and is not the pilot path. |
 | MCP server | **FastMCP** | Tools/resources for other agents |
 | Doc parsing | **Docling** | Local PDF/table/layout parsing |
 | Fine-tuning | **None; document LoRA plan** | Synthetic dataset + readiness plan |
@@ -111,7 +111,7 @@
 | PDF export | **ReportLab (server-side)** | Deterministic audit pack generated in memory; no browser dependency |
 | Data streams | **Bangladesh Bank + EU regulatory** | Primary two; UFLPA/sanctions as supporting third for the demo scenario |
 | Demo scenario | **EU CSDDD + UFLPA, RMG exporter** | Bangladeshi RMG exporter, EU buyer, US importer, multi-tier suppliers |
-| Data mode | **Fixture-only** | Deterministic demo; live source connectors are not implemented |
+| Data mode | **Fixture default; hybrid/live implemented** | Deterministic demo by default; GDELT + Federal Register live connectors with fallback and honest labels |
 | Risk scoring | **Deterministic weights + LLM explanation** | Auditable score; LLM drafts rationale and citations |
 | Report formats | **PDF + JSON + Markdown** | Audit-ready plus machine-readable |
 | File storage | **Supabase Storage + Postgres + local adapter** | Private bucket via authenticated API; database fallback; local for offline dev. No public/signed URLs. |
@@ -121,20 +121,33 @@
 | Auth flow | **Supabase email/password + seeded demo accounts** | Demo login only when `AUTH_MODE=dev` and `DEMO_MODE=true`; production uses the API's Supabase Auth proxy. |
 | Audit log | **Append-only table + hash chain** | Tamper-evident approval trail |
 | Search | **Postgres FTS + pgvector hybrid** | Reciprocal rank fusion |
-| Model mix | **Gemini Flash + Groq Llama + Gemini Pro verifier** | LiteLLM routing; local Ollama fallback |
-| Embeddings runtime | **Python FlagEmbedding** | BGE-M3 + BGE-reranker-v2-m3; torch installed |
+| Model mix | **Gemini 3.5 Flash + Groq `gpt-oss-120b`; Ollama optional** | LiteLLM routing with provider cooldown; verification/report uses the Gemini Pro slot (also 3.5 Flash by default) |
+| Embeddings runtime | **Python FlagEmbedding** | BGE-M3 + BGE-reranker-v2-m3; torch installed; mock vectors remain the demo default |
 | i18n | **next-intl** | Cookie-based locale, no URL prefix required |
 | Bengali scope | **UI chrome + labels only** | Legal source text stays original; translation disclaimer |
 | Notifications | **In-app only** | Bell, approval queue, activity feed |
 | Build start | **Local-first now** | Docker Compose; cloud wiring later |
-| n8n hosting | **Local Docker + FastAPI cron fallback** | Reliable deployed app; n8n for demo/video |
+| Ingestion scheduler | **In-process APScheduler; n8n optional** | Same service path as manual sync; n8n is not the pilot path |
 | Deployment region | **Singapore** | Closest to Bangladesh; Supabase/Render support |
 
 **Stack freeze:** 2026-10-23. No implementation choice changes without user approval.
 
-**Free-tier fallback:** Groq and Google AI Studio have rate limits. The pipeline must degrade to local Ollama models or a deterministic mock mode without breaking the demo.
+**Current implementation status (2026-10-26):** the frozen stack is the target,
+not a claim that every component is wired. Neo4j is optional and not in the
+product path; Ollama is an optional fallback and has not been run in the demo;
+n8n is optional and inactive; BGE-M3/reranker, RAGAS, Phoenix, Docling, Sentry,
+and PostHog are optional and not on the hosted pilot path. The product path is
+Postgres + pgvector/FTS, LangGraph, LiteLLM, FastMCP (stdio), and the in-process
+scheduler. See [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md).
 
-**Remaining external action:** Supabase project, Neo4j Aura, Render, Vercel, Sentry, and PostHog accounts exist in part. The production Auth keys and dashboard access are still required; the base builds locally without them.
+**Free-tier fallback:** Groq and Google AI Studio have rate limits. The pipeline
+degrades to a deterministic mock mode without breaking the demo; Gemini 3.8
+Flash timed out locally and Gemini Pro Latest had zero free-tier quota, so the
+defaults use Gemini 3.5 Flash.
+
+**Remaining external action:** Supabase, Render, Netlify, and Vercel are live.
+The connector/hybrid/scheduler cutover, provider keys on Render, and the Supabase
+password rotation remain operator actions.
 
 ### 2.2 Secrets handling
 
@@ -218,8 +231,8 @@
 |---|---|---|---|
 | Stack decisions (language, package manager, frameworks, DB, auth, AI stack, deploy) | User wants to approve every choice | User | Resolved — stack frozen 2026-10-23 |
 | Cloud accounts and keys (Supabase, Render, Vercel, Neo4j Aura, Sentry, PostHog) | Public demo URL and hosted data | Team | Open — local demo works without them |
-| Which live data sources work reliably from Bangladesh | Demo reliability | Team | Partially resolved — fixture-first path validated; connectors scaffolded |
-| Do we have any pilot user / compliance contact? | Validation and story | Team | Open |
+| Which live data sources work reliably from Bangladesh | Demo reliability | Team | Resolved — Federal Register live; GDELT rate-limited with labelled fallback; other streams fixture-backed |
+| Do we have any pilot user / compliance contact? | Validation and story | Team | Open — validation kit created; 0 interviews |
 | Can a law student review the demo for 1 hour? | Quality check, not dependency | Team | Optional |
 
 ---
@@ -284,6 +297,20 @@ To avoid losing details between sessions:
 - Live service remains **demo** (`AUTH_MODE=dev`, `DEMO_MODE=true`); new code is not yet deployed or committed at the end of this session. The official form remains untouched.
 - Blockers: Supabase URL/anon/service-role keys; Render/Vercel dashboard access; demo video; Figma/design link; team-diversity facts; Supabase password rotation.
 - Next: commit/push the production pass, deploy `STORAGE_BACKEND=database`, provision Supabase users, cut over auth, run hosted QA, then record assets and fill the form.
+
+### 2026-10-26 — Session 6
+- Completed a full evaluation against the official preliminary form signals and the final 5 × 20% rubric; recorded every P0/P1 gap in `docs/GAP_ANALYSIS.md`.
+- Implemented live GDELT + US Federal Register connectors, `fixture|live|hybrid` data modes, dedupe by `(source_id, external_id)`, source mode/error fields, and the APScheduler ingestion path.
+- Added migration `9c1e4f2a7b10_live_connectors.py`; `make migrate` and `make seed` passed with 5 sources and 13 signals.
+- Verified Federal Register live sync (`mode=live`, 8 signals, second run 0 due to dedupe) and GDELT hybrid fallback (`mode=fixture_fallback`, `status=degraded`, sanitized error) locally.
+- Added `LLM_MODE=mock|live|hybrid`, provider cooldown, sanitized provider errors, and `llm_live_ready` / live-connector / scheduler fields in health and meta.
+- Verified a local hybrid pipeline run: 2 signals → 2 obligations → 2 risks → 4 actions in 18.4s, no errors; Gemini 3.5 Flash and Groq succeeded.
+- Added conditional `verify → repair|persist` routing, one bounded repair cycle, verbatim-quote re-retrieval, routing metadata, and `repair_attempts` in run/risk records.
+- Updated the five-stream source UI, mode badges, dashboard pipeline/source panels, OpenAPI types, Render config, `.env.example`, and local `.env` model defaults.
+- Created `docs/VALIDATION.md` (interview guide, LOI template, pricing hypotheses, evidence log at 0) and `docs/DESIGN.md` (design artifact and wireframes).
+- Reconciled `LIMITATIONS.md`, `SUBMISSION.md`, `DATA_SOURCES.md`, `ARCHITECTURE.md`, `ENVIRONMENT.md`, `README.md`, `PRODUCTION.md`, `CLOUD_DEPLOYMENT_STATUS.md`, and `RESPONSIBLE_AI.md`.
+- Tests: API 75 passed; Ruff and Pyright clean; web typecheck/lint clean; web tests 8/8 passed.
+- Blockers: hosted cutover not applied; team-diversity facts, design-link push, video, and Supabase password rotation remain user/operator actions; official form untouched.
 
 ### Template for future sessions
 ```

@@ -65,7 +65,12 @@ class HealthOut(BaseModel):
     auth_mode: str
     demo_mode: bool
     llm_mode: str
+    llm_live_ready: bool = False
     data_mode: str
+    live_connectors: list[str] = Field(default_factory=list)
+    live_connectors_enabled: bool = False
+    scheduler_enabled: bool = False
+    scheduler_running: bool = False
     revision: str | None = None
     timestamp: datetime
 
@@ -79,6 +84,9 @@ class SourceOut(ORMModel):
     url: str
     cadence: str
     status: str
+    connector_key: str = "fixture"
+    last_sync_mode: str | None = None
+    last_signal_count: int = 0
     last_synced_at: datetime | None
     last_error: str | None
 
@@ -87,6 +95,8 @@ class SourceSyncResponse(BaseModel):
     source: SourceOut
     signals_created: int
     message: str
+    mode: str = "fixture"
+    connector: str = "fixture"
 
 
 class SignalOut(ORMModel):
@@ -286,6 +296,8 @@ class SourceHealth(BaseModel):
     stream_key: str
     jurisdiction: str
     status: str
+    connector_key: str = "fixture"
+    last_sync_mode: str | None = None
     last_synced_at: datetime | None
     signal_count: int
 

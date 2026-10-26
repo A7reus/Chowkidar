@@ -62,3 +62,31 @@ def test_production_defaults_to_durable_database_storage() -> None:
 def test_development_defaults_to_local_storage() -> None:
     settings = _settings(app_env="development")
     assert settings.storage_backend == "local"
+
+
+def test_invalid_runtime_modes_are_rejected() -> None:
+    with pytest.raises(ValidationError, match="LLM_MODE"):
+        _settings(llm_mode="turbo")
+    with pytest.raises(ValidationError, match="DATA_MODE"):
+        _settings(data_mode="streaming")
+    with pytest.raises(ValidationError, match="EMBEDDING_MODE"):
+        _settings(embedding_mode="semantic")
+
+
+def test_llm_live_ready_requires_a_non_mock_mode_and_a_key() -> None:
+    assert _settings(llm_mode="mock", gemini_api_key="key").llm_live_ready is False
+    assert _settings(llm_mode="hybrid", gemini_api_key="").llm_live_ready is False
+    assert _settings(llm_mode="hybrid", groq_api_key="key").llm_live_ready is True
+    assert _settings(llm_mode="live", gemini_api_key="key").llm_live_ready is True
+
+
+def test_live_connectors_require_live_or_hybrid_data_mode() -> None:
+    assert _settings(data_mode="fixture").live_connectors_enabled is False
+    assert _settings(data_mode="hybrid").live_connectors_enabled is True
+    assert _settings(data_mode="live").live_connectors_enabled is True
+
+
+def test_repair_attempts_are_bounded() -> None:
+    assert _settings().pipeline_max_repair_attempts == 1
+    with pytest.raises(ValidationError):
+        _settings(pipeline_max_repair_attempts=9)

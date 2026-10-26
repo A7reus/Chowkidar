@@ -12,6 +12,7 @@ export type DashboardSummary = Schema["DashboardSummary"];
 export type TopRisk = Schema["TopRisk"];
 export type SourceHealth = Schema["SourceHealth"];
 export type Source = Schema["SourceOut"];
+export type SourceSyncResponse = Schema["SourceSyncResponse"];
 export type Signal = Schema["SignalOut"];
 export type SignalDetail = Schema["SignalDetail"];
 export type SignalListResponse = Schema["SignalListResponse"];
@@ -58,13 +59,24 @@ export interface WorkspaceMeta {
     note: string;
   };
   buyers: Array<{ name: string; country: string; market: string }>;
-  streams: Array<{ key: string; name: string; role: string; jurisdiction: string }>;
+  streams: Array<{
+    key: string;
+    name: string;
+    role: string;
+    jurisdiction: string;
+    connector: string;
+    mode: string;
+  }>;
   capabilities: string[];
   disclaimer: string;
   llm_mode: string;
+  llm_live_ready?: boolean;
   embedding_mode: string;
   auth_mode: string;
   data_mode?: string;
+  live_connectors?: string[];
+  live_connectors_enabled?: boolean;
+  scheduler_enabled?: boolean;
   storage_backend?: string;
   roles: string[];
 }

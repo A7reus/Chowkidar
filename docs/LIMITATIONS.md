@@ -1,6 +1,6 @@
 # Chowkidar — Limitations
 
-**Last updated:** 2026-10-25
+**Last updated:** 2026-10-26
 
 **Status:** Honest inventory for the preliminary submission. This file takes
 precedence over any optimistic wording elsewhere.
@@ -10,6 +10,13 @@ deployment. It is not a commercial SaaS, a live regulatory feed, or a substitute
 for legal counsel. The list below records what is **not** built, what is **not
 enabled**, and what is **pilot-only**, so judges and future maintainers can
 calibrate the claims.
+
+> **Current split (2026-10-26):** live connectors, hybrid LLM mode, the bounded
+> repair loop, and the scheduler are implemented and locally verified. The hosted
+> Render service still runs the previous revision with `DATA_MODE=fixture` and
+> `LLM_MODE=mock` until the migration and environment cutover are deployed. Do not
+> claim hosted live inference or hosted live ingestion until `/healthz` shows the
+> new fields and `llm_live_ready=true`.
 
 ---
 
@@ -35,30 +42,56 @@ calibrate the claims.
   IPs. Netlify is now primary, so this affects only the fallback path. The Render
   web fallback returned `502` and is not a reliable backup yet.
 - **The Supabase database password is still weak** and rotation is pending.
-- **No demo video, final Figma/design link, or completed submission form** exists
-  yet. The form has deliberately not been filled.
+- **No demo video or completed submission form** exists yet. The design artifact
+  is [`DESIGN.md`](DESIGN.md), not a Figma file. The form has deliberately not
+  been filled.
 
 ## 2. Data and connectors
 
-- **Live source connectors are not implemented.** `DATA_MODE=live` is
-  unsupported. Source sync replays four fixture-backed streams and 12 seeded
-  signals; it does not call EUR-Lex, the Federal Register, DHS/UFLPA, GDELT, or
-  Bangladesh Bank in real time.
-- **No scheduled ingestion.** n8n workflows and a cron fallback are scaffolded,
-  but the demo path is manual/seed-driven.
+- **Two live connectors exist; three streams remain fixture-backed.**
+  `GDELT` and the `US Federal Register` have real key-free connectors with
+  normalization, dedupe by `(source_id, external_id)`, evidence chunking, and
+  honest mode labels. Bangladesh Bank, EUR-Lex, and DHS/UFLPA still replay
+  fixture data. The catalog in [`DATA_SOURCES.md`](DATA_SOURCES.md) distinguishes
+  wired connectors from design targets.
+- **Hybrid mode is implemented, but GDELT is externally rate-limited.** The
+  public GDELT endpoint enforces roughly one request every five seconds and
+  returned `429`/rate-limit HTML during local verification. Hybrid mode retries
+  once, then falls back to fixtures and labels the run `fixture_fallback` with
+  `status=degraded`. A hard `DATA_MODE=live` failure returns `502` and is never
+  reported as a healthy live sync.
+- **Scheduled ingestion is implemented but not hosted.** The in-process
+  APScheduler job runs when `ENABLE_SCHEDULER=true`; it is disabled in the local
+  demo and not yet enabled on Render. n8n remains optional and is not the pilot
+  path.
 - **No licensing or terms review** for source ingestion, redistribution, or
   storage. This must precede a real deployment.
-- **No replay protection, source provenance at fetch time, rate-limit handling,
-  or connector observability** beyond the seeded source-health model.
+- **Rate-limit handling and connector observability are minimal.** The source row
+  stores `last_sync_mode`, `last_signal_count`, `last_synced_at`, and a sanitized
+  `last_error`; there is no per-connector latency/cost dashboard or replay
+  protection beyond external-ID dedupe.
 - **No internal document ingestion pipeline in the demo.** The evidence corpus
   is seeded; Docling/PDF parsing is optional and not on the demo path.
-- **The company, suppliers, signals, and quotes are synthetic.** They are not
-  allegations about real entities. The product labels them as a demo.
+- **The company, suppliers, seeded signals, and quotes are synthetic.** They are
+  not allegations about real entities. The product labels the seeded data as a
+  demo. Live Federal Register/GDELT rows are real public documents but are
+  retrieved for a fictional company scenario.
 
 ## 3. AI and evaluation
 
-- **Mock mode is the default and the verified path.** Live Gemini/Groq calls
-  were smoke-tested, but the hosted demo does not call an LLM.
+- **Hybrid mode is implemented; mock remains the default and the safest demo
+  path.** Local hybrid runs completed with Gemini 3.5 Flash and Groq
+  `gpt-oss-120b`; the hosted service still reports `llm_mode=mock` until keys and
+  the env cutover are applied. The deterministic mock path remains the fallback.
+- **Provider reliability is variable.** Gemini 3.8 Flash timed out locally and
+  Gemini Pro Latest had zero free-tier quota; the defaults now use Gemini 3.5
+  Flash. A 90-second per-provider cooldown prevents repeated timeouts. This is
+  not a production SLA.
+- **The bounded repair loop is deterministic and narrow.** It re-retrieves a
+  verbatim quote and a citation once; it does not rewrite the risk, change the
+  score, or call another model. One local smoke run still left a risk in
+  `needs_review` after repair, which is the intended honest outcome when the
+  evidence cannot be grounded.
 - **The golden set is seven hand-built synthetic cases.** The 7/7 result measures
   pipeline contract compliance and citation grounding on that set, not
   generalization to unseen regulations.
@@ -128,7 +161,8 @@ calibrate the claims.
 - **Chromium was the primary browser test target.** Firefox/Safari were not
   exhaustively verified.
 - **PDF output is a generated audit pack, not a designed legal document.**
-- **No Figma source is linked yet.**
+- **No Figma source is linked.** [`DESIGN.md`](DESIGN.md) is the design artifact
+  and the public GitHub link is the substitute.
 
 ## 7. Legal, compliance, and ethics
 
@@ -147,11 +181,13 @@ calibrate the claims.
 
 ## 8. Evaluation and submission
 
-- **No real users, design partners, revenue, or letters of intent.**
+- **No real users, design partners, revenue, or letters of intent.** The
+  validation kit exists in [`VALIDATION.md`](VALIDATION.md), but the evidence log
+  records `0 interviews`, `0 LOIs`, and `0 paying customers`.
 - **No measured accuracy on real exporter data.**
 - **No final public demo video.** [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) is ready.
-- **No final design/Figma link.** [`PITCH_DECK.md`](PITCH_DECK.md) is the
-  content outline.
+- **No Figma file.** [`DESIGN.md`](DESIGN.md) is the design artifact and the
+  public GitHub link is the substitute.
 - **Team-size, NRB, and female-member facts** for the diversity question are not
   confirmed.
 - **No legal review of the submission copy.**
@@ -164,5 +200,5 @@ It means the master-prompt production path is **live and verified**: Supabase
 email/password auth, local role authorization, demo lockout, durable report
 storage, rate limits, settings, hosted browser QA, and operational
 documentation. It does **not** mean commercial SaaS readiness, validated legal
-accuracy, live connectors, or a security certification. The remaining gaps are
-listed above rather than hidden.
+accuracy, hosted live connectors, hosted live LLM inference, or a security
+certification. The remaining gaps are listed above rather than hidden.

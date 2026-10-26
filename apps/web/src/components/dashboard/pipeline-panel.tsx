@@ -7,6 +7,7 @@ import {
   Database,
   Gauge,
   Lock,
+  RefreshCw,
   ScanSearch,
   ShieldCheck,
   Sparkles,
@@ -42,6 +43,8 @@ export function PipelinePanel({ summary, latestRun, canRun, running, onRun }: Pi
       ).length
     : null;
   const hasRun = Boolean(latestRun);
+  const repairs =
+    typeof output.repair_attempts === "number" ? output.repair_attempts : null;
 
   const steps = [
     {
@@ -86,6 +89,13 @@ export function PipelinePanel({ summary, latestRun, canRun, running, onRun }: Pi
       unit: verification != null ? "verified" : "evidence rate",
       done: hasRun,
     },
+    {
+      label: t("stepRepair"),
+      icon: RefreshCw,
+      value: hasRun ? (repairs ?? 0) : "—",
+      unit: "bounded repairs",
+      done: hasRun,
+    },
   ];
 
   const message =
@@ -120,7 +130,7 @@ export function PipelinePanel({ summary, latestRun, canRun, running, onRun }: Pi
           }
         />
 
-        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-7">
           {steps.map((step, index) => {
             const Icon = step.icon;
             return (
@@ -169,7 +179,7 @@ export function PipelinePanel({ summary, latestRun, canRun, running, onRun }: Pi
               </span>
             </div>
           ) : (
-            <span className="text-[9px] text-muted-2">LangGraph · 6-stage workflow</span>
+            <span className="text-[9px] text-muted-2">LangGraph · 7 stages + bounded repair</span>
           )}
         </div>
       </div>

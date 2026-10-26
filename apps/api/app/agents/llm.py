@@ -36,10 +36,27 @@ def _strip_json_fences(text: str) -> str:
 class LLMClient:
     def __init__(self) -> None:
         self.settings = get_settings()
+        self._cooldown_until: dict[str, float] = {}
 
     @property
     def live_enabled(self) -> bool:
-        return self.settings.llm_mode == "live"
+        return self.settings.llm_mode in {"live", "hybrid"} and self.settings.llm_live_ready
+
+    @staticmethod
+    def _provider(model: str) -> str:
+        return model.split("/", 1)[0]
+
+    def _is_cooling(self, model: str) -> bool:
+        until = self._cooldown_until.get(self._provider(model))
+        return until is not None and time.monotonic() < until
+
+    def _start_cooldown(self, model: str) -> None:
+        self._cooldown_until[self._provider(model)] = (
+            time.monotonic() + self.settings.llm_provider_cooldown_seconds
+        )
+
+    def _clear_cooldown(self, model: str) -> None:
+        self._cooldown_until.pop(self._provider(model), None)
 
     def model_for_purpose(self, purpose: str) -> str:
         if purpose in {"classification", "triage"}:
@@ -76,8 +93,13 @@ class LLMClient:
         safe_user, _redactions = redact_pii(user)
         primary = self.model_for_purpose(purpose)
         candidates = [primary, *self.fallback_models(primary)]
+        available = [model for model in candidates if not self._is_cooling(model)]
+        if not available:
+            raise LLMUnavailable(
+                "All configured live LLM providers are in cooldown after recent failures"
+            )
         errors: list[str] = []
-        for index, model in enumerate(candidates):
+        for model in available:
             try:
                 from litellm import acompletion
 
@@ -96,21 +118,25 @@ class LLMClient:
                 api_key = self.api_key_for(model)
                 if api_key:
                     kwargs["api_key"] = api_key
+                if model.startswith("ollama/"):
+                    kwargs["api_base"] = self.settings.ollama_base_url
                 response = await acompletion(**kwargs)
                 latency_ms = int((time.perf_counter() - started) * 1000)
                 content = response.choices[0].message.content or ""  # pyright: ignore[reportAttributeAccessIssue]
                 usage = getattr(response, "usage", None)
+                self._clear_cooldown(model)
                 return LLMResult(
                     content=content,
                     model=model,
-                    provider=model.split("/")[0],
+                    provider=self._provider(model),
                     latency_ms=latency_ms,
                     prompt_tokens=getattr(usage, "prompt_tokens", 0) or 0,
                     completion_tokens=getattr(usage, "completion_tokens", 0) or 0,
-                    fallback_used=index > 0,
+                    fallback_used=model != primary,
                 )
             except Exception as exc:
-                errors.append(f"{model}: {type(exc).__name__}: {exc}")
+                self._start_cooldown(model)
+                errors.append(f"{model}: {type(exc).__name__}")
         raise LLMUnavailable("; ".join(errors[-3:]))
 
     async def complete_json(

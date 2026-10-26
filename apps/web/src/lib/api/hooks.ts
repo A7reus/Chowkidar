@@ -30,6 +30,7 @@ import type {
   SignalListResponse,
   Source,
   SourceHealth,
+  SourceSyncResponse,
   Supplier,
   WorkspaceMeta,
 } from "@/lib/api/types";
@@ -114,10 +115,9 @@ export function useSyncSource() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (sourceId: string) =>
-      apiFetch<{ source: Source; signals_created: number; message: string }>(
-        `/api/v1/sources/${sourceId}/sync`,
-        { method: "POST" },
-      ),
+      apiFetch<SourceSyncResponse>(`/api/v1/sources/${sourceId}/sync`, {
+        method: "POST",
+      }),
     onSuccess: () => {
       void client.invalidateQueries({ queryKey: queryKeys.sources });
       void client.invalidateQueries({ queryKey: queryKeys.dashboard });

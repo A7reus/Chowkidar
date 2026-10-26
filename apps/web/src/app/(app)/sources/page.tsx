@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Clock3,
   Database,
+  FileText,
   Landmark,
   Newspaper,
   RefreshCw,
@@ -29,6 +30,7 @@ const sourceIcons: Record<string, React.ComponentType<{ className?: string }>> =
   eu_eurlex: Scale,
   us_uflpa: ShieldAlert,
   gdelt: Newspaper,
+  us_federal_register: FileText,
 };
 
 const streamRole: Record<string, { label: string; variant: "success" | "info" | "warning" }> = {
@@ -36,6 +38,26 @@ const streamRole: Record<string, { label: string; variant: "success" | "info" | 
   eu_eurlex: { label: "Primary", variant: "success" },
   us_uflpa: { label: "Supporting", variant: "info" },
   gdelt: { label: "News", variant: "warning" },
+  us_federal_register: { label: "Rules", variant: "info" },
+};
+
+const syncMode: Record<string, { label: string; className: string }> = {
+  live: {
+    label: "Live",
+    className: "border-emerald-400/20 bg-emerald-400/10 text-emerald-300",
+  },
+  fixture: {
+    label: "Fixture",
+    className: "border-slate-400/20 bg-slate-400/10 text-slate-300",
+  },
+  fixture_fallback: {
+    label: "Fallback",
+    className: "border-amber-400/20 bg-amber-400/10 text-amber-300",
+  },
+  live_failed: {
+    label: "Failed",
+    className: "border-rose-400/20 bg-rose-400/10 text-rose-300",
+  },
 };
 
 export default function SourcesPage() {
@@ -61,7 +83,7 @@ export default function SourcesPage() {
     syncSource.mutate(sourceId, {
       onSuccess: (result) =>
         toast.success(`${name} synced`, {
-          description: `${result.signals_created} new signal(s). ${result.message}`,
+          description: `${result.signals_created} new signal(s) · ${result.mode.replaceAll("_", " ")}. ${result.message}`,
         }),
       onError: (error) =>
         toast.error("Sync failed", {
@@ -112,15 +134,16 @@ export default function SourcesPage() {
           <WifiOff className="size-4" />
         </div>
         <div>
-          <p className="text-[12px] font-medium text-slate-100">Two independent streams are the minimum.</p>
+          <p className="text-[12px] font-medium text-slate-100">Five streams, live where the source allows.</p>
           <p className="mt-0.5 text-[10px] leading-relaxed text-muted">
-            Chowkidar combines Bangladesh Bank circulars and EUR-Lex regulation as primary sources,
-            UFLPA entity-list signals as a supporting stream, and GDELT news as an operating-risk
-            signal. The hosted pilot replays fixtures; live connectors are not implemented.
+            Bangladesh Bank circulars and EUR-Lex regulation are primary fixture-backed streams.
+            UFLPA entity-list signals are supporting evidence. GDELT news and the US Federal
+            Register run through live connectors when hybrid mode is enabled; if a connector is
+            unavailable, the run is labelled Fallback and never reported as a live sync.
           </p>
         </div>
         <span className="ml-auto hidden shrink-0 rounded-full border border-sky-400/20 bg-sky-400/10 px-2 py-0.5 text-[9px] text-sky-200 md:block">
-          {meta.data?.streams.length ?? 4} streams
+          {meta.data?.streams.length ?? 5} streams
         </span>
       </div>
 
@@ -129,6 +152,7 @@ export default function SourcesPage() {
           const Icon = sourceIcons[source.stream_key] ?? Database;
           const health = healthById.get(source.id);
           const role = streamRole[source.stream_key] ?? { label: "Supporting", variant: "info" as const };
+          const mode = syncMode[source.last_sync_mode ?? "fixture"] ?? syncMode.fixture;
           const isSyncing = syncSource.isPending && syncSource.variables === source.id;
           return (
             <article key={source.id} className="panel p-5">
@@ -163,7 +187,15 @@ export default function SourcesPage() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex flex-wrap items-center justify-end gap-1.5">
+                  <span
+                    className={cn(
+                      "rounded-full border px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wider",
+                      mode.className,
+                    )}
+                  >
+                    {mode.label}
+                  </span>
                   <span className={cn("size-1.5 rounded-full", source.status === "healthy" ? "bg-emerald-400 live-dot" : "bg-amber-400")} />
                   <span className="text-[9px] capitalize text-muted">{source.status}</span>
                 </div>
@@ -230,10 +262,10 @@ export default function SourcesPage() {
           </div>
           <div className="mt-4 space-y-3">
             {[
-              { step: "01", title: "Schedule", body: "n8n and a FastAPI cron fallback are scaffolded; the hosted pilot runs manual fixture sync." },
-              { step: "02", title: "Fetch & normalize", body: "Live connectors are not implemented. Fixture payloads follow the same signal-row contract." },
-              { step: "03", title: "Parse & chunk", body: "Docling is optional and not on the pilot path; fixture text is chunked for citation retrieval." },
-              { step: "04", title: "Agent pipeline", body: "The LangGraph workflow extracts obligations, maps risks, scores, drafts remediation, and verifies." },
+              { step: "01", title: "Schedule", body: "An in-process APScheduler job runs when ENABLE_SCHEDULER=true. n8n remains an optional integration, not the pilot path." },
+              { step: "02", title: "Fetch & normalize", body: "GDELT and the US Federal Register have live connectors. Hybrid mode falls back to fixture replay and labels the run Fallback." },
+              { step: "03", title: "Parse & chunk", body: "Connector text is normalized, chunked with source context, and embedded for citation retrieval. Docling is optional." },
+              { step: "04", title: "Agent pipeline", body: "LangGraph extracts, maps, scores, drafts remediation, verifies, and runs one bounded evidence-repair loop when needed." },
             ].map((item) => (
               <div key={item.step} className="flex gap-3">
                 <span className="flex size-6 shrink-0 items-center justify-center rounded-md border border-border bg-white/[0.02] font-mono text-[9px] text-muted-2">

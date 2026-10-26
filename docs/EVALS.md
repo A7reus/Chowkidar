@@ -1,11 +1,12 @@
 # Chowkidar — Evaluation
 
-**Current result (mock mode):** 7/7 golden cases; extraction accuracy, citation
-coverage, verifier pass rate, legal-advice guard, and priority agreement all
-report `1.0`.
+**Current result (deterministic mock path):** 7/7 golden cases; extraction
+accuracy, citation coverage, verifier pass rate, no-legal-advice rate, and
+priority agreement all report `1.0`.
 
 This is a **demo-scale, synthetic, inspectable** set, not a legal benchmark or a
-production accuracy claim.
+production accuracy claim. Live Gemini/Groq routes are implemented but are not
+benchmarked on this set; the conditional repair loop is also not scored here.
 
 ---
 
@@ -76,8 +77,11 @@ summary and per-case notes.
 ## 4. Limitations
 
 - **Small and synthetic:** seven hand-built cases, one company, one scenario.
-- **Mock-path result:** the deterministic path is the default. Live model output
-  has been smoke-tested but is not benchmarked here.
+- **Deterministic-path result:** the deterministic path is the default and the
+  only path scored here. Live model output has been smoke-tested but is not
+  benchmarked. The repair loop is not exercised by the golden set.
+- **No end-to-end repair metric:** a risk that needs a repair cycle may still
+  finish as `needs_review`; the eval does not currently measure repair success.
 - **No human legal labels:** expected priorities and keywords are engineering
   labels, not legal opinions.
 - **No adversarial set:** prompt-injection and prohibited-language checks exist,

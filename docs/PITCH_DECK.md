@@ -1,8 +1,10 @@
 # Chowkidar — 10-slide pitch outline
 
-**Use:** preliminary submission deck, 3-minute pitch, or Figma source.
-**Rule:** every slide must be supportable by the repo or a demo screenshot. Do
-not claim live connectors, legal advice, or customer traction that does not exist.
+**Use:** preliminary submission deck, 3-minute pitch, or design source.
+**Rule:** every slide must be supportable by the repo or a demo screenshot. Claim
+only the two implemented live connectors (GDELT + US Federal Register) with
+their honest fallback labels; do not claim hosted live inference before the
+Render cutover, legal advice, or customer traction that does not exist.
 
 ---
 
@@ -69,7 +71,7 @@ Visual: five-step pipeline with human gate highlighted.
 
 Three screenshots:
 
-- Dashboard: 12 signals, 8 risks, source health, agent run.
+- Dashboard: 13 signals, 8 risks, five source streams, agent run.
 - Risk detail: evidence quote, citation, score breakdown, actions.
 - Approval/audit: rationale, decision, hash-chain verification.
 
@@ -80,12 +82,15 @@ Caption: every number is from the seeded demo; every finding is synthetic.
 ## Slide 6 — AI architecture
 
 - **LangGraph** state machine: ingest → extract → map → score → remediate →
-  verify → persist.
-- **LiteLLM** fallback: Gemini Flash → Groq → Gemini Pro; deterministic mock mode
-  for reproducible judging.
+  verify → conditional repair → persist.
+- **LiteLLM** fallback: Gemini 3.5 Flash → Groq `gpt-oss-120b` → optional Ollama;
+  deterministic fallback and mock mode for reproducible judging.
+- **Live ingestion:** GDELT + US Federal Register connectors with dedupe and
+  honest `live` / `fixture_fallback` labels; three other streams remain
+  fixture-backed.
 - **Hybrid retrieval:** pgvector + Postgres FTS over cited chunks.
 - **Verifier:** quote grounding, citation URL, prohibited-language and
-  prompt-injection checks.
+  prompt-injection checks; one bounded evidence-repair cycle.
 - **Human-in-the-loop:** role-gated approval, append-only audit chain.
 - **Read-only MCP:** other agents can inspect evidence without mutating state.
 
@@ -107,12 +112,13 @@ Visual: risk detail crop + audit verify card + report page.
 
 ## Slide 8 — Evaluation
 
-- 7/7 golden cases in mock mode.
-- Five gates: extraction, citation coverage, verifier pass, no-legal-advice,
-  priority agreement.
-- 57 API tests, 8 web tests, local Playwright smoke, and hosted production
+- 7/7 golden cases on the deterministic path.
+- Five gates: extraction accuracy, citation coverage, verifier pass rate,
+  no-legal-advice rate, priority agreement.
+- 75 API tests, 8 web tests, local Playwright smoke, and hosted production
   Playwright QA; Ruff/Pyright/ESLint/tsc clean.
-- Honest limitation: small synthetic set; not a legal benchmark.
+- Honest limitation: small synthetic set; not a legal benchmark; live models and
+  the repair loop are not scored here.
 
 Visual: eval dashboard screenshot with a “demo-scale” caption.
 
@@ -122,9 +128,12 @@ Visual: eval dashboard screenshot with a “demo-scale” caption.
 
 **Live:** Supabase email/password auth, local role mapping, durable Postgres
 reports, rate limits, production login, settings, hosted QA, and runbook.
+**Implemented locally, hosted cutover pending:** GDELT + Federal Register live
+connectors, hybrid LLM mode, bounded repair loop, and scheduled ingestion.
 
-**Next:** live source connectors, tenant isolation/RLS, HttpOnly sessions,
-MFA/SSO, external audit anchoring, human legal review, design-partner pilots.
+**Next:** deploy the connector/hybrid cutover, tenant isolation/RLS, HttpOnly
+sessions, MFA/SSO, external audit anchoring, human legal review, and
+design-partner pilots.
 
 **Moat:** the evidence graph + approval/audit workflow + domain-specific
 evaluation, not a generic chatbot.

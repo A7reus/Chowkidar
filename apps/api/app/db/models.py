@@ -115,6 +115,12 @@ class Source(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     url: Mapped[str] = mapped_column(String(1024), nullable=False)
     cadence: Mapped[str] = mapped_column(String(64), default="daily", nullable=False)
     status: Mapped[str] = mapped_column(String(32), default="healthy", nullable=False)
+    connector_key: Mapped[str] = mapped_column(String(64), default="fixture", nullable=False)
+    connector_config: Mapped[dict[str, Any]] = mapped_column(
+        "connector_config", JSONB, default=dict, nullable=False
+    )
+    last_sync_mode: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    last_signal_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     last_synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
 

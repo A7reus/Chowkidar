@@ -16,7 +16,7 @@ curl -sSI https://ch0wkidar.netlify.app/
 curl -sSI https://chowkidar-wheat.vercel.app/
 ```
 
-Expected production pilot:
+Expected hosted production pilot before the connector/hybrid cutover:
 
 ```json
 {
@@ -28,6 +28,12 @@ Expected production pilot:
   "data_mode": "fixture"
 }
 ```
+
+After the cutover described in [`PRODUCTION.md`](PRODUCTION.md) section 2.8, the
+same endpoint should additionally report `llm_mode: "hybrid"`,
+`llm_live_ready: true`, `data_mode: "hybrid"`, `live_connectors` containing
+`gdelt` and `federal_register`, and `scheduler_enabled: true`. If
+`llm_live_ready` is false, do not claim hosted live inference.
 
 The local offline demo still uses `auth_mode: dev` and `demo_mode: true`; those
 values on the public deployment would be a regression.
@@ -76,6 +82,19 @@ DATABASE_URL='postgresql+psycopg://...' uv run alembic upgrade head
 
 Never run migrations and the seed against a database with real data unless you
 intend to replace it.
+
+### Connectors and scheduler
+
+- `DATA_MODE=fixture|hybrid|live`; `ENABLE_SCHEDULER=true` starts the in-process
+  APScheduler job. `SCHEDULER_RUN_ON_START=false` avoids a burst on cold start.
+- The scheduler and manual sync use the same service path. The job is
+  process-local, so it does not coordinate across multiple Render instances.
+- Check `/api/v1/sources` for `last_sync_mode`, `last_signal_count`,
+  `last_synced_at`, and a sanitized `last_error`.
+- A `fixture_fallback` run is **degraded**, not healthy. A hard `live_failed`
+  run returns `502` from the sync route after persisting the failure.
+- GDELT's public endpoint allows roughly one request every five seconds. Do not
+  poll it manually in a loop; wait for the scheduler or retry after the window.
 
 ---
 
@@ -166,8 +185,10 @@ demo sessions become invalid and users must log in again.
 
 ### Provider keys
 
-Rotate Gemini/Groq keys in their consoles, update Render, redeploy, and verify the
-pipeline in mock mode first. Live mode is optional and not the default.
+Rotate Gemini/Groq keys in their consoles, update Render, redeploy, and verify
+`/healthz` and one pipeline run. If the live path is unreliable, set
+`LLM_MODE=mock` and disclose that state; the deterministic demo remains
+functional.
 
 ---
 
@@ -210,6 +231,20 @@ real tenant data.
   `CORS_ORIGINS`. The current allowlist must include both Netlify and Vercel.
 - Check the Render logs for `SupabaseAuthError` messages. Never log passwords or
   tokens.
+
+### Source sync fails or reports a fallback
+
+- Check the source row's `last_sync_mode` and sanitized `last_error` via
+  `GET /api/v1/sources`.
+- `fixture_fallback` means the live connector failed and fixture data was used;
+  the source should be `degraded`, not `healthy`. Do not present it as live.
+- `live_failed` means a hard live run failed; the route returns `502` and the
+  failure is persisted for audit.
+- For GDELT, a `429`/rate-limit HTML response is expected under aggressive
+  polling. Wait at least five seconds, or let the scheduler run.
+- If the scheduler is enabled but not running, check the Render logs for an
+  APScheduler startup error and confirm `scheduler_enabled`/`scheduler_running`
+  in `/healthz`.
 
 ### Report generation fails
 

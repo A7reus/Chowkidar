@@ -93,6 +93,8 @@ async def get_dashboard_summary(session: AsyncSession) -> DashboardSummary:
             stream_key=source.stream_key,
             jurisdiction=source.jurisdiction,
             status=source.status,
+            connector_key=source.connector_key,
+            last_sync_mode=source.last_sync_mode,
             last_synced_at=source.last_synced_at,
             signal_count=int(signal_counts.get(source.id, 0)),
         )

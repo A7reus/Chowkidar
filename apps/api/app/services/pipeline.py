@@ -13,7 +13,7 @@ from app.db.models import AgentRun
 from app.schemas import AgentRunOut, PipelineRunResponse
 from app.services.serializers import agent_run_out
 
-WORKFLOW = "ingest_extract_map_score_remediate_verify"
+WORKFLOW = "ingest_extract_map_score_remediate_verify_repair"
 
 
 async def run_pipeline(
@@ -70,6 +70,8 @@ async def run_pipeline(
         "created_risk_ids": persisted,
         "errors": errors,
         "mode": runner.mode,
+        "repair_attempts": int(state.get("repair_attempts", 0)),
+        "routing": state.get("routing", []),
         "verification": [
             {
                 "title": item.get("title"),

@@ -4,15 +4,23 @@
 with Supabase email/password auth (`AUTH_MODE=supabase`, `DEMO_MODE=false`), four
 pilot accounts are provisioned, demo login is disabled, and reports are stored
 in Postgres. Netlify is the primary web origin and Vercel is the secondary
-fallback. Netlify production browser QA passed 2/2 on 2026-10-25 at revision
-`d70e493db510`; the prior Vercel run passed at `fcd7fd8`. This is a
+fallback. Netlify production browser QA passed 2/2 on 2026-10-25; the most
+recently verified hosted health check on 2026-10-26 reported revision
+`2bfaed71372c` with `status=ok`, `database=ok`, `auth_mode=supabase`,
+`demo_mode=false`, `llm_mode=mock`, and `data_mode=fixture`. This is a
 single-workspace production pilot, not a commercial customer deployment.
+
+> **Local vs hosted (2026-10-26):** live connectors, hybrid LLM mode, the
+> bounded repair loop, and the scheduler are implemented and locally verified.
+> They are **not deployed** to Render yet. The hosted service remains
+> `DATA_MODE=fixture` and `LLM_MODE=mock` until the migration and environment
+> cutover in section 2.8 is executed.
 
 This document defines “production-ready” for Chowkidar's preliminary round as
 the production path required by `prompts/MASTER_PROMPT.md`: real authentication,
 durable report storage, demo access disabled, and bounded request rates. It does
 **not** claim commercial SaaS readiness (multi-tenant isolation, billing, 24/7
-operations, legal review, or live source connectors).
+operations, legal review, or universal live source coverage).
 
 ---
 
@@ -32,9 +40,18 @@ operations, legal review, or live source connectors).
 
 ### Deliberate limitations
 
-- **Live source connectors are not implemented.** `DATA_MODE=live` is not a
-  supported ingestion mode; source sync replays the fixture set. The demo
-  therefore uses synthetic signals even after auth is switched to production.
+- **Two live connectors are implemented; three streams remain fixture-backed.**
+  `GDELT` and the `US Federal Register` run through real connectors when
+  `DATA_MODE=hybrid` or `live` is enabled. Bangladesh Bank, EUR-Lex, and UFLPA
+  still replay fixtures. GDELT is externally rate-limited and may fall back to
+  fixtures with a visible `fixture_fallback` label. The hosted service has not
+  yet been cut over to the new modes.
+- **Scheduled ingestion is implemented but not enabled on Render.** The
+  in-process APScheduler job runs when `ENABLE_SCHEDULER=true`; n8n is optional
+  and not the pilot path.
+- **Hybrid LLM mode is implemented but not hosted yet.** Local runs used Gemini
+  3.5 Flash and Groq `gpt-oss-120b`; the hosted service still reports
+  `llm_mode=mock` until keys and the environment cutover are applied.
 - **Tokens are held in browser storage** by the current client (Zustand
   `persist`). A hardened deployment should move refresh tokens to HttpOnly,
   SameSite cookies with CSRF protection. Treat this as a pilot limitation.
@@ -57,7 +74,7 @@ operations, legal review, or live source connectors).
 | Accounts | `admin@chowkidar.app`, `analyst@chowkidar.app`, `approver@chowkidar.app`, `viewer@chowkidar.app` |
 | Credentials | Gitignored `docs/private/supabase-credentials.local.md`, mode `600` |
 | Report storage | Postgres (`STORAGE_BACKEND=database`) |
-| Runtime QA | Netlify run passed 2/2 at revision `d70e493db510`; prior Vercel run passed at `fcd7fd8`. API, role, report, browser, mobile, CORS, and rate-limit checks passed. |
+| Runtime QA | Netlify run passed 2/2; the most recent hosted health check on 2026-10-26 reported revision `2bfaed71372c` with `llm_mode=mock` and `data_mode=fixture`. API, role, report, browser, mobile, CORS, and rate-limit checks passed. |
 | Remaining external constraint | Vercel default DNS is variable on some networks; it is only the secondary fallback. See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md). |
 
 ---
@@ -221,12 +238,54 @@ a deployment that may contain real data. Roll back the API deploy or fix the
 Supabase environment. `AUTH_MODE=dev` + `DEMO_MODE=true` is only acceptable for a
 fresh synthetic demo deployment.
 
+### 2.8 Connector, hybrid LLM, and scheduler cutover
+
+This cutover is **not yet applied** to the hosted service. Apply it only after
+the new code and migration `9c1e4f2a7b10_live_connectors.py` are on the deployed
+revision and the provider keys are present.
+
+```dotenv
+DATA_MODE=hybrid
+LLM_MODE=hybrid
+ENABLE_SCHEDULER=true
+SCHEDULER_INTERVAL_MINUTES=60
+SCHEDULER_RUN_ON_START=false
+GEMINI_API_KEY=<key>
+GROQ_API_KEY=<key>
+GEMINI_FLASH_MODEL=gemini/gemini-3.5-flash
+GEMINI_PRO_MODEL=gemini/gemini-3.5-flash
+LLM_TIMEOUT_SECONDS=25
+LLM_PROVIDER_COOLDOWN_SECONDS=90
+PIPELINE_LIVE_MAX_SIGNALS=6
+PIPELINE_MAX_REPAIR_ATTEMPTS=1
+```
+
+Cutover order:
+
+1. Deploy the API revision containing the migration and connector code.
+2. Confirm the boot log applies `9c1e4f2a7b10` without error.
+3. Set the environment values above and redeploy.
+4. Verify `/healthz` reports `data_mode=hybrid`, `llm_live_ready=true`,
+   `live_connectors` containing `gdelt` and `federal_register`,
+   `scheduler_enabled=true`, and `scheduler_running=true`.
+5. Run one Federal Register sync and confirm `mode=live`; run it again and
+   confirm `mode=live` with `0` new signals due to dedupe.
+6. Run one GDELT sync. If the public API is rate-limited, confirm the run is
+   `mode=fixture_fallback`, `status=degraded`, and `last_error` is sanitized. Do
+   not present the fallback as a healthy live sync.
+7. Run one live pipeline and inspect `repair_attempts`, `routing`, and
+   verification statuses.
+8. If the provider keys are absent or the live path is unreliable, revert to
+   `LLM_MODE=mock` and `DATA_MODE=fixture` and disclose that state. The demo
+   remains functional.
+
 ---
 
 ## 3. Hosted QA matrix
 
-Completed against Netlify and the hosted API on 2026-10-25 at runtime revision
-`d70e493db510`, with the prior Vercel run retained at `fcd7fd8`:
+Completed against Netlify and the hosted API on 2026-10-25; the most recent
+hosted health check on 2026-10-26 reported revision `2bfaed71372c`, with the
+prior Vercel run retained at `fcd7fd8`:
 
 - [x] `/healthz` returns `status: ok`, `database: ok`, `auth_mode: supabase`,
       `demo_mode: false`.

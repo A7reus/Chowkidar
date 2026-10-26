@@ -29,12 +29,13 @@
                 │
 ┌───────────────▼────────────────────────────────────────────────────┐
 │ LangGraph pipeline                                                  │
-│ ingest → extract → map → score → remediate → verify → persist      │
+│ ingest → extract → map → score → remediate → verify → repair       │
+│                                              └──────→ persist      │
 │ LiteLLM providers / deterministic mock fixtures                    │
 └────────────────────────────────────────────────────────────────────┘
 ```
 
-The pilot is deliberately **fixture-first**: a seeded Postgres database makes the story reproducible. Connectors and the agent pipeline can run again over the same signals; mutation tools are role-gated and audited.
+The pilot keeps a seeded Postgres database so the story is reproducible. Connectors and the agent pipeline can run again over the same signals; mutation tools are role-gated and audited. The hosted service is still fixture/mock until the connector and hybrid-mode cutover is deployed; the local build supports `DATA_MODE=hybrid` and `LLM_MODE=hybrid`.
 
 ---
 
@@ -85,12 +86,13 @@ The Alembic baseline enables `vector` and creates an HNSW index for evidence emb
 
 Primary demo streams:
 
-1. **Bangladesh Bank** — foreign-exchange and export-proceeds circulars.
-2. **EU regulatory** — CSDDD / due-diligence signals.
-3. **UFLPA / DHS** — forced-labour entity and traceability signals.
-4. **GDELT** — global operational news for corroboration and supplier events.
+1. **Bangladesh Bank** — foreign-exchange and export-proceeds circulars. Fixture-backed.
+2. **EU regulatory** — CSDDD / due-diligence signals. Fixture-backed.
+3. **UFLPA / DHS** — forced-labour entity and traceability signals. Fixture-backed.
+4. **GDELT** — global operational news for corroboration and supplier events. Live connector; rate-limited, hybrid fallback.
+5. **US Federal Register** — trade and supply-chain rules. Live connector.
 
-Each source has a `stream_key`, jurisdiction, status, last sync, and health badge. The demo fixture includes 12 signals; n8n workflows and a FastAPI cron fallback are scaffolded for scheduled ingestion. `DATA_MODE=live` is **not implemented**; source sync replays the fixture set.
+Each source has a `stream_key`, `connector_key`, jurisdiction, status, last sync, `last_sync_mode`, `last_signal_count`, and a sanitized `last_error`. The seed includes 13 signals across the five streams. The in-process APScheduler job can sync the live-capable sources when `ENABLE_SCHEDULER=true`; n8n remains optional. `DATA_MODE=fixture|hybrid|live` is implemented; a failed hard live run is surfaced as `live_failed`, not a fake healthy sync.
 
 See [`DATA_SOURCES.md`](DATA_SOURCES.md).
 
@@ -106,21 +108,22 @@ LangGraph state machine (`apps/api/app/agents/pipeline.py`):
 4. **Score** — compute the deterministic weighted score outside the LLM.
 5. **Remediate** — draft two or more actions with owner role, priority, due date, and automation flag.
 6. **Verify** — deterministic verifier checks quote grounding, citation URL, prohibited legal-advice language, prompt-injection markers, and evidence presence. Live mode can add a verifier model pass; deterministic checks still gate the result.
-7. **Persist** — write obligation, risk, evidence, actions, agent run, and audit event in a nested transaction per risk.
+7. **Repair (conditional)** — if any risk is unresolved and the attempt budget allows, re-retrieve a verbatim quote and citation from the signal/chunks, then re-verify. The loop is bounded to one cycle by default (`PIPELINE_MAX_REPAIR_ATTEMPTS=1`) and never changes severity or invents evidence. Unresolved risks are persisted as `needs_review`.
+8. **Persist** — write obligation, risk, evidence, actions, agent run, and audit event in a nested transaction per risk.
 
-Pipeline runs are also exposed as `POST /api/v1/pipeline/run` and recorded in `agent_runs`.
+Pipeline runs are also exposed as `POST /api/v1/pipeline/run` and recorded in `agent_runs`. The run output stores `repair_attempts`, routing events, and per-risk verification status; risk `extra` stores the repair attempts that touched it.
 
 ### Model roles
 
 | Purpose | Model | Fallback |
 |---|---|---|
-| Extraction | Gemini Flash | Groq Llama |
-| Classification/rationale | Groq Llama | Gemini Flash |
-| Verification (live) | Gemini Pro | Gemini Flash |
+| Extraction | Gemini 3.5 Flash | Groq `gpt-oss-120b`, then optional Ollama |
+| Classification/rationale | Groq `gpt-oss-120b` | Gemini 3.5 Flash, then optional Ollama |
+| Verification (live) | Gemini 3.5 Flash (Pro slot) | Gemini 3.5 Flash, Groq, optional Ollama |
 | Offline/demo | Deterministic mock | — |
 | Embeddings | BGE-M3 (optional) | Hash-based mock |
 
-`LLM_MODE=mock` is the default for a reproducible demo. Live fallback was smoke-tested with the configured provider keys.
+`LLM_MODE=mock` is the default for a reproducible demo. `LLM_MODE=hybrid` tries a live provider and falls back deterministically; local hybrid runs succeeded with Gemini 3.5 Flash and Groq. A 90-second per-provider cooldown limits repeated timeouts. The hosted service still reports `llm_mode=mock` until the env cutover.
 
 ---
 
@@ -252,7 +255,7 @@ OpenAPI JSON: `/openapi.json`. The web app’s schema types are generated from i
 - CORS restricted by `CORS_ORIGINS`.
 - Sliding-window rate limits on auth and mutating endpoints; process-local for the single Render instance.
 - Report downloads are authenticated and never expose storage paths or public bucket URLs.
-- PII redaction (email, phone, NID, passport, IBAN) before evidence display/storage paths that require it.
+- PII redaction (email, phone, NID, passport) before evidence display/storage paths that require it. IBAN is **not** in the current pattern set.
 - Prompt-injection markers detected and treated as review findings.
 - Prohibited legal-advice phrases block verification.
 - Sentry hooks for API errors; PostHog is anonymized and optional.
@@ -264,13 +267,13 @@ OpenAPI JSON: `/openapi.json`. The web app’s schema types are generated from i
 
 The `/evals` page reports five gates over a 7-case golden set:
 
-1. Citation coverage
-2. Evidence grounding
-3. Priority agreement
-4. Remediation completeness
-5. Guardrail pass rate
+1. Extraction accuracy
+2. Citation coverage
+3. Verifier pass rate
+4. No-legal-advice rate
+5. Priority agreement
 
-Current mock-mode result: **7/7 cases**, all metrics **1.0**. This is a demo-scale set, not a production benchmark; it is intentionally small and inspectable.
+Current mock-path result: **7/7 cases**, all metrics **1.0**. The golden set and expected keywords were authored together, so this demonstrates pipeline-contract compliance and citation grounding on the seed set, not generalization to unseen regulations. Live Gemini/Groq routes have been smoke-tested but are not benchmarked here.
 
 ---
 
@@ -286,7 +289,7 @@ Current mock-mode result: **7/7 cases**, all metrics **1.0**. This is a demo-sca
 | Auth | Supabase Auth proxy | Live: email/password, JWKS verification, four provisioned accounts, demo login disabled |
 | Report storage | Postgres (default hosted) or Supabase Storage | Live on Postgres; checksum-verified across a Render redeploy; Storage optional |
 | Graph | Neo4j Aura | Optional; pending account |
-| Scheduling | n8n local/Docker + FastAPI cron fallback | Local only |
+| Scheduling | In-process APScheduler (`ENABLE_SCHEDULER=true`) | Implemented; local only; hosted cutover pending |
 | Monitoring | Sentry + PostHog | Optional keys pending |
 
 See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md) for URLs and verification details.
@@ -300,7 +303,9 @@ See [`DEPLOYMENT.md`](DEPLOYMENT.md).
 - The public deployment uses Supabase Auth, not demo auth. The local demo adapter remains for offline reproducibility and is selected only with `AUTH_MODE=dev` + `DEMO_MODE=true`.
 - Browser tokens are stored in local storage; a hardened deployment should use HttpOnly cookies.
 - Rate limiting is process-local, suitable for one Render instance.
-- Mock mode prioritizes deterministic storytelling over live model variability.
+- Mock mode prioritizes deterministic storytelling over live model variability. Hybrid mode is available but remains non-deterministic; the deterministic verifier and human approval still gate output.
+- Live connectors are limited to GDELT and the US Federal Register; the other three streams are fixture-backed. GDELT's public rate limit can force a labelled fallback.
+- The repair loop is bounded and deterministic; it does not guarantee that every risk becomes `verified`.
 - The graph has a compact fixed layout for 30 nodes; very large supply chains need clustering.
 - Reports default to Postgres on hosted deployments; Supabase Storage is an optional adapter.
 - The golden set is small and hand-built.

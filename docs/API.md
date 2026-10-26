@@ -1,7 +1,12 @@
 # Chowkidar — API
 
-**Base URL:** `https://chowkidar-api.onrender.com` (hosted demo) or
+**Base URL:** `https://chowkidar-api.onrender.com` (hosted production pilot) or
 `http://localhost:8000` (local)
+
+The hosted service is a single-workspace production pilot with Supabase
+email/password auth and durable Postgres reports. Its data and LLM modes are
+reported by `/healthz` and `/api/v1/meta`; do not assume live ingestion or live
+inference without checking those fields. See [`LIMITATIONS.md`](LIMITATIONS.md).
 
 OpenAPI: `/openapi.json` · Interactive docs: `/docs`
 
@@ -77,13 +82,13 @@ unless noted.
 
 | Method | Path | Roles | Notes |
 |---|---|---|---|
-| `GET` | `/healthz` | public | DB, auth, demo, LLM, data mode, deployed revision |
-| `GET` | `/api/v1/meta` | any | Company, streams, modes, storage backend |
+| `GET` | `/healthz` | public | DB, auth, demo, LLM, data mode, connector/scheduler readiness, deployed revision |
+| `GET` | `/api/v1/meta` | any | Company, five streams with connector/mode, live readiness, storage backend |
 | `GET` | `/api/v1/dashboard/summary` | any | Counts, posture, sources, recent runs |
 | `GET` | `/api/v1/signals` | any | Filters: source, severity, status, search |
 | `GET` | `/api/v1/signals/{id}` | any | Signal detail |
-| `GET` | `/api/v1/sources` | any | Source health and last sync |
-| `POST` | `/api/v1/sources/{id}/sync` | analyst/admin | Replays fixture signals; rate-limited |
+| `GET` | `/api/v1/sources` | any | Source health, `last_sync_mode`, `last_signal_count`, sanitized `last_error` |
+| `POST` | `/api/v1/sources/{id}/sync` | analyst/admin | Sync one source; `fixture`, `hybrid`, or `live` per `DATA_MODE`; rate-limited |
 | `GET` | `/api/v1/risks` | any | Filters: priority, status, search |
 | `POST` | `/api/v1/risks` | analyst/admin | Create a manual risk |
 | `GET` | `/api/v1/risks/{id}` | any | Score breakdown, evidence, actions |
@@ -153,7 +158,7 @@ Common statuses:
 | `409` | Report bytes unavailable |
 | `422` | Validation error |
 | `429` | Rate limit; honor `Retry-After` |
-| `502`/`503` | Supabase Auth/Storage or database dependency unavailable |
+| `502`/`503` | Supabase Auth/Storage or database dependency unavailable; a hard `DATA_MODE=live` source failure returns `502` after persisting the failed run |
 
 Rate limits are process-local:
 

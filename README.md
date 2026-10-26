@@ -47,10 +47,11 @@ More views: [signals](docs/assets/02-signals.png) · [search](docs/assets/05-sea
 | Risk dashboard with posture, trends, and source health | Built |
 | Signal inbox with filters, source detail, and raw payload | Built |
 | Risk register and risk detail with score breakdown and evidence | Built |
-| LangGraph pipeline: ingest → extract → map → score → remediate → verify → persist | Built |
+| LangGraph pipeline: ingest → extract → map → score → remediate → verify → conditional repair → persist | Built |
 | Deterministic weighted risk score + LLM rationale | Built |
 | Hybrid retrieval over cited evidence (pgvector + Postgres FTS) | Built |
 | Evidence verifier and legal-advice guard | Built |
+| Bounded evidence-repair loop with routing metadata | Built |
 | Human approval queue with rationale and audit trail | Built |
 | Append-only SHA-256 hash-chained audit log | Built |
 | Reports in PDF, JSON, and Markdown | Built |
@@ -62,7 +63,9 @@ More views: [signals](docs/assets/02-signals.png) · [search](docs/assets/05-sea
 | Demo auth with four roles | Built; local only in `AUTH_MODE=dev` + `DEMO_MODE=true` |
 | Supabase Auth production path | Live: password/refresh/logout proxy, JWKS verification, local role mapping, production login UI; four pilot accounts provisioned and hosted QA passed |
 | Durable report storage | Built: local, Postgres, and private Supabase Storage backends; Postgres is live on the hosted API and survived a redeploy |
-| Live LLM providers | Tested via LiteLLM fallback; mock mode is the hosted pilot default |
+| Live GDELT + US Federal Register connectors | Built and locally verified; hybrid fallback labels the run honestly |
+| Hybrid LLM mode | Built and locally verified with Gemini 3.5 Flash + Groq; mock remains the hosted default until cutover |
+| In-process scheduled ingestion | Built (APScheduler); disabled locally, hosted cutover pending |
 | Cloud deployment | Live production pilot: Render API + Netlify web primary, Vercel secondary fallback; see [`docs/CLOUD_DEPLOYMENT_STATUS.md`](docs/CLOUD_DEPLOYMENT_STATUS.md) |
 
 ### Demo accounts
@@ -100,9 +103,10 @@ Next.js console · REST/OpenAPI · read-only MCP
 
 - **Web:** Next.js App Router, TypeScript, Tailwind, shadcn-style components, TanStack Query, Zustand, Recharts, React Flow.
 - **API:** FastAPI, SQLAlchemy 2, Alembic, Postgres + pgvector, REST/OpenAPI.
-- **Agents:** LangGraph orchestration; LiteLLM fallback chain (Gemini Flash → Groq → Gemini Pro); deterministic mock mode for reproducible demos.
+- **Agents:** LangGraph orchestration with a conditional repair loop; LiteLLM fallback chain (Gemini 3.5 Flash → Groq → optional Ollama); hybrid mode with deterministic fallback.
 - **Trust:** verbatim evidence quotes, citation URLs, deterministic verifier, prohibited-phrase checks, hash-chained audit events, role-gated mutations.
-- **Ops:** Docker Compose for local Postgres/Neo4j/Ollama/n8n, Render Docker blueprint for the API, Netlify for the primary web app, Vercel as the secondary fallback.
+- **Ingestion:** live GDELT + US Federal Register connectors with dedupe and honest mode labels; in-process APScheduler job; Bangladesh Bank/EUR-Lex/UFLPA remain fixture-backed.
+- **Ops:** Docker Compose for local Postgres plus optional Neo4j/Ollama/n8n, Render Docker blueprint for the API, Netlify for the primary web app, Vercel as the secondary fallback.
 
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for detail.
 
@@ -195,13 +199,16 @@ cd apps/api && uv run python -m app.db.seed
 
 ### Current limitations
 
-- Fixture-first pilot data; source connectors are not implemented or production-scheduled.
+- **Two live connectors exist (GDELT + US Federal Register); three streams remain fixture-backed.** GDELT is externally rate-limited and may fall back to fixtures with a visible `fixture_fallback` label. The hosted Render service still runs the previous revision with `DATA_MODE=fixture` and `LLM_MODE=mock` until the migration and environment cutover are deployed.
+- Scheduled ingestion is implemented via the in-process APScheduler job, but it is disabled locally and not yet enabled on Render. n8n is optional and not the pilot path.
 - No legal/compliance advisor; the product is deliberately positioned as decision support.
 - The **live service is a production pilot**, not a demo: `AUTH_MODE=supabase`, `DEMO_MODE=false`, four provisioned accounts, and demo login disabled. It is still a single-workspace pilot, not a commercial multi-tenant service.
 - Reports use the durable Postgres backend on the hosted API (`STORAGE_BACKEND=database`), with private Supabase Storage as an optional object-store adapter. Hosted reports survived an API redeploy with matching checksums; local `/tmp` reports remain only for offline demos.
 - Rate limits are process-local (suitable for the single Render instance); browser tokens are stored in local storage rather than HttpOnly cookies.
-- Live source connectors are not implemented; `DATA_MODE=live` is unsupported and source sync replays fixtures.
+- Hybrid LLM mode is implemented and locally verified, but provider reliability is not an SLA; Gemini 3.8 Flash timed out and Gemini Pro Latest had zero free-tier quota, so the defaults use Gemini 3.5 Flash.
 - Optional BGE-M3 embeddings, Docling, RAGAS, and Phoenix are not required for the demo path.
+- No customer interviews, LOIs, design partners, or revenue. The validation kit is at [`docs/VALIDATION.md`](docs/VALIDATION.md) and the evidence log is honestly at zero.
+- No Figma file; [`docs/DESIGN.md`](docs/DESIGN.md) is the design artifact. No final demo video yet.
 - Cloud deployment is live for the API and web build. Netlify is the primary web origin with production browser QA passed 2/2; Vercel remains a secondary fallback and still has DNS variability on some networks. See [`docs/CLOUD_DEPLOYMENT_STATUS.md`](docs/CLOUD_DEPLOYMENT_STATUS.md).
 
 ---

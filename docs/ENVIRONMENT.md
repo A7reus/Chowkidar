@@ -24,7 +24,7 @@ The defaults work with `infra/docker-compose.yml`. The values that matter are:
 | `DEMO_MODE`           | `true`                                                              | Keeps the UI in demo mode                                    |
 | `DEV_JWT_SECRET`      | a random value                                                      | Signs demo tokens; replace `change-me`                       |
 | `LLM_MODE`            | `mock`                                                              | Deterministic LangGraph path; fastest and most reliable demo |
-| `DATA_MODE`           | `fixture`                                                           | Reports fixture-backed data in `/healthz`                    |
+| `DATA_MODE`           | `fixture`                                                           | Fixture replay by default; `hybrid` enables live connectors with fallback |
 | `CORS_ORIGINS`        | `http://localhost:3000`                                             | Browser origin allowed by the API                            |
 | `NEXT_PUBLIC_API_URL` | `http://localhost:8000`                                             | Web app API base URL                                         |
 | `STORAGE_BACKEND`     | `local`                                                             | Local report files; use `database` for durable reports       |
@@ -117,27 +117,37 @@ download response includes an ETag and `Cache-Control: private, no-store`.
 Limits are process-local. Render Free runs one API instance; a multi-instance
 deployment needs a shared store. Clients receive `429` with `Retry-After`.
 
-## Live model mode (optional)
+## LLM modes and live providers
 
-Set `LLM_MODE=live` to make the pipeline call a real model through LiteLLM. In
-this mode the two keys below are the only external credentials the agents use:
+`LLM_MODE` accepts:
+
+| Mode | Behavior |
+|---|---|
+| `mock` | Deterministic extractor/mapper/remediation; no network call. Default and safest demo. |
+| `hybrid` | Try a live provider through LiteLLM; on failure, continue deterministically and record the fallback. |
+| `live` | Require the live path; a provider failure raises `LLMUnavailable` and the pipeline records the error. |
+
+`/healthz` exposes `llm_mode` and `llm_live_ready`; `llm_live_ready` is true only
+when the mode is `live` or `hybrid` and at least one provider key is present.
 
 | Variable                          | Required             | Purpose                                       |
 | --------------------------------- | -------------------- | --------------------------------------------- |
 | `GROQ_API_KEY`                    | yes for Groq calls   | Classification and fallback                   |
 | `GEMINI_API_KEY`                  | yes for Gemini calls | Default extraction, verification, and reports |
-| `GEMINI_FLASH_MODEL`              | no                   | Default `gemini/gemini-3.8-flash`             |
-| `GEMINI_PRO_MODEL`                | no                   | Default `gemini/gemini-pro-latest`            |
+| `GEMINI_FLASH_MODEL`              | no                   | Default `gemini/gemini-3.5-flash`             |
+| `GEMINI_PRO_MODEL`                | no                   | Default `gemini/gemini-3.5-flash`             |
 | `GROQ_MODEL`                      | no                   | Default `groq/openai/gpt-oss-120b`            |
 | `OLLAMA_BASE_URL`, `OLLAMA_MODEL` | no                   | Local fallback when Ollama is running         |
-| `LLM_TIMEOUT_SECONDS`             | no                   | Per-provider timeout; default `45`            |
+| `LLM_TIMEOUT_SECONDS`             | no                   | Per-provider timeout; default `25`            |
+| `LLM_PROVIDER_COOLDOWN_SECONDS`   | no                   | Cooldown after a provider failure; default `90` |
 
-The default chain tries Gemini Flash, then Groq, then Ollama. Verification and
-report calls try Gemini Pro first. If a provider is slow or quota-limited, lower
-`LLM_TIMEOUT_SECONDS` or make Groq the primary model for every purpose:
+The default chain tries Gemini 3.5 Flash, then Groq, then Ollama. Verification and
+report calls use the Gemini Pro slot first (also 3.5 Flash by default). If a
+provider is slow or quota-limited, lower `LLM_TIMEOUT_SECONDS` or make Groq the
+primary model for every purpose:
 
 ```dotenv
-LLM_MODE=live
+LLM_MODE=hybrid
 GROQ_API_KEY=<your-key>
 GEMINI_FLASH_MODEL=groq/openai/gpt-oss-120b
 GEMINI_PRO_MODEL=groq/openai/gpt-oss-120b
@@ -147,14 +157,43 @@ LLM_TIMEOUT_SECONDS=20
 
 Model routing is prefix-based, so a `groq/...` value uses `GROQ_API_KEY` even
 when it is assigned to a `GEMINI_*` variable. The model's output still passes
-through the deterministic verifier and human approval flow.
+through the deterministic verifier and human approval flow. A 90-second
+per-provider cooldown prevents repeated 25-second timeouts after a failure.
 
 For the stage, `LLM_MODE=mock` remains the recommended path: it is fast, has no
-network dependency, and produces the same seeded result every time.
+network dependency, and produces the same seeded result every time. Local hybrid
+runs succeeded with Gemini 3.5 Flash and Groq; the hosted service remains `mock`
+until the environment cutover.
 
-**`DATA_MODE=live` is not implemented.** Source sync replays the fixture signal
-set. Use `DATA_MODE=fixture` even on the production pilot, and disclose that the
-signals are synthetic.
+## Data modes and connectors
+
+`DATA_MODE` accepts:
+
+| Mode | Behavior |
+|---|---|
+| `fixture` | Replay the local fixture; label the run `fixture`. |
+| `hybrid` | Try the live connector; on failure, replay the fixture and label the run `fixture_fallback` with `status=degraded`. |
+| `live` | Try the live connector; on failure, record `live_failed` and return `502`. |
+
+Live connectors are implemented for `gdelt` and `federal_register`. Bangladesh
+Bank, EUR-Lex, and UFLPA remain fixture-backed. The GDELT public endpoint is
+rate-limited to roughly one request every five seconds and may return `429` with
+an HTML body; the connector retries once, then hybrid mode falls back.
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `LIVE_CONNECTOR_TIMEOUT_SECONDS` | `25` | Per-request connector timeout |
+| `LIVE_CONNECTOR_MAX_RECORDS` | `10` | Maximum records requested per connector |
+| `LIVE_CONNECTOR_USER_AGENT` | `Chowkidar/0.1 (compliance-risk pilot)` | Polite user agent |
+| `ENABLE_SCHEDULER` | `false` | Start the in-process APScheduler job |
+| `SCHEDULER_INTERVAL_MINUTES` | `60` | Sync interval |
+| `SCHEDULER_RUN_ON_START` | `false` | Run once at startup |
+| `PIPELINE_MAX_SIGNALS` | `20` | Pipeline bound in fixture/mock mode |
+| `PIPELINE_LIVE_MAX_SIGNALS` | `6` | Smaller pipeline bound for slower live runs |
+| `PIPELINE_MAX_REPAIR_ATTEMPTS` | `1` | Bounded evidence-repair cycles (0–3) |
+
+The scheduler is the supported ingestion path. n8n remains optional and is not
+the pilot path.
 
 ## Optional integrations
 
@@ -163,7 +202,8 @@ None of these are needed for the demo:
 | Variables | Status |
 |---|---|
 | `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD`, `NEO4J_DATABASE` | Compose service only; the current graph endpoint reads Postgres |
-| `INTERNAL_API_KEY`, `ENABLE_SCHEDULER`, `N8N_API_URL` | Automation scaffolding; not part of the demo path |
+| `INTERNAL_API_KEY`, `N8N_API_URL` | Optional n8n integration; not the pilot path |
+| `ENABLE_SCHEDULER`, `SCHEDULER_INTERVAL_MINUTES`, `SCHEDULER_RUN_ON_START` | In-process scheduler; the supported ingestion path |
 | `SENTRY_DSN` | Optional API error reporting |
 | `POSTHOG_KEY`, `POSTHOG_HOST` | Reserved; no current web/API client |
 | `PHOENIX_ENABLED`, `PHOENIX_COLLECTOR_ENDPOINT` | Optional tracing; dependencies are not installed by default |

@@ -1020,8 +1020,30 @@ export interface components {
             demo_mode: boolean;
             /** Llm Mode */
             llm_mode: string;
+            /**
+             * Llm Live Ready
+             * @default false
+             */
+            llm_live_ready: boolean;
             /** Data Mode */
             data_mode: string;
+            /** Live Connectors */
+            live_connectors?: string[];
+            /**
+             * Live Connectors Enabled
+             * @default false
+             */
+            live_connectors_enabled: boolean;
+            /**
+             * Scheduler Enabled
+             * @default false
+             */
+            scheduler_enabled: boolean;
+            /**
+             * Scheduler Running
+             * @default false
+             */
+            scheduler_running: boolean;
             /** Revision */
             revision?: string | null;
             /**
@@ -1444,6 +1466,13 @@ export interface components {
             jurisdiction: string;
             /** Status */
             status: string;
+            /**
+             * Connector Key
+             * @default fixture
+             */
+            connector_key: string;
+            /** Last Sync Mode */
+            last_sync_mode?: string | null;
             /** Last Synced At */
             last_synced_at: string | null;
             /** Signal Count */
@@ -1470,6 +1499,18 @@ export interface components {
             cadence: string;
             /** Status */
             status: string;
+            /**
+             * Connector Key
+             * @default fixture
+             */
+            connector_key: string;
+            /** Last Sync Mode */
+            last_sync_mode?: string | null;
+            /**
+             * Last Signal Count
+             * @default 0
+             */
+            last_signal_count: number;
             /** Last Synced At */
             last_synced_at: string | null;
             /** Last Error */
@@ -1482,6 +1523,16 @@ export interface components {
             signals_created: number;
             /** Message */
             message: string;
+            /**
+             * Mode
+             * @default fixture
+             */
+            mode: string;
+            /**
+             * Connector
+             * @default fixture
+             */
+            connector: string;
         };
         /** SupplierOut */
         SupplierOut: {

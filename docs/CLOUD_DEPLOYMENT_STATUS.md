@@ -1,6 +1,6 @@
 # Chowkidar — Cloud Deployment Status
 
-- **Updated:** 2026-10-25
+- **Updated:** 2026-10-26
 - **Scope:** Supabase Free + Render Free API + Netlify Free primary web + Vercel Hobby secondary web
 - **Status:** The API and both web builds are live as a **production pilot**.
   Netlify is the primary web origin at <https://ch0wkidar.netlify.app/>. Vercel
@@ -10,6 +10,12 @@
   cutover is complete and Netlify production browser QA passed 2/2 with the real
   admin and viewer accounts. This is not a claim of commercial SaaS readiness;
   see [`LIMITATIONS.md`](LIMITATIONS.md).
+
+> **Hosted vs local (2026-10-26):** live GDELT/Federal Register connectors,
+> hybrid LLM mode, the bounded repair loop, and the scheduler are implemented
+> and locally verified, but they are **not deployed** to Render. The hosted
+> service still reports `llm_mode=mock` and `data_mode=fixture`. The cutover is
+> documented in [`PRODUCTION.md`](PRODUCTION.md) section 2.8.
 
 ---
 
@@ -38,8 +44,12 @@ cold-start behavior.
 
 - `GET /healthz` returns `status: ok`, `database: ok`, `auth_mode: supabase`,
   `demo_mode: false`, `llm_mode: mock`, `data_mode: fixture`, and a revision.
-  The QA run was verified at revision `d70e493db510`; later docs-only commits
-  may advance the reported revision without changing runtime behavior.
+  The most recent hosted health check on 2026-10-26 reported revision
+  `2bfaed71372c`; later docs-only commits may advance the reported revision
+  without changing runtime behavior. The local build additionally exposes
+  `llm_live_ready`, `live_connectors`, `live_connectors_enabled`,
+  `scheduler_enabled`, and `scheduler_running`; those fields appear on the hosted
+  service only after the cutover.
 - `GET /api/v1/auth/config` returns `password_auth: true`, `demo_mode: false`,
   and an empty `demo_users` list.
 - `POST /api/v1/auth/demo-login` returns `403` with `Demo login is disabled`.
@@ -57,7 +67,7 @@ cold-start behavior.
 ### Browser QA
 
 - **Netlify production browser QA passed 2/2** on 2026-10-25 at API revision
-  `d70e493db510`, using the real admin and viewer accounts. The run covered
+  `2bfaed71372c`, using the real admin and viewer accounts. The run covered
   managed login, dashboard, risks, approvals, signals, sources, reports, graph,
   search, evals, audit verification, `/settings`, PDF generation/download,
   viewer read-only state, mobile layout at 390 px, logout/protected-route
@@ -237,8 +247,10 @@ placeholders, never the Supabase password/URI, JWTs, or provider keys.
   project before a demo/judging session.
 - Vercel Hobby has no custom-domain cost, but a custom domain itself may cost
   money.
-- No live source connectors, Supabase Storage bucket, Neo4j, n8n, or live LLM
-  calls are part of the pilot. The code paths for Supabase Storage exist;
+- Two live connectors (GDELT + US Federal Register) are implemented locally but
+  not deployed; three streams remain fixture-backed. Supabase Storage, Neo4j, and
+  n8n are not part of the hosted pilot. The hosted service still uses mock LLM
+  mode and fixture data until the cutover. The Supabase Storage code path exists;
   Postgres is the active report backend.
 - Rate limits are process-local and sized for one Render instance. Browser
   tokens are in local storage rather than HttpOnly cookies.
@@ -250,8 +262,13 @@ placeholders, never the Supabase password/URI, JWTs, or provider keys.
 ## 6. Next actions
 
 1. Record the 2–3 minute demo video with the live Supabase login.
-2. Confirm the final Figma/design link and the team-diversity facts.
-3. Rotate the Supabase database password; the current one is weak and was shared
+2. Confirm the team-diversity facts. The design artifact is
+   [`DESIGN.md`](DESIGN.md); the public GitHub link resolves after the commit is
+   pushed. No Figma file is planned.
+3. Deploy the connector/hybrid/scheduler migration and environment cutover per
+   [`PRODUCTION.md`](PRODUCTION.md) section 2.8, then verify `/healthz` and one
+   live sync of each connector.
+4. Rotate the Supabase database password; the current one is weak and was shared
    during setup. Update Render's `DATABASE_URL` after rotation.
 4. Optional: fix or remove the Render web fallback.
 5. Fill and submit the official form only after finalization is complete.

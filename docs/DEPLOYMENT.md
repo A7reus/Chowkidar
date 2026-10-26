@@ -1,15 +1,20 @@
 # Chowkidar — Deployment
 
-**Status (2026-10-25):** the Supabase database is provisioned, migrated, and
+**Status (2026-10-26):** the Supabase database is provisioned, migrated, and
 seeded. The Render API and both web builds are live as a **production pilot**:
 Netlify is the primary web origin, Vercel is the secondary fallback, and
 Supabase email/password auth (`AUTH_MODE=supabase`, `DEMO_MODE=false`) is
 enabled with four provisioned accounts, demo login disabled, and durable
-Postgres report storage. Netlify production browser QA passed 2/2 at revision
-`d70e493db510`; the prior Vercel run passed at `fcd7fd8`. See
-[`PRODUCTION.md`](PRODUCTION.md) and
+Postgres report storage. Netlify production browser QA passed 2/2; the most
+recent hosted health check on 2026-10-26 reported revision `2bfaed71372c` with
+`llm_mode=mock` and `data_mode=fixture`. See [`PRODUCTION.md`](PRODUCTION.md) and
 [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md). This is a
 single-workspace pilot, not a commercial multi-tenant deployment.
+
+> **Not yet deployed (2026-10-26):** live GDELT/Federal Register connectors,
+> hybrid LLM mode, the bounded repair loop, and the scheduler are implemented and
+> locally verified, but Render still runs the previous revision. The cutover is
+> documented in [`PRODUCTION.md`](PRODUCTION.md) section 2.8.
 
 **Target region:** Supabase `ap-northeast-1` (Tokyo); Render `singapore`;
 Netlify and Vercel global edge. The cross-region API/database hop is acceptable
@@ -28,7 +33,7 @@ for the pilot.
 | Reports | Postgres (`STORAGE_BACKEND=database`) or Supabase Storage | Durable; local disk remains for offline demos |
 | Auth | Supabase Auth (production path) | Demo adapter remains available only with `AUTH_MODE=dev` + `DEMO_MODE=true` |
 | Graph | Neo4j Aura | Optional; the API graph view uses seeded relational data |
-| Scheduling | n8n | Optional; not on the demo path |
+| Scheduling | In-process APScheduler | Implemented; enabled with `ENABLE_SCHEDULER=true`; hosted cutover pending |
 | Monitoring | Sentry / PostHog | Optional keys |
 
 The free Render service has no persistent disk. `infra/render.yaml` therefore
@@ -143,7 +148,7 @@ The detailed checklist, limitations, and browser QA matrix are in
    | `WEB_URL` | `https://ch0wkidar.netlify.app` (single canonical origin) |
    | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | Required for production auth; enter in the dashboard, never in git |
    | `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD` | Leave blank; optional Aura credentials |
-   | `GEMINI_API_KEY`, `GROQ_API_KEY` | Leave blank for mock mode; optional live mode |
+   | `GEMINI_API_KEY`, `GROQ_API_KEY` | Required only for live/hybrid LLM mode; leave blank for deterministic mock mode |
    | `SENTRY_DSN`, `POSTHOG_KEY` | Leave blank; optional |
 
    `CORS_ORIGINS` accepts a comma-separated list of exact origins. `WEB_URL` is
@@ -291,15 +296,15 @@ an account whose Supabase UUID or email is present in the local `users` table.
 
 ## 7. Post-deploy smoke checklist
 
-Production pilot QA completed against Netlify on 2026-10-25 at revision
-`d70e493db510`, with the prior Vercel run retained at `fcd7fd8`:
+Production pilot QA completed against Netlify on 2026-10-25; the most recent
+hosted health check on 2026-10-26 reported revision `2bfaed71372c`:
 
 - [x] `/healthz` returns `status: ok`, `database: ok`, `auth_mode: supabase`,
       `demo_mode: false`.
 - [x] `/docs` renders OpenAPI.
 - [x] Email/password login works for all four provisioned accounts.
 - [x] Demo login returns `403` and `/auth/config` lists no demo users.
-- [x] Dashboard shows 8 risks, 4 pending approvals, 12 signals, source health.
+- [x] Dashboard shows 8 risks, 4 pending approvals, 13 signals, source health.
 - [x] Risk detail shows evidence quote, citation, score breakdown, actions.
 - [x] Viewer and approver mutations are role-restricted.
 - [x] Admin can verify the audit chain.
@@ -336,10 +341,10 @@ local seed baseline for offline judging. The full production matrix is in
 
 | Blocker | Impact |
 |---|---|
-| Live source connectors | `DATA_MODE=live` is not implemented; signals remain synthetic |
+| Hosted connector/hybrid cutover | Live connectors, hybrid LLM, and the scheduler are implemented locally but not deployed; the hosted service still reports `mock`/`fixture` |
 | Supabase database password | Current password is weak; rotate before any real-user deployment |
 | Public demo video | Pending; required for the official form |
-| Final Figma/design link | Pending |
+| Design link push | `docs/DESIGN.md` is ready; the public GitHub URL resolves after the commit is pushed. No Figma file. |
 | Team-diversity facts | Team size, NRB status, and female-member status are unconfirmed |
 | No Neo4j Aura | Graph uses relational demo data |
 | No Sentry/PostHog keys | Observability remains local/optional |
@@ -354,7 +359,7 @@ local seed baseline for offline judging. The full production matrix is in
 1. HttpOnly cookie sessions with CSRF protection (replace localStorage tokens).
 2. Multi-tenant isolation, Postgres RLS, and separate database roles.
 3. Shared rate limiting (Redis or Postgres) for multi-instance deployments.
-4. Live, licensed source connectors with replay protection and per-source quotas.
+4. Broader licensed source connectors, replay protection, and per-source quotas beyond the two live connectors.
 5. Real BGE-M3 embeddings and a larger human-labeled eval set.
 6. Queue-backed pipeline execution and idempotency keys.
 7. PII retention policy and data-subject deletion workflow.

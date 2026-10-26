@@ -114,7 +114,7 @@
     "priorityQueue": "Priority queue",
     "priorityQueueSub": "Highest-scoring open risks",
     "agentActivity": "Agent activity",
-    "agentActivitySub": "Ingest → extract → map → score → remediate → verify",
+    "agentActivitySub": "Ingest → extract → map → score → remediate → verify → repair",
     "sourceHealth": "Source health",
     "sourceHealthSub": "Independent streams monitored",
     "latestSignals": "Latest signals",
@@ -133,6 +133,7 @@
     "stepScore": "Score",
     "stepRemediate": "Remediate",
     "stepVerify": "Verify",
+    "stepRepair": "Repair",
     "ready": "Ready",
     "signalsMonitored": "signals monitored",
     "pending": "pending"
@@ -242,7 +243,7 @@
     "supporting": "Supporting",
     "news": "News",
     "syncComplete": "Source synced",
-    "ingestion": "n8n and a FastAPI cron fallback are scaffolded. The hosted pilot replays fixtures."
+    "ingestion": "Manual and scheduled runs share the same connector path. Fixture, live, and fallback modes are labelled; a failed live run is never reported as healthy."
   },
   "reports": {
     "title": "Reports",

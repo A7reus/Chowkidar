@@ -12,6 +12,7 @@ from app.api.v1 import health
 from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.db.session import check_database
+from app.services.scheduler import shutdown_scheduler, start_scheduler
 
 settings = get_settings()
 logger = logging.getLogger("chowkidar")
@@ -41,7 +42,12 @@ async def lifespan(_app: FastAPI):
         settings.llm_mode,
         settings.data_mode,
     )
+    try:
+        start_scheduler()
+    except Exception:
+        logger.exception("scheduler failed to start")
     yield
+    shutdown_scheduler()
     logger.info("stopping %s", settings.app_name)
 
 

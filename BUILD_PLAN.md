@@ -1,7 +1,14 @@
 # Chowkidar — 8-Day Build Plan
 
+> **Historical document (2026-10-26):** This is the original build plan, not the
+> current status. Some planned items were not built: admin invite/role-change UI,
+> local Ollama inference in the demo path, graph RAG, external MCP clients, and
+> active n8n automation. The working pilot is described in [`README.md`](README.md);
+> the honest capability boundary is [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md);
+> the remediation tracker is [`docs/GAP_ANALYSIS.md`](docs/GAP_ANALYSIS.md).
+
 **Last updated:** 2026-10-23  
-**Status:** Draft v0.1  
+**Status:** Historical plan — superseded by the delivered pilot
 **Deadline:** 2026-10-31, 11:59 PM GMT+6  
 **Target submission:** 2026-10-31, 6:00 PM GMT+6
 

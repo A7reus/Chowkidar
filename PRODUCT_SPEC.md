@@ -1,7 +1,15 @@
 # Chowkidar — Product Specification
 
+> **Historical document (2026-10-26):** This is the product specification as
+> planned on 2026-10-23. Features marked as planned below — admin invitation and
+> role-change UI, local model execution in the demo path, graph RAG, and some
+> multi-agent behavior — are **not implemented**. The shipped pilot is narrower.
+> Read [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) for the capability boundary,
+> [`README.md`](README.md) for what is built, and
+> [`docs/GAP_ANALYSIS.md`](docs/GAP_ANALYSIS.md) for remaining gaps.
+
 **Last updated:** 2026-10-23  
-**Status:** Draft v0.1 — planning  
+**Status:** Historical specification — implemented subset documented in `README.md`
 **Challenge:** JusticeSphere AI → Risk Sentinel  
 **Deadline:** 2026-10-31, 11:59 PM GMT+6
 

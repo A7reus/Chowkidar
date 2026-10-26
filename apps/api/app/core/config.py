@@ -61,20 +61,21 @@ class Settings(BaseSettings):
     storage_backend: str = "local"  # local | database | supabase
     report_storage_bucket: str = "chowkidar-reports"
 
-    llm_mode: str = "mock"
-    data_mode: str = "fixture"
-    embedding_mode: str = "mock"
+    llm_mode: str = "mock"  # mock | live | hybrid
+    data_mode: str = "fixture"  # fixture | live | hybrid
+    embedding_mode: str = "mock"  # mock | live
     embedding_dim: int = 1024
     embedding_model: str = "BAAI/bge-m3"
     reranker_model: str = "BAAI/bge-reranker-v2-m3"
     gemini_api_key: str = ""
     groq_api_key: str = ""
-    gemini_flash_model: str = "gemini/gemini-3.8-flash"
-    gemini_pro_model: str = "gemini/gemini-pro-latest"
+    gemini_flash_model: str = "gemini/gemini-3.5-flash"
+    gemini_pro_model: str = "gemini/gemini-3.5-flash"
     groq_model: str = "groq/openai/gpt-oss-120b"
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "ollama/qwen2.5:7b"
-    llm_timeout_seconds: int = 45
+    llm_timeout_seconds: int = 25
+    llm_provider_cooldown_seconds: int = 90
 
     neo4j_uri: str = "bolt://localhost:7687"
     neo4j_user: str = "neo4j"
@@ -83,7 +84,15 @@ class Settings(BaseSettings):
 
     internal_api_key: str = "change-me-internal"
     enable_scheduler: bool = False
+    scheduler_interval_minutes: int = 60
+    scheduler_run_on_start: bool = False
     n8n_api_url: str = "http://localhost:5678"
+
+    live_connector_timeout_seconds: int = 25
+    live_connector_max_records: int = 10
+    live_connector_user_agent: str = (
+        "Chowkidar/0.1 (compliance-risk pilot; +https://github.com/A7reus/Chowkidar)"
+    )
 
     sentry_dsn: str = ""
     posthog_key: str = ""
@@ -96,6 +105,8 @@ class Settings(BaseSettings):
     upload_storage_dir: str = "./storage/uploads"
 
     pipeline_max_signals: int = Field(default=20, ge=1, le=100)
+    pipeline_live_max_signals: int = Field(default=6, ge=1, le=30)
+    pipeline_max_repair_attempts: int = Field(default=1, ge=0, le=3)
 
     @field_validator("database_url", mode="before")
     @classmethod
@@ -111,6 +122,12 @@ class Settings(BaseSettings):
     def _validate_runtime_modes(self) -> Settings:
         if self.auth_mode not in {"dev", "supabase"}:
             raise ValueError("AUTH_MODE must be 'dev' or 'supabase'")
+        if self.llm_mode not in {"mock", "live", "hybrid"}:
+            raise ValueError("LLM_MODE must be 'mock', 'live', or 'hybrid'")
+        if self.data_mode not in {"fixture", "live", "hybrid"}:
+            raise ValueError("DATA_MODE must be 'fixture', 'live', or 'hybrid'")
+        if self.embedding_mode not in {"mock", "live"}:
+            raise ValueError("EMBEDDING_MODE must be 'mock' or 'live'")
         if self.storage_backend not in {"local", "database", "supabase"}:
             raise ValueError("STORAGE_BACKEND must be local, database, or supabase")
         if self.auth_mode == "supabase" and (
@@ -144,6 +161,17 @@ class Settings(BaseSettings):
     @property
     def supabase_auth_enabled(self) -> bool:
         return self.auth_mode == "supabase"
+
+    @property
+    def llm_live_ready(self) -> bool:
+        """True when a live/hybrid LLM path has at least one usable provider key."""
+        if self.llm_mode == "mock":
+            return False
+        return bool(self.gemini_api_key or self.groq_api_key)
+
+    @property
+    def live_connectors_enabled(self) -> bool:
+        return self.data_mode in {"live", "hybrid"}
 
     @property
     def is_production(self) -> bool:
