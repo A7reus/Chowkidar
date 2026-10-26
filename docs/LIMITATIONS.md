@@ -45,6 +45,8 @@ calibrate the claims.
   enabled.
 - **Render Free sleeps** after inactivity; the first request can take 30–60
   seconds. **Supabase Free can pause**; it must be restored before a demo.
+  Because the scheduler is in-process, Render spin-down also pauses scheduled
+  ingestion; use an always-on instance or an external scheduler for production.
 - **The secondary Vercel fallback still has DNS variability on some networks.**
   On 2026-10-24 the default resolver sometimes returned unreachable Vercel edge
   IPs. Netlify is now primary, so this affects only the fallback path. The Render

@@ -356,6 +356,8 @@ prior Vercel run retained at `fcd7fd8`:
 ## 4. Operational notes
 
 - Render Free spins down after inactivity; warm the API before a judging session.
+  The scheduler is in-process, so a sleeping service also pauses scheduled
+  ingestion; use an always-on instance or an external scheduler for production.
 - Supabase Free may pause; restore the project before recording or judging.
 - Keep `docs/private/` out of git. The credentials file is generated at mode
   `0600`; provide access to judges only through the submission's private access

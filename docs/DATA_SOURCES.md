@@ -208,7 +208,9 @@ operational target, not a guarantee.
 
 A stale source is visible in the sources UI but does **not** currently block a
 pipeline run or trigger an alert. Do not describe the pilot as having automated
-freshness enforcement.
+freshness enforcement. The scheduler is in-process, so Render Free spin-down
+also pauses scheduled ingestion; an always-on instance or external scheduler is
+required for reliable production freshness.
 
 ### 6.2 Current quality metrics (pilot)
 

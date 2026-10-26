@@ -263,7 +263,9 @@ placeholders, never the Supabase password/URI, JWTs, or provider keys.
   avoid repeated production redeploys. `netlify.toml` skips docs-only pushes.
 - Netlify Free includes 20 GB bandwidth and 2 credits per 10,000 requests;
   judging traffic should fit, but monitor the team usage page.
-- Render free services sleep after inactivity; judges may see a cold start.
+- Render free services sleep after inactivity; judges may see a cold start. The
+  scheduler is in-process, so sleep also pauses scheduled ingestion; reliable
+  production ingestion needs an always-on instance or an external scheduler.
 - Render free storage is ephemeral, but hosted reports are stored in Postgres.
 - Supabase Free projects may pause after a period of inactivity; restore the
   project before a demo/judging session.
