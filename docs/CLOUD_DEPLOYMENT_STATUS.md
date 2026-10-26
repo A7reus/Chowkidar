@@ -263,8 +263,8 @@ placeholders, never the Supabase password/URI, JWTs, or provider keys.
 
 1. Record the 2–3 minute demo video with the live Supabase login.
 2. Confirm the team-diversity facts. The design artifact is
-   [`DESIGN.md`](DESIGN.md); the public GitHub link resolves after the commit is
-   pushed. No Figma file is planned.
+   [`DESIGN.md`](DESIGN.md); the public GitHub link is live (verified
+   2026-10-26). No Figma file is planned.
 3. Deploy the connector/hybrid/scheduler migration and environment cutover per
    [`PRODUCTION.md`](PRODUCTION.md) section 2.8, then verify `/healthz` and one
    live sync of each connector.

@@ -41,7 +41,7 @@
 | **P0-2** | Hosted AI is deterministic mock mode; no real model inference | Originally `/healthz` reported `llm_mode=mock`; no hosted Gemini/Groq call. **Now:** `LLM_MODE=mock|live|hybrid`, LiteLLM calls with deterministic fallback, provider cooldown, sanitized errors, and `llm_live_ready` in health/meta | Judges may see a rules engine, not AI; weakens AI-Native and agent scores | Add a truthful `hybrid` LLM mode: try Gemini/Groq through LiteLLM, fall back to deterministic mock, and expose `llm_live_ready` in health/meta. Enable on the hosted service only when keys are present. | `implemented` — local hybrid verified; hosted keys/cutover pending |
 | **P0-3** | "Agentic" is a fixed linear DAG | Originally `_build_graph()` had fixed edges only. **Now:** conditional `verify → repair|persist`, one bounded repair cycle, verbatim-quote re-retrieval, routing metadata, and `repair_attempts` persisted on the run and risk | Undercuts the central agentic claim and the agent/orchestration form field | Add conditional routing and a bounded repair loop: verifier failure triggers evidence re-retrieval and one re-verification; unresolved risks are marked `needs_review`. Persist routing/attempt metadata. | `implemented` — local smoke verified |
 | **P0-4** | No commercial validation | `STRATEGY.md` validation plan was future tense; no interviews, LOIs, design partners, revenue, or pricing tests in the repo | Business Value 20%; Story/Proof credibility | Create a validation kit and evidence log. Execute interviews/LOIs only if real evidence can be collected; never invent traction. If not executed, disclose `0 interviews` in the form. | `implemented` — kit created; evidence log is honestly `0 interviews` |
-| **P0-5** | Submission data gaps | No Figma/design link; team size, NRB status, and female-member status unknown; video not produced (out of scope per instruction) | Up to 19 form points at risk; presentation criterion | Create a public design artifact (architecture + wireframes) usable as the design link; add a team-data checklist with blanks; assign video owner. Do not invent team data. | `implemented` — `docs/DESIGN.md` created; public link pending push; team/video data still blocked |
+| **P0-5** | Submission data gaps | No Figma/design link; team size, NRB status, and female-member status unknown; video not produced (out of scope per instruction) | Up to 19 form points at risk; presentation criterion | Create a public design artifact (architecture + wireframes) usable as the design link; add a team-data checklist with blanks; assign video owner. Do not invent team data. | `implemented` — `docs/DESIGN.md` created and public link verified; team/video data still blocked |
 
 ### P0 acceptance criteria
 
@@ -83,7 +83,7 @@
 
 - **P0-5 — design artifact**
   - `docs/DESIGN.md` contains the design principles, information architecture, user flows, screen wireframes, design tokens, component inventory, accessibility notes, and the evidence/approval interaction model.
-  - The public link is the GitHub-rendered file: `https://github.com/A7reus/Chowkidar/blob/main/docs/DESIGN.md` (available after the commit is pushed). No Figma account was created; this document is the design artifact substitute.
+  - The public link is the GitHub-rendered file: `https://github.com/A7reus/Chowkidar/blob/main/docs/DESIGN.md` (verified `200` on 2026-10-26). No Figma account was created; this document is the design artifact substitute.
   - Team size, member names, NRB status, female-member status, and the video owner remain unknown. They are not invented.
 
 ---
@@ -230,7 +230,7 @@ If `llm_live_ready=false`, the hosted demo is still deterministic mock mode and 
 | Blocker | Why it matters | Owner | Status |
 |---|---|---|---|
 | Team size, member names, NRB status, female-member status | Up to 7 Team points; cannot be invented | User | `blocked` |
-| Public design link | `docs/DESIGN.md` is ready; the GitHub URL only resolves after the commit is pushed. A Figma file would need a user account. | User/operator | `blocked` on push; substitute ready |
+| Public design link | `docs/DESIGN.md` is public at the GitHub URL (verified 2026-10-26). A Figma file would need a user account. | User/operator | `resolved` — substitute live |
 | Gemini/Groq keys available on Render | Real LLM inference on hosted service | User/operator | `blocked` |
 | Render env cutover to `DATA_MODE=hybrid`, `LLM_MODE=hybrid`, `ENABLE_SCHEDULER=true` | Makes P0-1/P0-2 live on the hosted pilot | User/operator | `blocked` |
 | Video owner and recording | Official form requires a YouTube URL; explicitly out of scope for this work | User | `blocked` |
@@ -245,6 +245,7 @@ If `llm_live_ready=false`, the hosted demo is still deterministic mock mode and 
 | 2026-10-26 | Recorded the full P0/P1 evaluation, evidence, acceptance criteria, form-safe wording, and blockers | `docs/GAP_ANALYSIS.md` | Documentation review |
 | 2026-10-26 | Implemented live connectors, hybrid modes, scheduler, and bounded repair loop; added validation/design artifacts | API, web, fixtures, migration, tests, docs | Local live connector smoke, hybrid pipeline smoke, API 75 tests |
 | 2026-10-26 | Reconciled current-state docs and added historical banners to planning documents | `README.md`, `DECISIONS.md`, `STRATEGY.md`, `BUILD_PLAN.md`, `PRODUCT_SPEC.md`, `docs/*` | `make check` clean; fresh-database migration test; `make seed` baseline 5/13/11/8/21/5/12/13 |
+| 2026-10-26 | Committed and pushed the P0 implementation and documentation reconciliation; verified the public design link | `main` at `5f224ca` | Design URL `200`; hosted health still on `2bfaed71372c` (`mock`/`fixture`) pending Render deploy |
 
 ---
 

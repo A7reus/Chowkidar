@@ -205,7 +205,7 @@ Pilot with an RMG exporter and a compliance reviewer; enable scheduled ingestion
 - [x] Design artifact [`DESIGN.md`](DESIGN.md) with wireframes, flows, tokens, and accessibility notes.
 - [ ] Two-to-three-minute demo video recorded and linked.
 - [ ] Team-diversity facts confirmed (see the checklist below).
-- [ ] Public design link pushed (GitHub URL resolves after the commit is pushed).
+- [x] Public design link live (GitHub URL resolves; verified 2026-10-26).
 - [ ] Final submission form completed before the deadline.
 
 ---
@@ -223,7 +223,7 @@ and must be supplied by the team, not invented:
 | Team lead / contact | _unknown_ | **needs user input** |
 | NRB status (non-resident Bangladeshi) | _unknown_ | **needs user input** |
 | Female team member(s) | _unknown_ | **needs user input** |
-| Design link | `https://github.com/A7reus/Chowkidar/blob/main/docs/DESIGN.md` | ready after push |
+| Design link | `https://github.com/A7reus/Chowkidar/blob/main/docs/DESIGN.md` | live (verified 2026-10-26) |
 | Video URL | _not recorded_ | **out of scope; needs owner** |
 
 If the form requires a value that is not known, leave it blank or use the

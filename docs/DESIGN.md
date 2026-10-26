@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-26  
 **Owner:** JU_StackMind  
-**Public link (after push):** <https://github.com/A7reus/Chowkidar/blob/main/docs/DESIGN.md>  
+**Public link:** <https://github.com/A7reus/Chowkidar/blob/main/docs/DESIGN.md>
 **Status:** Design specification and wireframes for the working pilot. This is the
 design artifact submitted in place of a Figma file. No Figma account or file was
 created.

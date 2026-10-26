@@ -344,7 +344,7 @@ local seed baseline for offline judging. The full production matrix is in
 | Hosted connector/hybrid cutover | Live connectors, hybrid LLM, and the scheduler are implemented locally but not deployed; the hosted service still reports `mock`/`fixture` |
 | Supabase database password | Current password is weak; rotate before any real-user deployment |
 | Public demo video | Pending; required for the official form |
-| Design link push | `docs/DESIGN.md` is ready; the public GitHub URL resolves after the commit is pushed. No Figma file. |
+| Design link | `docs/DESIGN.md` is public at the GitHub URL. No Figma file. |
 | Team-diversity facts | Team size, NRB status, and female-member status are unconfirmed |
 | No Neo4j Aura | Graph uses relational demo data |
 | No Sentry/PostHog keys | Observability remains local/optional |
