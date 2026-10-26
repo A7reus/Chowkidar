@@ -225,7 +225,7 @@ Expected health after enabling hybrid mode with keys:
 }
 ```
 
-Current hosted state (2026-10-26): `llm_mode=hybrid`, `llm_live_ready=false`, `data_mode=hybrid`, `scheduler_enabled=true`, `scheduler_running=true`, `scheduler_next_run_at=2026-10-26T10:29:36Z`. The hosted pipeline is therefore deterministic until provider keys are added to Render; the form must say so. Working Gemini/Groq keys are present only in the gitignored local `.env` and were probed successfully. The scheduler arming fix is deployed, and the first scheduled cycle was observed at revision `d1f285f50e67`: GDELT `09:29:36Z` (`fixture_fallback`, 0 new), Federal Register `09:30:00Z` (`live`, 0 new due to dedupe), next run advanced to `10:29:36Z`.
+Current hosted state (2026-10-26): `llm_mode=hybrid`, `llm_live_ready=false`, `data_mode=hybrid`, `scheduler_enabled=true`, `scheduler_running=true`, and `scheduler_next_run_at` is non-null. The hosted pipeline is therefore deterministic until provider keys are added to Render; the form must say so. Working Gemini/Groq keys are present only in the gitignored local `.env` and were probed successfully. The first scheduled cycle was captured at revision `d1f285f50e67`: GDELT `09:29:36Z` (`fixture_fallback`, 0 new), Federal Register `09:30:00Z` (`live`, 0 new due to dedupe), next run advanced to `10:29:36Z`. After the cycle-evidence push, Render deployed `56df4142eda8` and re-armed the scheduler at `10:44:54Z`; every docs-only deploy resets the interval, so treat the revision and next-run as a snapshot.
 
 ---
 
@@ -259,6 +259,7 @@ Current hosted state (2026-10-26): `llm_mode=hybrid`, `llm_live_ready=false`, `d
 | 2026-10-26 | Found and fixed the paused APScheduler job: explicit `next_run_time=None` with `SCHEDULER_RUN_ON_START=false` left the job unscheduled | `apps/api/app/services/scheduler.py`, `health.py`, `meta.py`, `schemas.py`, `tests/test_scheduler.py`, `test_api_contract.py` | Local scheduler test proves `next_run_time` is armed for both `run_on_start` branches; `scheduler_next_run_at` added to health/meta; API tests 78 passed |
 | 2026-10-26 | Pushed and deployed the scheduler arming fix; verified the hosted job is armed | `main` at `94c2a19`; hosted revision `94c2a19f91c4` | `/healthz` and `/api/v1/meta` both report `scheduler_next_run_at=2026-10-26T09:17:40Z`; `scheduler_running=true` |
 | 2026-10-26 | Observed the first scheduled ingestion cycle on Render | `main` at `d1f285f`; hosted revision `d1f285f50e67` | GDELT `last_synced_at=2026-10-26T09:29:36.732196Z`, `mode=fixture_fallback`, 0 new; Federal Register `last_synced_at=2026-10-26T09:30:00.053271Z`, `mode=live`, 0 new due to dedupe; `scheduler_next_run_at` advanced to `2026-10-26T10:29:36.398084Z` |
+| 2026-10-26 | Pushed the cycle-evidence and docs commits; verified the post-push Render deploy | `main` at `56df414`; hosted revision `56df4142eda8` | `/healthz` returned `status=ok`, `database=ok`, `scheduler_running=true`, and `scheduler_next_run_at=2026-10-26T10:44:54Z`; the docs-only deploy re-armed the interval |
 
 ---
 

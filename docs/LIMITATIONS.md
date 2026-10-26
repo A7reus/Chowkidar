@@ -18,8 +18,10 @@ calibrate the claims.
 > found paused when `SCHEDULER_RUN_ON_START=false`; the arming fix was verified
 > at revision `94c2a19f91c4`, and the first scheduled cycle fired at revision
 > `d1f285f50e67`: GDELT `2026-10-26T09:29:36Z` (`fixture_fallback`, 0 new),
-> Federal Register `09:30:00Z` (`live`, 0 new due to dedupe), next run
-> `10:29:36Z`. Render Free spin-down still pauses the in-process scheduler.
+> Federal Register `09:30:00Z` (`live`, 0 new due to dedupe), next run advanced
+> to `10:29:36Z`. A later docs-only deploy at `56df4142eda8` re-armed the
+> scheduler; every deploy resets the interval. Render Free spin-down still
+> pauses the in-process scheduler.
 > Federal Register live
 > sync and dedupe are hosted-verified; GDELT reports `fixture_fallback` under its
 > public rate limit. Hosted pipeline inference still uses the deterministic

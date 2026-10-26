@@ -5,13 +5,14 @@ with Supabase email/password auth (`AUTH_MODE=supabase`, `DEMO_MODE=false`), fou
 pilot accounts are provisioned, demo login is disabled, and reports are stored
 in Postgres. Netlify is the primary web origin and Vercel is the secondary
 fallback. Netlify production browser QA passed 2/2 on 2026-10-25; the most
-recently verified hosted health check on 2026-10-26 reported revision
+The first scheduled cycle was captured on 2026-10-26 at revision
 `d1f285f50e67` with `status=ok`, `database=ok`, `auth_mode=supabase`,
 `demo_mode=false`, `llm_mode=hybrid`, `llm_live_ready=false`,
-`data_mode=hybrid`, `scheduler_enabled=true`, `scheduler_running=true`, and
-`scheduler_next_run_at=2026-10-26T10:29:36Z`. The first scheduled cycle fired:
-GDELT `09:29:36Z` (`fixture_fallback`, 0 new) and Federal Register `09:30:00Z`
-(`live`, 0 new due to dedupe).
+`data_mode=hybrid`, `scheduler_enabled=true`, and `scheduler_running=true`.
+The cycle synced GDELT `09:29:36Z` (`fixture_fallback`, 0 new) and Federal
+Register `09:30:00Z` (`live`, 0 new due to dedupe). A subsequent docs-only
+deploy at `56df4142eda8` re-armed the scheduler with a non-null next run; every
+deploy resets the interval.
 This is a single-workspace production pilot, not a commercial customer
 deployment.
 
@@ -94,7 +95,7 @@ operations, legal review, or universal live source coverage).
 | Accounts | `admin@chowkidar.app`, `analyst@chowkidar.app`, `approver@chowkidar.app`, `viewer@chowkidar.app` |
 | Credentials | Gitignored `docs/private/supabase-credentials.local.md`, mode `600` |
 | Report storage | Postgres (`STORAGE_BACKEND=database`) |
-| Runtime QA | Netlify run passed 2/2; the most recent hosted health check on 2026-10-26 reported revision `d1f285f50e67` with `llm_mode=hybrid`, `llm_live_ready=false`, `data_mode=hybrid`, `scheduler_running=true`, and `scheduler_next_run_at=2026-10-26T10:29:36Z`. The first scheduled cycle fired (GDELT `09:29:36Z`, Federal Register `09:30:00Z`). Federal Register live sync, dedupe, GDELT fallback, and a hosted pipeline run are verified. API, role, report, browser, mobile, CORS, and rate-limit checks passed. |
+| Runtime QA | Netlify run passed 2/2; the first scheduled cycle was captured on 2026-10-26 at revision `d1f285f50e67` with `llm_mode=hybrid`, `llm_live_ready=false`, `data_mode=hybrid`, and `scheduler_running=true`. The cycle fired for GDELT `09:29:36Z` and Federal Register `09:30:00Z`; a later docs-only deploy at `56df4142eda8` re-armed the scheduler. Federal Register live sync, dedupe, GDELT fallback, and a hosted pipeline run are verified. API, role, report, browser, mobile, CORS, and rate-limit checks passed. |
 | Remaining external constraint | Vercel default DNS is variable on some networks; it is only the secondary fallback. See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md). |
 
 ---

@@ -57,11 +57,11 @@ cold-start behavior.
   `demo_mode: false`, `llm_mode: hybrid`, `llm_live_ready: false`,
   `data_mode: hybrid`, `live_connectors` containing `gdelt` and
   `federal_register`, `scheduler_enabled: true`, `scheduler_running: true`, and a
-  revision. The most recent hosted health check on 2026-10-26 reported revision
-  `d1f285f50e67`; docs-only pushes may advance it without runtime change.
-  The scheduler arming fix adds `scheduler_next_run_at`; revision
-  `d1f285f50e67` reported `2026-10-26T09:29:36Z` before the cycle and
-  `10:29:36Z` after it. A `null`
+  revision. The first scheduled cycle was captured on 2026-10-26 at revision
+  `d1f285f50e67`; `scheduler_next_run_at` moved from `09:29:36Z` to
+  `10:29:36Z`. A subsequent docs-only deploy at `56df4142eda8` re-armed the
+  scheduler; docs-only pushes may advance the revision and reset the next run
+  without runtime change. A `null`
   value still means the job is paused or absent, and arming alone does not prove
   a cycle has completed; the observed `last_synced_at` advance does.
   `llm_live_ready=false` because provider keys are absent on Render; do not

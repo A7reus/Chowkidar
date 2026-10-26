@@ -5,12 +5,13 @@ seeded. The Render API and both web builds are live as a **production pilot**:
 Netlify is the primary web origin, Vercel is the secondary fallback, and
 Supabase email/password auth (`AUTH_MODE=supabase`, `DEMO_MODE=false`) is
 enabled with four provisioned accounts, demo login disabled, and durable
-Postgres report storage. Netlify production browser QA passed 2/2; the most
-recent hosted health check on 2026-10-26 reported revision `d1f285f50e67` with
-`llm_mode=hybrid`, `data_mode=hybrid`, `scheduler_running=true`, and
-`scheduler_next_run_at=2026-10-26T10:29:36Z`. The first scheduled cycle fired:
-GDELT `09:29:36Z` (`fixture_fallback`, 0 new) and Federal Register `09:30:00Z`
-(`live`, 0 new due to dedupe). Federal
+Postgres report storage. Netlify production browser QA passed 2/2. The first
+scheduled cycle was captured on 2026-10-26 at revision `d1f285f50e67` with
+`llm_mode=hybrid`, `data_mode=hybrid`, `scheduler_running=true`, and a non-null
+`scheduler_next_run_at`. The cycle synced GDELT `09:29:36Z` (`fixture_fallback`,
+0 new) and Federal Register `09:30:00Z` (`live`, 0 new due to dedupe). A later
+docs-only deploy at `56df4142eda8` re-armed the scheduler; every deploy resets
+the interval. Federal
 Register live sync, GDELT fallback, and a hosted pipeline run are verified;
 hosted LLM inference is not enabled because provider keys are absent on Render.
 Working keys exist only in the gitignored local `.env`. See
