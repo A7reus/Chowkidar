@@ -341,3 +341,31 @@ OpenCode (AI coding agent), Python 3.14 with `uv`, FastAPI, SQLAlchemy 2, Alembi
   `llm_live_ready=true` and one pipeline run before changing the wording.
 - **Fine-tuning, local models, external MCP integration, tunneling:** record the
   honest "not used" status above. Do not check boxes for them.
+
+### 10.5 Portal fill order (save draft, do not submit)
+
+Use this sequence so the required Story fields exist before the Proof and Prompt
+Library tabs unlock.
+
+| Step | Portal field / tab | Source in this packet |
+|---:|---|---|
+| 1 | Project Name | `Chowkidar` |
+| 2 | Elevator Pitch | Section 10.1 |
+| 3 | Public Summary | Section 10.2 |
+| 4 | Problem Statement | Section 10.2 |
+| 5 | Solution Description | Section 10.2 |
+| 6 | Data & AI Provenance | Section 10.2 |
+| 7 | Tooling & IDE | Section 10.2 |
+| 8 | YouTube Video | Placeholder only; do not invent a URL |
+| 9 | Demo / Live Links | Netlify primary, GitHub, API docs, design link; Vercel secondary |
+| 10 | Domain | `JusticeSphere AI` |
+| 11 | Challenge | `Risk Sentinel` |
+| 12 | Team | `JU_StackMind` only; leave all other fields blank |
+| 13 | **Save draft** | Required before Proof / Prompt Library tabs unlock |
+| 14 | Proof and Prompt Library tabs | Section 10.3 structured-tab copy |
+| 15 | AI-Native Build and Data Lifecycle tabs | Section 10.3 structured-tab copy |
+| 16 | Review completeness | Stop here; **do not click Submit** without separate explicit approval |
+
+**Stop condition:** filling the form is approved, but submission is not. Do not
+click the final Submit button, and do not treat a saved draft as a submitted
+entry.
