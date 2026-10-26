@@ -99,7 +99,7 @@ The local demo login page uses one-click accounts. Role switching in the app rei
 ```
 1 company · 4 users · 8 suppliers · 5 sources · 13 signals
 11 obligations · 8 risks (3 critical, 3 high, 1 medium, 1 low)
-21 actions · 5 approvals (4 pending) · 12 audit events · 13 evidence chunks
+21 actions · 5 approvals (4 pending) · 12 audit events · 14 evidence chunks
 ```
 
 ---

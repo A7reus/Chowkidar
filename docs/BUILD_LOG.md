@@ -48,7 +48,7 @@ risks: 8             (3 critical, 3 high, 1 medium, 1 low)
 actions: 21
 approvals: 5         (4 pending)
 audit_events: 12
-evidence_chunks: 13
+evidence_chunks: 14
 ```
 
 ---
