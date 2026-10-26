@@ -292,8 +292,9 @@ placeholders, never the Supabase password/URI, JWTs, or provider keys.
    modes and scheduler are already applied; see
    [`PRODUCTION.md`](PRODUCTION.md) section 2.8. The keys are present only in the
    gitignored local `.env` and were probed successfully.
-2. Observe one scheduled ingestion cycle, or state honestly that the scheduler
-   is running but no cycle has been captured.
+2. Confirm `scheduler_next_run_at` remains non-null and observe one cycle by
+   checking `last_synced_at` on `/api/v1/sources`; do not claim a completed
+   cycle before then.
 3. Record the 2–3 minute demo video with the live Supabase login; the form packet
    uses a placeholder until then.
 4. Team-diversity facts are intentionally left blank by the user's decision. The

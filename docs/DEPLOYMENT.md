@@ -42,7 +42,7 @@ for the pilot.
 | Reports | Postgres (`STORAGE_BACKEND=database`) or Supabase Storage | Durable; local disk remains for offline demos |
 | Auth | Supabase Auth (production path) | Demo adapter remains available only with `AUTH_MODE=dev` + `DEMO_MODE=true` |
 | Graph | Neo4j Aura | Optional; the API graph view uses seeded relational data |
-| Scheduling | In-process APScheduler | Implemented, deployed, and running with `ENABLE_SCHEDULER=true` |
+| Scheduling | In-process APScheduler | Implemented and deployed with `ENABLE_SCHEDULER=true`; job armed at revision `94c2a19f91c4` (`scheduler_next_run_at=2026-10-26T09:17:40Z`); first cycle pending |
 | Monitoring | Sentry / PostHog | Optional keys |
 
 The free Render service has no persistent disk. `infra/render.yaml` therefore

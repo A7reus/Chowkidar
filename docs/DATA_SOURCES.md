@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-26
 
-**Status:** Two live connectors implemented, deployed, and running (GDELT + US Federal Register); three streams remain fixture-backed. `DATA_MODE=hybrid` is implemented and hosted-enabled; Federal Register live sync and dedupe are hosted-verified. `DATA_MODE=live` is implemented but externally rate-limited for GDELT; a hard failure is surfaced as `live_failed`.
+**Status:** Two live connectors implemented and deployed (GDELT + US Federal Register); three streams remain fixture-backed. `DATA_MODE=hybrid` is implemented and hosted-enabled; Federal Register live sync and dedupe are hosted-verified. `DATA_MODE=live` is implemented but externally rate-limited for GDELT; a hard failure is surfaced as `live_failed`. The scheduler job is armed; the first cycle is pending.
 
 **Purpose:** Track source access, reliability, licensing, and demo usage. Update as connectors are tested.
 

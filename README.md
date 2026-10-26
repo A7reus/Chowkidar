@@ -65,7 +65,7 @@ More views: [signals](docs/assets/02-signals.png) · [search](docs/assets/05-sea
 | Durable report storage | Built: local, Postgres, and private Supabase Storage backends; Postgres is live on the hosted API and survived a redeploy |
 | Live GDELT + US Federal Register connectors | Built, deployed, and hosted-verified for Federal Register; hybrid fallback labels the run honestly |
 | Hybrid LLM mode | Built and deployed; local runs used Gemini 3.5 Flash + Groq; hosted `llm_live_ready=false` until provider keys are added |
-| In-process scheduled ingestion | Built (APScheduler), deployed, and running on Render; disabled in the local demo |
+| In-process scheduled ingestion | Built (APScheduler), deployed, and armed on Render (`scheduler_next_run_at=2026-10-26T09:17:40Z`); first cycle pending; disabled in the local demo |
 | Cloud deployment | Live production pilot: Render API + Netlify web primary, Vercel secondary fallback; see [`docs/CLOUD_DEPLOYMENT_STATUS.md`](docs/CLOUD_DEPLOYMENT_STATUS.md) |
 
 ### Demo accounts

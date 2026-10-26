@@ -227,8 +227,8 @@ Manual visual QA covered every route at 1440×1000. Known cosmetic trade-off: th
 - Browser tokens are stored in local storage; HttpOnly cookies are a hardening backlog item.
 - The Supabase database password is weak; accepted for the zero-real-user pilot and not a submission blocker, but rotate it before any real-user deployment.
 - Vercel default DNS is variable on some networks; the prior hosted QA used a reachable Vercel edge IP. Netlify is now primary, so this affects only the fallback.
-- Live GDELT and US Federal Register connectors are implemented, deployed, and running; Bangladesh Bank, EUR-Lex, and UFLPA remain fixture-backed. GDELT is externally rate-limited and falls back with a visible label. Hosted `llm_live_ready=false` because provider keys are absent on Render, so hosted inference still falls back deterministically; working keys exist only in the gitignored local `.env`.
+- Live GDELT and US Federal Register connectors are implemented and deployed; Bangladesh Bank, EUR-Lex, and UFLPA remain fixture-backed. GDELT is externally rate-limited and falls back with a visible label. Hosted `llm_live_ready=false` because provider keys are absent on Render, so hosted inference still falls back deterministically; working keys exist only in the gitignored local `.env`.
 - BGE-M3, Docling, RAGAS, and Phoenix are optional and not required for the demo path.
 - Golden set is small (7 cases) and synthetic; live models and the repair loop are not benchmarked.
 - No legal/compliance advisor reviewed the content.
-- No demo video; the design artifact is [`DESIGN.md`](DESIGN.md), not a Figma file. Team-diversity facts are unconfirmed.
+- No demo video; the design artifact is [`DESIGN.md`](DESIGN.md), not a Figma file. Team-diversity facts are intentionally blank per the 2026-10-26 user decision, and no bonus is claimed.
