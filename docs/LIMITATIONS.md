@@ -11,12 +11,14 @@ for legal counsel. The list below records what is **not** built, what is **not
 enabled**, and what is **pilot-only**, so judges and future maintainers can
 calibrate the claims.
 
-> **Current split (2026-10-26):** live connectors, hybrid LLM mode, the bounded
-> repair loop, and the scheduler are implemented, locally verified, and deployed
-> on Render at revision `5f224ca`. The hosted environment still runs with
-> `DATA_MODE=fixture`, `LLM_MODE=mock`, and `ENABLE_SCHEDULER=false` until the
-> operator cutover. Do not claim hosted live inference or hosted live ingestion
-> until `/healthz` shows `llm_live_ready=true` and `data_mode=hybrid`.
+> **Current hosted state (2026-10-26):** live connectors, hybrid modes, the
+> bounded repair loop, and the scheduler are deployed and enabled on Render.
+> `/healthz` reports `data_mode=hybrid`, `llm_mode=hybrid`,
+> `scheduler_running=true`, and `llm_live_ready=false`. Federal Register live
+> sync and dedupe are hosted-verified; GDELT reports `fixture_fallback` under its
+> public rate limit. Hosted pipeline inference still uses the deterministic
+> fallback because Gemini/Groq keys are absent. Do not claim hosted live LLM
+> inference until `/healthz` shows `llm_live_ready=true`.
 
 ---
 
@@ -60,10 +62,10 @@ calibrate the claims.
   once, then falls back to fixtures and labels the run `fixture_fallback` with
   `status=degraded`. A hard `DATA_MODE=live` failure returns `502` and is never
   reported as a healthy live sync.
-- **Scheduled ingestion is implemented and deployed but not enabled.** The
-  in-process APScheduler job runs when `ENABLE_SCHEDULER=true`; it is disabled in
-  the local demo and in the hosted environment. n8n remains optional and is not
-  the pilot path.
+- **Scheduled ingestion is implemented, deployed, and running.** The in-process
+  APScheduler job runs when `ENABLE_SCHEDULER=true`; it is disabled in the local
+  demo but enabled on Render (`scheduler_running=true`). No scheduled cycle has
+  been captured yet. n8n remains optional and is not the pilot path.
 - **No licensing or terms review** for source ingestion, redistribution, or
   storage. This must precede a real deployment.
 - **Rate-limit handling and connector observability are minimal.** The source row
@@ -79,10 +81,12 @@ calibrate the claims.
 
 ## 3. AI and evaluation
 
-- **Hybrid mode is implemented and deployed; mock remains the enabled hosted
-  path.** Local hybrid runs completed with Gemini 3.5 Flash and Groq
-  `gpt-oss-120b`; the hosted service still reports `llm_mode=mock` until keys and
-  the env cutover are applied. The deterministic mock path remains the fallback.
+- **Hybrid mode is implemented and deployed; hosted live inference is not
+  enabled.** Local hybrid runs completed with Gemini 3.5 Flash and Groq
+  `gpt-oss-120b`; the hosted service reports `llm_mode=hybrid` but
+  `llm_live_ready=false` because provider keys are absent. Hosted pipeline
+  inference therefore uses the deterministic fallback. The deterministic mock
+  path remains the safe fallback.
 - **Provider reliability is variable.** Gemini 3.8 Flash timed out locally and
   Gemini Pro Latest had zero free-tier quota; the defaults now use Gemini 3.5
   Flash. A 90-second per-provider cooldown prevents repeated timeouts. This is

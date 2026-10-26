@@ -1,8 +1,9 @@
 # Chowkidar — Operations runbook
 
 **Scope:** the Render API + Netlify primary web + Vercel secondary web +
-Supabase production pilot. Supabase email/password auth and durable Postgres
-reports are live. The cutover, QA evidence, and credential handling are in
+Supabase production pilot. Supabase email/password auth, durable Postgres
+reports, hybrid data/LLM modes, and the scheduler are live. The deployment
+state, QA evidence, and credential handling are in
 [`PRODUCTION.md`](PRODUCTION.md).
 
 ---
@@ -16,7 +17,7 @@ curl -sSI https://ch0wkidar.netlify.app/
 curl -sSI https://chowkidar-wheat.vercel.app/
 ```
 
-Expected hosted production pilot before the connector/hybrid cutover:
+Expected hosted production pilot (verified 2026-10-26):
 
 ```json
 {
@@ -24,16 +25,19 @@ Expected hosted production pilot before the connector/hybrid cutover:
   "database": "ok",
   "auth_mode": "supabase",
   "demo_mode": false,
-  "llm_mode": "mock",
-  "data_mode": "fixture"
+  "llm_mode": "hybrid",
+  "llm_live_ready": false,
+  "data_mode": "hybrid",
+  "scheduler_enabled": true,
+  "scheduler_running": true
 }
 ```
 
-After the cutover described in [`PRODUCTION.md`](PRODUCTION.md) section 2.8, the
-same endpoint should additionally report `llm_mode: "hybrid"`,
-`llm_live_ready: true`, `data_mode: "hybrid"`, `live_connectors` containing
-`gdelt` and `federal_register`, and `scheduler_enabled: true`. If
-`llm_live_ready` is false, do not claim hosted live inference.
+`llm_live_ready=false` means Gemini/Groq keys are absent and hosted inference is
+using the deterministic fallback. Do not claim hosted live inference until it is
+`true`. Once keys are added, the same endpoint should report
+`llm_live_ready: true`; `live_connectors` should contain `gdelt` and
+`federal_register`.
 
 The local offline demo still uses `auth_mode: dev` and `demo_mode: true`; those
 values on the public deployment would be a regression.

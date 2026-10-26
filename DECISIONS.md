@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-26
 
-**Status:** Active — base build complete; hosted production pilot live; connector/hybrid/repair code deployed, hosted env cutover pending
+**Status:** Active — base build complete; hosted production pilot live; hybrid data/LLM modes and scheduler running; Federal Register live sync verified; hosted LLM keys absent
 
 **Owner:** JU_StackMind  
 **Purpose:** Single source of truth for decisions, constraints, assumptions, and session history. Read this before starting any new work session.
@@ -146,7 +146,7 @@ Flash timed out locally and Gemini Pro Latest had zero free-tier quota, so the
 defaults use Gemini 3.5 Flash.
 
 **Remaining external action:** Supabase, Render, Netlify, and Vercel are live.
-The connector/hybrid/scheduler cutover, provider keys on Render, and the Supabase
+The hybrid/scheduler cutover is applied; provider keys on Render and the Supabase
 password rotation remain operator actions.
 
 ### 2.2 Secrets handling
@@ -310,7 +310,7 @@ To avoid losing details between sessions:
 - Created `docs/VALIDATION.md` (interview guide, LOI template, pricing hypotheses, evidence log at 0) and `docs/DESIGN.md` (design artifact and wireframes).
 - Reconciled `LIMITATIONS.md`, `SUBMISSION.md`, `DATA_SOURCES.md`, `ARCHITECTURE.md`, `ENVIRONMENT.md`, `README.md`, `PRODUCTION.md`, `CLOUD_DEPLOYMENT_STATUS.md`, and `RESPONSIBLE_AI.md`.
 - Tests: API 75 passed; Ruff and Pyright clean; web typecheck/lint clean; web tests 8/8 passed.
-- Blockers: hosted environment cutover not applied; team-diversity facts, video, and Supabase password rotation remain user/operator actions. The design link is pushed and verified; the official form remains untouched.
+- Blockers: hosted provider keys absent (`llm_live_ready=false`), no scheduled cycle captured yet, and team-diversity facts, video, and Supabase password rotation remain user/operator actions. The design link is pushed and verified; the official form remains untouched.
 
 ### Template for future sessions
 ```

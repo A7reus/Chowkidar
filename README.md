@@ -63,9 +63,9 @@ More views: [signals](docs/assets/02-signals.png) · [search](docs/assets/05-sea
 | Demo auth with four roles | Built; local only in `AUTH_MODE=dev` + `DEMO_MODE=true` |
 | Supabase Auth production path | Live: password/refresh/logout proxy, JWKS verification, local role mapping, production login UI; four pilot accounts provisioned and hosted QA passed |
 | Durable report storage | Built: local, Postgres, and private Supabase Storage backends; Postgres is live on the hosted API and survived a redeploy |
-| Live GDELT + US Federal Register connectors | Built and locally verified; hybrid fallback labels the run honestly |
-| Hybrid LLM mode | Built and locally verified with Gemini 3.5 Flash + Groq; mock remains the hosted default until cutover |
-| In-process scheduled ingestion | Built (APScheduler) and deployed; disabled locally and in the hosted environment until the env cutover |
+| Live GDELT + US Federal Register connectors | Built, deployed, and hosted-verified for Federal Register; hybrid fallback labels the run honestly |
+| Hybrid LLM mode | Built and deployed; local runs used Gemini 3.5 Flash + Groq; hosted `llm_live_ready=false` until provider keys are added |
+| In-process scheduled ingestion | Built (APScheduler), deployed, and running on Render; disabled in the local demo |
 | Cloud deployment | Live production pilot: Render API + Netlify web primary, Vercel secondary fallback; see [`docs/CLOUD_DEPLOYMENT_STATUS.md`](docs/CLOUD_DEPLOYMENT_STATUS.md) |
 
 ### Demo accounts
@@ -199,13 +199,13 @@ cd apps/api && uv run python -m app.db.seed
 
 ### Current limitations
 
-- **Two live connectors exist (GDELT + US Federal Register); three streams remain fixture-backed.** GDELT is externally rate-limited and may fall back to fixtures with a visible `fixture_fallback` label. The new code and migration are deployed on Render at revision `5f224ca`, but the hosted environment still uses `DATA_MODE=fixture` and `LLM_MODE=mock` until the operator cutover.
-- Scheduled ingestion is implemented via the in-process APScheduler job, but it is disabled locally and not yet enabled on Render. n8n is optional and not the pilot path.
+- **Two live connectors exist (GDELT + US Federal Register); three streams remain fixture-backed.** GDELT is externally rate-limited and may fall back to fixtures with a visible `fixture_fallback` label. Render runs `DATA_MODE=hybrid`; Federal Register live sync and dedupe are hosted-verified. Hosted `llm_live_ready=false` because provider keys are absent, so hosted inference still falls back deterministically.
+- Scheduled ingestion runs via the in-process APScheduler job on Render (`ENABLE_SCHEDULER=true`, `scheduler_running=true`); no scheduled cycle has been captured yet. n8n is optional and not the pilot path.
 - No legal/compliance advisor; the product is deliberately positioned as decision support.
 - The **live service is a production pilot**, not a demo: `AUTH_MODE=supabase`, `DEMO_MODE=false`, four provisioned accounts, and demo login disabled. It is still a single-workspace pilot, not a commercial multi-tenant service.
 - Reports use the durable Postgres backend on the hosted API (`STORAGE_BACKEND=database`), with private Supabase Storage as an optional object-store adapter. Hosted reports survived an API redeploy with matching checksums; local `/tmp` reports remain only for offline demos.
 - Rate limits are process-local (suitable for the single Render instance); browser tokens are stored in local storage rather than HttpOnly cookies.
-- Hybrid LLM mode is implemented and locally verified, but provider reliability is not an SLA; Gemini 3.8 Flash timed out and Gemini Pro Latest had zero free-tier quota, so the defaults use Gemini 3.5 Flash.
+- Hybrid LLM mode is implemented and deployed; local runs used Gemini 3.5 Flash and Groq, and hosted `llm_live_ready=false` because provider keys are absent, so hosted inference falls back deterministically. Provider reliability is not an SLA; Gemini 3.8 Flash timed out and Gemini Pro Latest had zero free-tier quota, so the defaults use Gemini 3.5 Flash.
 - Optional BGE-M3 embeddings, Docling, RAGAS, and Phoenix are not required for the demo path.
 - No customer interviews, LOIs, design partners, or revenue. The validation kit is at [`docs/VALIDATION.md`](docs/VALIDATION.md) and the evidence log is honestly at zero.
 - No Figma file; [`docs/DESIGN.md`](docs/DESIGN.md) is the design artifact. No final demo video yet.

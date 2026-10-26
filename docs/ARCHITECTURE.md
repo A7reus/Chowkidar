@@ -35,7 +35,7 @@
 └────────────────────────────────────────────────────────────────────┘
 ```
 
-The pilot keeps a seeded Postgres database so the story is reproducible. Connectors and the agent pipeline can run again over the same signals; mutation tools are role-gated and audited. The hosted service is still fixture/mock until the connector and hybrid-mode cutover is deployed; the local build supports `DATA_MODE=hybrid` and `LLM_MODE=hybrid`.
+The pilot keeps a seeded Postgres database so the story is reproducible. Connectors and the agent pipeline can run again over the same signals; mutation tools are role-gated and audited. The hosted service runs `DATA_MODE=hybrid`, `LLM_MODE=hybrid`, and the scheduler; Federal Register live sync is verified, while GDELT falls back under its public rate limit. Hosted LLM inference still falls back deterministically because provider keys are absent (`llm_live_ready=false`).
 
 ---
 
@@ -92,7 +92,7 @@ Primary demo streams:
 4. **GDELT** — global operational news for corroboration and supplier events. Live connector; rate-limited, hybrid fallback.
 5. **US Federal Register** — trade and supply-chain rules. Live connector.
 
-Each source has a `stream_key`, `connector_key`, jurisdiction, status, last sync, `last_sync_mode`, `last_signal_count`, and a sanitized `last_error`. The seed includes 13 signals across the five streams. The in-process APScheduler job can sync the live-capable sources when `ENABLE_SCHEDULER=true`; n8n remains optional. `DATA_MODE=fixture|hybrid|live` is implemented; a failed hard live run is surfaced as `live_failed`, not a fake healthy sync.
+Each source has a `stream_key`, `connector_key`, jurisdiction, status, last sync, `last_sync_mode`, `last_signal_count`, and a sanitized `last_error`. The seed includes 13 signals across the five streams. The in-process APScheduler job runs the live-capable sources when `ENABLE_SCHEDULER=true`; it is running on Render. n8n remains optional. `DATA_MODE=fixture|hybrid|live` is implemented; a failed hard live run is surfaced as `live_failed`, not a fake healthy sync.
 
 See [`DATA_SOURCES.md`](DATA_SOURCES.md).
 
@@ -123,7 +123,7 @@ Pipeline runs are also exposed as `POST /api/v1/pipeline/run` and recorded in `a
 | Offline/demo | Deterministic mock | — |
 | Embeddings | BGE-M3 (optional) | Hash-based mock |
 
-`LLM_MODE=mock` is the default for a reproducible demo. `LLM_MODE=hybrid` tries a live provider and falls back deterministically; local hybrid runs succeeded with Gemini 3.5 Flash and Groq. A 90-second per-provider cooldown limits repeated timeouts. The hosted service still reports `llm_mode=mock` until the operator applies keys and the env cutover.
+`LLM_MODE=mock` is the default for a reproducible local demo. `LLM_MODE=hybrid` tries a live provider and falls back deterministically; local hybrid runs succeeded with Gemini 3.5 Flash and Groq. A 90-second per-provider cooldown limits repeated timeouts. The hosted service reports `llm_mode=hybrid` but `llm_live_ready=false` because provider keys are absent, so hosted inference still falls back deterministically.
 
 ---
 
@@ -289,7 +289,7 @@ Current mock-path result: **7/7 cases**, all metrics **1.0**. The golden set and
 | Auth | Supabase Auth proxy | Live: email/password, JWKS verification, four provisioned accounts, demo login disabled |
 | Report storage | Postgres (default hosted) or Supabase Storage | Live on Postgres; checksum-verified across a Render redeploy; Storage optional |
 | Graph | Neo4j Aura | Optional; pending account |
-| Scheduling | In-process APScheduler (`ENABLE_SCHEDULER=true`) | Implemented and deployed; hosted env cutover pending |
+| Scheduling | In-process APScheduler (`ENABLE_SCHEDULER=true`) | Implemented, deployed, and running; no scheduled cycle captured yet |
 | Monitoring | Sentry + PostHog | Optional keys pending |
 
 See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md) for URLs and verification details.

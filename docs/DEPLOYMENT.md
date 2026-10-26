@@ -6,17 +6,21 @@ Netlify is the primary web origin, Vercel is the secondary fallback, and
 Supabase email/password auth (`AUTH_MODE=supabase`, `DEMO_MODE=false`) is
 enabled with four provisioned accounts, demo login disabled, and durable
 Postgres report storage. Netlify production browser QA passed 2/2; the most
-recent hosted health check on 2026-10-26 reported revision `2bfaed71372c` with
-`llm_mode=mock` and `data_mode=fixture`. See [`PRODUCTION.md`](PRODUCTION.md) and
+recent hosted health check on 2026-10-26 reported revision `8caca3eef555` with
+`llm_mode=hybrid`, `data_mode=hybrid`, and `scheduler_running=true`. Federal
+Register live sync, GDELT fallback, and a hosted pipeline run are verified;
+hosted LLM inference is not enabled because provider keys are absent. See
+[`PRODUCTION.md`](PRODUCTION.md) and
 [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md). This is a
 single-workspace pilot, not a commercial multi-tenant deployment.
 
-> **Code deployed, env pending (2026-10-26):** live GDELT/Federal Register
-> connectors, hybrid LLM mode, the bounded repair loop, and the scheduler are
-> implemented, locally verified, and deployed on Render at revision `5f224ca`.
-> The hosted environment still uses `DATA_MODE=fixture`, `LLM_MODE=mock`, and
-> `ENABLE_SCHEDULER=false`; the operator cutover is in
-> [`PRODUCTION.md`](PRODUCTION.md) section 2.8.
+> **Hosted hybrid state (2026-10-26):** live GDELT/Federal Register connectors,
+> hybrid modes, the bounded repair loop, and the scheduler are deployed and the
+> Render environment now runs `DATA_MODE=hybrid`, `LLM_MODE=hybrid`, and
+> `ENABLE_SCHEDULER=true`. Federal Register sync is hosted-verified live; GDELT
+> is externally rate-limited and reports `fixture_fallback`. `llm_live_ready`
+> is `false` because Gemini/Groq keys are not set, so hosted inference still
+> falls back deterministically. See [`PRODUCTION.md`](PRODUCTION.md) section 2.8.
 
 **Target region:** Supabase `ap-northeast-1` (Tokyo); Render `singapore`;
 Netlify and Vercel global edge. The cross-region API/database hop is acceptable
@@ -35,7 +39,7 @@ for the pilot.
 | Reports | Postgres (`STORAGE_BACKEND=database`) or Supabase Storage | Durable; local disk remains for offline demos |
 | Auth | Supabase Auth (production path) | Demo adapter remains available only with `AUTH_MODE=dev` + `DEMO_MODE=true` |
 | Graph | Neo4j Aura | Optional; the API graph view uses seeded relational data |
-| Scheduling | In-process APScheduler | Implemented and deployed; enabled with `ENABLE_SCHEDULER=true`; hosted env cutover pending |
+| Scheduling | In-process APScheduler | Implemented, deployed, and running with `ENABLE_SCHEDULER=true` |
 | Monitoring | Sentry / PostHog | Optional keys |
 
 The free Render service has no persistent disk. `infra/render.yaml` therefore
@@ -343,7 +347,8 @@ local seed baseline for offline judging. The full production matrix is in
 
 | Blocker | Impact |
 |---|---|
-| Hosted connector/hybrid cutover | The code and migration are deployed at `5f224ca`, but the hosted environment still uses `mock`/`fixture` with the scheduler off |
+| Hosted LLM keys | `llm_live_ready=false`; hosted inference still uses deterministic fallback until Gemini/Groq keys are added |
+| Scheduled cycle observation | Scheduler is running, but no scheduled cycle has been captured yet |
 | Supabase database password | Current password is weak; rotate before any real-user deployment |
 | Public demo video | Pending; required for the official form |
 | Design link | `docs/DESIGN.md` is public at the GitHub URL. No Figma file. |

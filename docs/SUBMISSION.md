@@ -17,12 +17,12 @@
 **Tagline:** *See the risk. Approve the fix.*
 
 **Current data reality:** five labelled streams. GDELT and the US Federal Register
-have real live connectors with dedupe and a scheduler; Bangladesh Bank, EUR-Lex,
-and UFLPA are fixture-backed. A rate-limited GDELT run is labelled
-`fixture_fallback`, never reported as a healthy live sync. The new code is
-deployed on Render at revision `5f224ca`, but the hosted environment still uses
-`DATA_MODE=fixture`, `LLM_MODE=mock`, and `ENABLE_SCHEDULER=false` until the
-operator cutover.
+have real live connectors with dedupe and a running scheduler; Bangladesh Bank,
+EUR-Lex, and UFLPA are fixture-backed. A rate-limited GDELT run is labelled
+`fixture_fallback`, never reported as a healthy live sync. Render runs
+`DATA_MODE=hybrid`, and Federal Register live sync is hosted-verified.
+`llm_live_ready=false` because provider keys are absent, so hosted pipeline
+inference still uses the deterministic fallback.
 
 ---
 
@@ -48,7 +48,7 @@ operator cutover.
 - **Live pilot URL:** <https://ch0wkidar.netlify.app/> — Netlify primary, verified with production browser QA: Supabase email/password auth, four managed accounts, demo login disabled, PDF generation/download, and viewer read-only access. Secondary fallback: <https://chowkidar-wheat.vercel.app/> (Vercel DNS may vary on some networks; see [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md)).
 - **API URL:** <https://chowkidar-api.onrender.com/>
 - **Hosted access:** Supabase accounts use the emails `admin@chowkidar.app`, `analyst@chowkidar.app`, `approver@chowkidar.app`, and `viewer@chowkidar.app`. Passwords are held in the private, gitignored access note and must be supplied to judges only through the form's private access field or another controlled channel.
-- **Production status:** live and verified as a production pilot. Netlify browser QA passed 2/2 at the previously verified revision `2bfaed71372c`: `/healthz` reports `auth_mode=supabase`, `demo_mode=false`, `database=ok`; admin and viewer flows passed; PDF generation/download matched SHA-256; reports use Postgres; viewer role restrictions returned `403`; and both web origins pass CORS preflight. This is a single-workspace pilot, not commercial SaaS readiness. **The connector/hybrid/repair code is deployed on Render at revision `5f224ca`, with the new migration applied and the five-stream UI verified on Netlify; the hosted environment still reports `llm_mode=mock` and `data_mode=fixture` until the operator cutover.**
+- **Production status:** live and verified as a production pilot. Netlify browser QA passed 2/2 at the previously verified revision `2bfaed71372c`: `/healthz` reports `auth_mode=supabase`, `demo_mode=false`, `database=ok`; admin and viewer flows passed; PDF generation/download matched SHA-256; reports use Postgres; viewer role restrictions returned `403`; and both web origins pass CORS preflight. This is a single-workspace pilot, not commercial SaaS readiness. **Render now runs the hybrid environment at revision `8caca3eef555` (`data_mode=hybrid`, `llm_mode=hybrid`, `scheduler_running=true`). Federal Register live sync, dedupe, GDELT fallback, and a hosted pipeline run are verified. `llm_live_ready=false` because provider keys are absent; hosted inference still falls back deterministically.**
 - **Video URL:** _to be added after recording — required for the official form_
 
 > The official form and MCP knowledge base both reward a public live demo and a 2–3 minute video. A local-only demo is not enough for maximum preliminary score. See [`COMPETITION_CONTEXT.md`](COMPETITION_CONTEXT.md) for the captured form, scoring signals, and the authoritative domain list.
@@ -170,8 +170,8 @@ Pilot with an RMG exporter and a compliance reviewer; enable scheduled ingestion
 
 ## 7. Known limitations
 
-- **Live connectors are implemented for GDELT and the US Federal Register only.** Bangladesh Bank, EUR-Lex, and DHS/UFLPA remain fixture-backed. GDELT is externally rate-limited and falls back to fixtures with a `fixture_fallback` label. The new code and migration are deployed on Render at revision `5f224ca`, but the hosted environment still uses `DATA_MODE=fixture` and `LLM_MODE=mock` until the operator cutover.
-- **Scheduled ingestion is implemented and deployed but not enabled on Render.** The in-process APScheduler job is enabled by `ENABLE_SCHEDULER=true`; n8n remains optional and is not the pilot path.
+- **Live connectors are implemented for GDELT and the US Federal Register only.** Bangladesh Bank, EUR-Lex, and DHS/UFLPA remain fixture-backed. GDELT is externally rate-limited and falls back to fixtures with a `fixture_fallback` label. Render runs `DATA_MODE=hybrid`; Federal Register live sync and dedupe are hosted-verified.
+- **Scheduled ingestion is implemented, deployed, and running on Render.** The in-process APScheduler job is enabled by `ENABLE_SCHEDULER=true` and `scheduler_running=true`; no scheduled cycle has been captured yet. n8n remains optional and is not the pilot path.
 - The hosted app is a **single-workspace production pilot**, not demo mode: `AUTH_MODE=supabase`, `DEMO_MODE=false`, four provisioned accounts, demo login `403`. It is not a multi-tenant commercial deployment.
 - Reports use Postgres on the hosted API, with private Supabase Storage as an optional adapter. Local `/tmp` reports are not durable.
 - Rate limits are process-local; browser tokens are in local storage rather than HttpOnly cookies. The current Supabase database password is weak and rotation is pending.
@@ -202,7 +202,9 @@ Pilot with an RMG exporter and a compliance reviewer; enable scheduled ingestion
 - [x] Hosted role restrictions, rate limiting, audit verification, report downloads, and mobile layout checked.
 - [x] Durable reports verified across a Render redeploy with matching checksums.
 - [x] CI green and local `make check` passing after the hosted fixes.
-- [x] Live GDELT + Federal Register connectors, hybrid modes, scheduler, and bounded repair loop implemented and locally verified.
+- [x] Live GDELT + Federal Register connectors, hybrid modes, scheduler, and bounded repair loop implemented, deployed, and locally verified.
+- [x] Hosted hybrid environment applied: `data_mode=hybrid`, `llm_mode=hybrid`, `scheduler_running=true`; Federal Register live sync and dedupe verified; GDELT fallback verified; hosted pipeline run completed with 0 errors.
+- [ ] Hosted live LLM inference verified (`llm_live_ready=true`); currently blocked on provider keys.
 - [x] Validation kit with interview guide, LOI template, pricing hypotheses, and an honest zero-evidence log.
 - [x] Design artifact [`DESIGN.md`](DESIGN.md) with wireframes, flows, tokens, and accessibility notes.
 - [ ] Two-to-three-minute demo video recorded and linked.

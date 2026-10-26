@@ -27,6 +27,18 @@ async def test_root_identifies_product_and_disclaimer() -> None:
 
 
 @pytest.mark.asyncio
+async def test_meta_exposes_streams_and_scheduler_state() -> None:
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get("/api/v1/meta")
+    assert response.status_code == 200
+    payload = response.json()
+    assert len(payload["streams"]) == 5
+    assert isinstance(payload["scheduler_enabled"], bool)
+    assert isinstance(payload["scheduler_running"], bool)
+
+
+@pytest.mark.asyncio
 async def test_openapi_exposes_required_workflow_endpoints() -> None:
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:

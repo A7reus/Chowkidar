@@ -6,15 +6,19 @@ pilot accounts are provisioned, demo login is disabled, and reports are stored
 in Postgres. Netlify is the primary web origin and Vercel is the secondary
 fallback. Netlify production browser QA passed 2/2 on 2026-10-25; the most
 recently verified hosted health check on 2026-10-26 reported revision
-`2bfaed71372c` with `status=ok`, `database=ok`, `auth_mode=supabase`,
-`demo_mode=false`, `llm_mode=mock`, and `data_mode=fixture`. This is a
-single-workspace production pilot, not a commercial customer deployment.
+`8caca3eef555` with `status=ok`, `database=ok`, `auth_mode=supabase`,
+`demo_mode=false`, `llm_mode=hybrid`, `llm_live_ready=false`,
+`data_mode=hybrid`, `scheduler_enabled=true`, and `scheduler_running=true`.
+This is a single-workspace production pilot, not a commercial customer
+deployment.
 
-> **Code deployed, env pending (2026-10-26):** live connectors, hybrid LLM mode,
-> the bounded repair loop, and the scheduler are implemented, locally verified,
-> and deployed on Render at revision `5f224ca`. The hosted environment remains
-> `DATA_MODE=fixture`, `LLM_MODE=mock`, and `ENABLE_SCHEDULER=false` until the
-> environment cutover in section 2.8 is executed.
+> **Hosted hybrid state (2026-10-26):** live connectors, hybrid modes, the
+> bounded repair loop, and the scheduler are deployed and enabled on Render.
+> Federal Register live sync and dedupe are hosted-verified; GDELT reports
+> `fixture_fallback` under its public rate limit. Gemini/Groq keys are absent,
+> so `llm_live_ready=false` and hosted pipeline inference uses the deterministic
+> fallback. The remaining operator action is to add provider keys and verify one
+> live hosted pipeline run.
 
 This document defines “production-ready” for Chowkidar's preliminary round as
 the production path required by `prompts/MASTER_PROMPT.md`: real authentication,
@@ -40,20 +44,20 @@ operations, legal review, or universal live source coverage).
 
 ### Deliberate limitations
 
-- **Two live connectors are implemented; three streams remain fixture-backed.**
-  `GDELT` and the `US Federal Register` run through real connectors when
-  `DATA_MODE=hybrid` or `live` is enabled. Bangladesh Bank, EUR-Lex, and UFLPA
-  still replay fixtures. GDELT is externally rate-limited and may fall back to
-  fixtures with a visible `fixture_fallback` label. The hosted service has not
-  yet been cut over to the new modes.
-- **Scheduled ingestion is implemented but not enabled on Render.** The
-  in-process APScheduler job runs when `ENABLE_SCHEDULER=true`; it is deployed
-  with the new code but disabled in the hosted environment. n8n is optional and
-  not the pilot path.
-- **Hybrid LLM mode is implemented and deployed, but not enabled on Render yet.**
-  Local runs used Gemini 3.5 Flash and Groq `gpt-oss-120b`; the hosted service
-  still reports `llm_mode=mock` until keys and the environment cutover are
-  applied.
+- **Two live connectors are implemented and running; three streams remain
+  fixture-backed.** `GDELT` and the `US Federal Register` run through real
+  connectors under `DATA_MODE=hybrid`. Bangladesh Bank, EUR-Lex, and UFLPA still
+  replay fixtures. GDELT is externally rate-limited and may fall back to
+  fixtures with a visible `fixture_fallback` label. Federal Register live sync
+  and dedupe are hosted-verified.
+- **Scheduled ingestion is implemented, deployed, and running on Render.** The
+  in-process APScheduler job runs when `ENABLE_SCHEDULER=true`;
+  `/healthz` reports `scheduler_running=true`. No scheduled cycle has been
+  captured yet. n8n is optional and not the pilot path.
+- **Hybrid LLM mode is implemented and deployed; hosted live inference is not
+  enabled.** Local runs used Gemini 3.5 Flash and Groq `gpt-oss-120b`; the hosted
+  service reports `llm_mode=hybrid` but `llm_live_ready=false` because provider
+  keys are absent, so hosted inference still falls back deterministically.
 - **Tokens are held in browser storage** by the current client (Zustand
   `persist`). A hardened deployment should move refresh tokens to HttpOnly,
   SameSite cookies with CSRF protection. Treat this as a pilot limitation.
@@ -76,7 +80,7 @@ operations, legal review, or universal live source coverage).
 | Accounts | `admin@chowkidar.app`, `analyst@chowkidar.app`, `approver@chowkidar.app`, `viewer@chowkidar.app` |
 | Credentials | Gitignored `docs/private/supabase-credentials.local.md`, mode `600` |
 | Report storage | Postgres (`STORAGE_BACKEND=database`) |
-| Runtime QA | Netlify run passed 2/2; the most recent hosted health check on 2026-10-26 reported revision `2bfaed71372c` with `llm_mode=mock` and `data_mode=fixture`. API, role, report, browser, mobile, CORS, and rate-limit checks passed. |
+| Runtime QA | Netlify run passed 2/2; the most recent hosted health check on 2026-10-26 reported revision `8caca3eef555` with `llm_mode=hybrid`, `llm_live_ready=false`, `data_mode=hybrid`, and `scheduler_running=true`. Federal Register live sync, dedupe, GDELT fallback, and a hosted pipeline run are verified. API, role, report, browser, mobile, CORS, and rate-limit checks passed. |
 | Remaining external constraint | Vercel default DNS is variable on some networks; it is only the secondary fallback. See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md). |
 
 ---
@@ -242,9 +246,10 @@ fresh synthetic demo deployment.
 
 ### 2.8 Connector, hybrid LLM, and scheduler cutover
 
-This cutover is **not yet applied** to the hosted service. Apply it only after
-the new code and migration `9c1e4f2a7b10_live_connectors.py` are on the deployed
-revision and the provider keys are present.
+**Applied on 2026-10-26, except provider keys.** The deployed revision includes
+migration `9c1e4f2a7b10_live_connectors.py`, and Render runs the environment
+below. `GEMINI_API_KEY` and `GROQ_API_KEY` are still absent, so
+`llm_live_ready=false` and hosted inference falls back deterministically.
 
 ```dotenv
 DATA_MODE=hybrid
@@ -252,8 +257,8 @@ LLM_MODE=hybrid
 ENABLE_SCHEDULER=true
 SCHEDULER_INTERVAL_MINUTES=60
 SCHEDULER_RUN_ON_START=false
-GEMINI_API_KEY=<key>
-GROQ_API_KEY=<key>
+GEMINI_API_KEY=<key>       # still absent on Render
+GROQ_API_KEY=<key>         # still absent on Render
 GEMINI_FLASH_MODEL=gemini/gemini-3.5-flash
 GEMINI_PRO_MODEL=gemini/gemini-3.5-flash
 LLM_TIMEOUT_SECONDS=25
@@ -262,37 +267,46 @@ PIPELINE_LIVE_MAX_SIGNALS=6
 PIPELINE_MAX_REPAIR_ATTEMPTS=1
 ```
 
-Cutover order:
+Verified cutover state:
 
-1. Deploy the API revision containing the migration and connector code.
-2. Confirm the boot log applies `9c1e4f2a7b10` without error.
-3. Set the environment values above and redeploy.
-4. Verify `/healthz` reports `data_mode=hybrid`, `llm_live_ready=true`,
-   `live_connectors` containing `gdelt` and `federal_register`,
-   `scheduler_enabled=true`, and `scheduler_running=true`.
-5. Run one Federal Register sync and confirm `mode=live`; run it again and
-   confirm `mode=live` with `0` new signals due to dedupe.
-6. Run one GDELT sync. If the public API is rate-limited, confirm the run is
-   `mode=fixture_fallback`, `status=degraded`, and `last_error` is sanitized. Do
-   not present the fallback as a healthy live sync.
-7. Run one live pipeline and inspect `repair_attempts`, `routing`, and
-   verification statuses.
-8. If the provider keys are absent or the live path is unreliable, revert to
-   `LLM_MODE=mock` and `DATA_MODE=fixture` and disclose that state. The demo
-   remains functional.
+1. The boot log applied `9c1e4f2a7b10` without error.
+2. `/healthz` reports `data_mode=hybrid`, `llm_mode=hybrid`,
+   `llm_live_ready=false`, `live_connectors` containing `gdelt` and
+   `federal_register`, `scheduler_enabled=true`, and `scheduler_running=true`.
+3. A Federal Register sync returned `mode=live` with 8 signals; a second sync
+   returned `mode=live` with `0` new signals due to dedupe.
+4. A GDELT sync returned `mode=fixture_fallback`, `status=degraded`, and a
+   sanitized rate-limit error.
+5. A pipeline run over 8 Federal Register signals created 8 obligations, 8
+   risks, and 16 actions with 0 errors; all risks verified on `verify attempt 0`
+   and `repair_attempts=0`.
+
+Remaining steps when provider keys are available:
+
+1. Add `GEMINI_API_KEY` and `GROQ_API_KEY` in Render and redeploy.
+2. Confirm `/healthz` reports `llm_live_ready=true`.
+3. Run one pipeline and confirm a real model call with deterministic fallback
+   still available.
+4. Observe one scheduled cycle, or state honestly that the scheduler is running
+   but no cycle has been captured.
+
+If the provider keys remain absent or the live path is unreliable, keep
+`LLM_MODE=hybrid` for honest fallback or set `LLM_MODE=mock`; never claim hosted
+live inference while `llm_live_ready=false`.
 
 ---
 
 ## 3. Hosted QA matrix
 
 Completed against Netlify and the hosted API on 2026-10-25; the most recent
-hosted health check on 2026-10-26 reported revision `2bfaed71372c`, with the
+hosted health check on 2026-10-26 reported revision `8caca3eef555`, with the
 prior Vercel run retained at `fcd7fd8`:
 
 - [x] `/healthz` returns `status: ok`, `database: ok`, `auth_mode: supabase`,
       `demo_mode: false`.
-- [x] New code at `5f224ca` exposes the five-stream UI and new health fields;
-      hosted env remains `mock`/`fixture` until the operator cutover.
+- [x] Hosted hybrid env at `8caca3eef555` exposes five streams and new health
+      fields; Federal Register live sync, GDELT fallback, and a pipeline run are
+      verified; `llm_live_ready=false` until provider keys are added.
 - [x] `/api/v1/auth/config` returns `password_auth: true` and no demo users.
 - [x] Login with the admin account; the demo role cards are absent and the
       sidebar says **Pilot**, not **Demo**.

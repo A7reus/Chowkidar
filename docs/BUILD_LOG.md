@@ -1,7 +1,7 @@
 # Chowkidar — Build Log
 
 **Last updated:** 2026-10-26
-**Status:** Base build complete; local QA and hosted QA against Netlify and Vercel passed. The hosted API and both web builds are live as a production pilot with Supabase email/password auth and durable Postgres reports. Netlify is the primary web origin and passed production browser QA 2/2; Vercel is the secondary fallback. Live GDELT/Federal Register connectors, hybrid LLM mode, the bounded repair loop, and the scheduler are implemented, locally verified, and deployed on Render at revision `5f224ca`; the hosted environment still reports `mock`/`fixture` until the operator cutover. See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md) and [`GAP_ANALYSIS.md`](GAP_ANALYSIS.md).
+**Status:** Base build complete; local QA and hosted QA against Netlify and Vercel passed. The hosted API and both web builds are live as a production pilot with Supabase email/password auth and durable Postgres reports. Netlify is the primary web origin and passed production browser QA 2/2; Vercel is the secondary fallback. Live GDELT/Federal Register connectors, hybrid modes, the bounded repair loop, and the scheduler are deployed; Render now reports `data_mode=hybrid`, `llm_mode=hybrid`, and `scheduler_running=true`. Federal Register live sync, dedupe, GDELT fallback, and a hosted pipeline run are verified. `llm_live_ready=false` because provider keys are absent, so hosted inference still falls back deterministically. See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md) and [`GAP_ANALYSIS.md`](GAP_ANALYSIS.md).
 **Purpose:** Record how the build was produced, especially the master prompt execution, confirmation triggers, and manual changes. This supports the submission's "Build Level" and "Prompt Library" fields.
 
 ---
@@ -33,7 +33,7 @@
 | Lint | Ruff clean; ESLint clean |
 | Evals | 7/7 golden cases; five metrics at 1.0 on the deterministic path |
 | MCP | Read-only FastMCP server implemented and manually exercised |
-| Deployment | Live production pilot: Render API + Netlify primary web + Vercel secondary web + Supabase Auth/Postgres; new connector/hybrid code deployed at `5f224ca`; hosted env cutover pending |
+| Deployment | Live production pilot: Render API + Netlify primary web + Vercel secondary web + Supabase Auth/Postgres; hosted hybrid env running; Federal Register live sync verified; GDELT fallback verified; hosted LLM keys absent |
 
 ### Verified demo baseline
 
@@ -226,7 +226,7 @@ Manual visual QA covered every route at 1440×1000. Known cosmetic trade-off: th
 - Browser tokens are stored in local storage; HttpOnly cookies are a hardening backlog item.
 - The Supabase database password is weak and rotation is pending.
 - Vercel default DNS is variable on some networks; the prior hosted QA used a reachable Vercel edge IP. Netlify is now primary, so this affects only the fallback.
-- Live GDELT and US Federal Register connectors are implemented, locally verified, and deployed; Bangladesh Bank, EUR-Lex, and UFLPA remain fixture-backed. GDELT is externally rate-limited and falls back with a visible label. The hosted environment still uses `DATA_MODE=fixture` and `LLM_MODE=mock` until the operator cutover.
+- Live GDELT and US Federal Register connectors are implemented, deployed, and running; Bangladesh Bank, EUR-Lex, and UFLPA remain fixture-backed. GDELT is externally rate-limited and falls back with a visible label. Hosted `llm_live_ready=false` because provider keys are absent, so hosted inference still falls back deterministically.
 - BGE-M3, Docling, RAGAS, and Phoenix are optional and not required for the demo path.
 - Golden set is small (7 cases) and synthetic; live models and the repair loop are not benchmarked.
 - No legal/compliance advisor reviewed the content.

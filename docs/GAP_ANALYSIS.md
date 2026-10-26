@@ -37,11 +37,11 @@
 
 | ID | Shortcoming | Evidence (2026-10-26) | Scoring / risk impact | Required outcome | Status |
 |---|---|---|---|---|---|
-| **P0-1** | No autonomous live monitoring; source sync replays fixtures | Originally `DATA_MODE=fixture`; `sources.py` loaded only `data/fixtures/demo.json`; no scheduler. **Now:** live GDELT + US Federal Register connectors, `fixture|live|hybrid` data modes, dedupe by `(source_id, external_id)`, APScheduler job, and honest `last_sync_mode` labels | Fails the challenge's first specific ask; weakens Story, AI-Native Build, Data Lifecycle, Innovation, and Impact | Implement at least two real live connectors (GDELT + Federal Register), persist signals with dedupe, expose live/fallback mode, and schedule ingestion. Fixture mode must remain available and clearly labeled. | `implemented` — local live verified; hosted env cutover pending |
-| **P0-2** | Hosted AI is deterministic mock mode; no real model inference | Originally `/healthz` reported `llm_mode=mock`; no hosted Gemini/Groq call. **Now:** `LLM_MODE=mock|live|hybrid`, LiteLLM calls with deterministic fallback, provider cooldown, sanitized errors, and `llm_live_ready` in health/meta | Judges may see a rules engine, not AI; weakens AI-Native and agent scores | Add a truthful `hybrid` LLM mode: try Gemini/Groq through LiteLLM, fall back to deterministic mock, and expose `llm_live_ready` in health/meta. Enable on the hosted service only when keys are present. | `implemented` — local hybrid verified; hosted keys/cutover pending |
-| **P0-3** | "Agentic" is a fixed linear DAG | Originally `_build_graph()` had fixed edges only. **Now:** conditional `verify → repair|persist`, one bounded repair cycle, verbatim-quote re-retrieval, routing metadata, and `repair_attempts` persisted on the run and risk | Undercuts the central agentic claim and the agent/orchestration form field | Add conditional routing and a bounded repair loop: verifier failure triggers evidence re-retrieval and one re-verification; unresolved risks are marked `needs_review`. Persist routing/attempt metadata. | `implemented` — local smoke verified |
+| **P0-1** | No autonomous live monitoring; source sync replays fixtures | Originally `DATA_MODE=fixture`; `sources.py` loaded only `data/fixtures/demo.json`; no scheduler. **Now:** live GDELT + US Federal Register connectors, `fixture|live|hybrid` data modes, dedupe by `(source_id, external_id)`, APScheduler job, and honest `last_sync_mode` labels | Fails the challenge's first specific ask; weakens Story, AI-Native Build, Data Lifecycle, Innovation, and Impact | Implement at least two real live connectors (GDELT + Federal Register), persist signals with dedupe, expose live/fallback mode, and schedule ingestion. Fixture mode must remain available and clearly labeled. | `verified` — hosted Federal Register `mode=live` (8 signals, second run 0), GDELT `fixture_fallback`, scheduler running; scheduled cycle not yet observed |
+| **P0-2** | Hosted AI is deterministic mock mode; no real model inference | Originally `/healthz` reported `llm_mode=mock`; no hosted Gemini/Groq call. **Now:** `LLM_MODE=mock|live|hybrid`, LiteLLM calls with deterministic fallback, provider cooldown, sanitized errors, and `llm_live_ready` in health/meta. Hosted env is `LLM_MODE=hybrid` but `llm_live_ready=false` because no provider keys are set | Judges may see a rules engine, not AI; weakens AI-Native and agent scores | Add a truthful `hybrid` LLM mode: try Gemini/Groq through LiteLLM, fall back to deterministic mock, and expose `llm_live_ready` in health/meta. Enable on the hosted service only when keys are present. | `implemented` — local hybrid verified; hosted keys missing, so hosted inference is still deterministic fallback |
+| **P0-3** | "Agentic" is a fixed linear DAG | Originally `_build_graph()` had fixed edges only. **Now:** conditional `verify → repair|persist`, one bounded repair cycle, verbatim-quote re-retrieval, routing metadata, and `repair_attempts` persisted on the run and risk | Undercuts the central agentic claim and the agent/orchestration form field | Add conditional routing and a bounded repair loop: verifier failure triggers evidence re-retrieval and one re-verification; unresolved risks are marked `needs_review`. Persist routing/attempt metadata. | `implemented` — local repair smoke + tests; hosted pipeline run completed (8 verified risks, no repair triggered) |
 | **P0-4** | No commercial validation | `STRATEGY.md` validation plan was future tense; no interviews, LOIs, design partners, revenue, or pricing tests in the repo | Business Value 20%; Story/Proof credibility | Create a validation kit and evidence log. Execute interviews/LOIs only if real evidence can be collected; never invent traction. If not executed, disclose `0 interviews` in the form. | `implemented` — kit created; evidence log is honestly `0 interviews` |
-| **P0-5** | Submission data gaps | No Figma/design link; team size, NRB status, and female-member status unknown; video not produced (out of scope per instruction) | Up to 19 form points at risk; presentation criterion | Create a public design artifact (architecture + wireframes) usable as the design link; add a team-data checklist with blanks; assign video owner. Do not invent team data. | `implemented` — `docs/DESIGN.md` created and public link verified; team/video data still blocked |
+| **P0-5** | Submission data gaps | No Figma/design link; team size, NRB status, and female-member status unknown; video not produced (out of scope per instruction) | Up to 19 form points at risk; presentation criterion | Create a public design artifact (architecture + wireframes) usable as the design link; add a team-data checklist with blanks; assign video owner. Do not invent team data. | `implemented` — `docs/DESIGN.md` public link verified `200`; team/video data still blocked |
 
 ### P0 acceptance criteria
 
@@ -61,20 +61,21 @@
   - Migration `9c1e4f2a7b10_live_connectors.py` applied; `make migrate` and `make seed` passed with 5 sources, 13 signals, 11 obligations, 8 risks, 21 actions, 5 approvals, 12 audit events, and 13 evidence chunks.
   - **Federal Register live evidence:** `mode=live`, 8 signals created, source `healthy`; a second run returned `mode=live` and `0` new signals because of dedupe.
   - **GDELT fallback evidence:** the public API returned `429` and rate-limit HTML despite the connector's five-second retry. Hybrid sync returned `mode=fixture_fallback`, source `degraded`, `0` new signals, and a sanitized `last_error`. It never reported a fake healthy live sync.
-  - **Hosted status:** the code and migration are deployed on Render at revision `5f224ca`; the hosted environment still uses `DATA_MODE=fixture` and `ENABLE_SCHEDULER=false`. Hosted live verification is therefore still pending.
+  - **Hosted status (verified):** Render reports `data_mode=hybrid`, `live_connectors_enabled=true`, `scheduler_enabled=true`, and `scheduler_running=true` at revision `8caca3eef555`. A hosted Federal Register sync returned `mode=live` with 8 signals and source `healthy`; a second sync returned `mode=live` with 0 signals because of dedupe. A hosted GDELT sync returned `mode=fixture_fallback`, source `degraded`, and the sanitized rate-limit error. No scheduled cycle has been observed yet; the scheduler is running, but the first interval has not been captured.
 
 - **P0-2 — hybrid LLM path**
   - `apps/api/app/agents/llm.py` accepts `mock|live|hybrid`, routes by model prefix, adds a 90-second per-provider cooldown after failures, and stores only sanitized provider error types.
   - Default model slots now use `gemini/gemini-3.5-flash`; `gemini-3.8-flash` timed out locally and `gemini-pro-latest` had zero free-tier quota. Groq `openai/gpt-oss-120b` remains the fallback.
   - `/healthz` exposes `llm_live_ready`; `/api/v1/meta` lists five streams with connector/mode and exposes live-connector and scheduler readiness.
   - **Local hybrid evidence:** a live pipeline run completed in 18.4 seconds with 2 signals, 2 obligations, 2 risks, 4 actions, and no errors. Gemini/Groq calls succeeded; one risk verified and one persisted as `needs_review`.
-  - **Hosted status:** the code is deployed at `5f224ca`, but Render still reports `llm_mode=mock` and `llm_live_ready=false` until the keys and env cutover. Do not claim live hosted inference until `/healthz` shows `llm_live_ready=true`.
+  - **Hosted status:** Render now reports `llm_mode=hybrid`, but `llm_live_ready=false` because `GEMINI_API_KEY` and `GROQ_API_KEY` are absent. Hosted pipeline inference therefore still uses the deterministic fallback. Do not claim live hosted inference until `/healthz` shows `llm_live_ready=true`.
 
 - **P0-3 — bounded repair loop**
   - `route_after_verify()` sends unresolved risks to one repair cycle, then persists; `pipeline_max_repair_attempts` bounds the cycle.
   - `repair_evidence()` re-retrieves a verbatim quote from the signal/chunks, restores a valid citation URL, and never changes severity or invents facts. Unresolved evidence remains `needs_review`.
   - Routing and `repair_attempts` are persisted in `AgentRun.output` and risk `extra`.
   - **Smoke evidence:** routing showed `verify attempt 0` → `repair attempt 1` (`chunks_retrieved=1`, replaced a non-verbatim quote) → `verify attempt 1`; one risk still remained `needs_review` because the repaired quote did not satisfy the verifier.
+  - **Hosted evidence:** a hosted pipeline run over 8 Federal Register signals created 8 obligations, 8 risks, and 16 actions with 0 errors; all 8 risks verified on `verify attempt 0`, and `repair_attempts=0`. The deployed conditional route exists and is exercised by tests and the local smoke, but this hosted run did not need a repair.
   - **Tests:** `apps/api/tests/test_connectors.py` and `apps/api/tests/test_pipeline_routing.py` cover connector normalization/dedupe/failure wrapping and the repair route/attempt cap/verbatim repair.
 
 - **P0-4 — validation kit**
@@ -127,7 +128,7 @@ Use these until the corresponding capability is verified:
 - **Agentic:** "LangGraph-orchestrated seven-stage risk pipeline with conditional evidence repair, human-in-the-loop approval, and deterministic fallback."
 - **RAG:** "Context-enriched chunking + pgvector/Postgres FTS hybrid retrieval with reciprocal rank fusion and lexical reranking."
 - **MCP:** "Built a read-only FastMCP stdio server exposing six tools; external MCP integration is not in the product path."
-- **Deployment:** "Single-workspace production pilot with Supabase auth, RBAC, audit trail, and durable reports; not multi-tenant SaaS. Live connectors and hybrid LLM are implemented and locally verified; hosted cutover is pending."
+- **Deployment:** "Single-workspace production pilot with Supabase auth, RBAC, audit trail, and durable reports; not multi-tenant SaaS. GDELT and US Federal Register live ingestion, hybrid modes, and scheduled ingestion are deployed; Federal Register live sync is hosted-verified. Hosted LLM inference is not enabled (`llm_live_ready=false`), so the hosted pipeline uses deterministic fallback until provider keys are added."
 - **Evals:** "Seven synthetic golden cases, all five gates pass; demo-scale, not a legal benchmark."
 
 ---
@@ -161,7 +162,7 @@ Do not claim any of the following unless the status changes to `verified` with e
 | 4 | Add conditional routing + bounded repair loop to the LangGraph pipeline | Closes P0-3 | `implemented` |
 | 5 | Add `docs/VALIDATION.md` and `docs/DESIGN.md` + design artifact | Closes P0-4/P0-5 documentation portions | `implemented` |
 | 6 | Reconcile current-state docs and update `LIMITATIONS.md` | Prevents judge-visible contradictions | `implemented` |
-| 7 | Run tests, local live-connector smoke, and hosted QA | Verify before form | `in_progress` — local checks and live smoke pass; hosted code/UI deployed and checked; env cutover pending |
+| 7 | Run tests, local live-connector smoke, and hosted QA | Verify before form | `in_progress` — local checks pass; hosted hybrid env, Federal Register live sync, GDELT fallback, and pipeline run verified; scheduled cycle and hosted LLM keys pending |
 | 8 | Fill the official form only after user approval | Required by instruction | `blocked` |
 
 ---
@@ -217,11 +218,13 @@ Expected health after enabling hybrid mode with keys:
   "status": "ok",
   "llm_mode": "hybrid",
   "llm_live_ready": true,
-  "data_mode": "hybrid"
+  "data_mode": "hybrid",
+  "scheduler_enabled": true,
+  "scheduler_running": true
 }
 ```
 
-If `llm_live_ready=false`, the hosted demo is still deterministic mock mode and the form must say so.
+Current hosted state (2026-10-26): `llm_mode=hybrid`, `llm_live_ready=false`, `data_mode=hybrid`, `scheduler_enabled=true`, `scheduler_running=true`. The hosted pipeline is therefore deterministic until provider keys are added; the form must say so.
 
 ---
 
@@ -231,8 +234,8 @@ If `llm_live_ready=false`, the hosted demo is still deterministic mock mode and 
 |---|---|---|---|
 | Team size, member names, NRB status, female-member status | Up to 7 Team points; cannot be invented | User | `blocked` |
 | Public design link | `docs/DESIGN.md` is public at the GitHub URL (verified 2026-10-26). A Figma file would need a user account. | User/operator | `resolved` — substitute live |
-| Gemini/Groq keys available on Render | Real LLM inference on hosted service | User/operator | `blocked` |
-| Render env cutover to `DATA_MODE=hybrid`, `LLM_MODE=hybrid`, `ENABLE_SCHEDULER=true` | Makes P0-1/P0-2 live on the hosted pilot | User/operator | `blocked` |
+| Gemini/Groq keys available on Render | Real LLM inference on hosted service; currently `llm_live_ready=false` and the pipeline falls back deterministically | User/operator | `blocked` |
+| Observe one scheduled ingestion cycle | Confirms the APScheduler path fires on Render, not just that it is running | Operator | `pending` — scheduler is running; no cycle observed yet |
 | Video owner and recording | Official form requires a YouTube URL; explicitly out of scope for this work | User | `blocked` |
 | Supabase database password rotation | Security hygiene; requires updating Render `DATABASE_URL` | User/operator | `blocked` |
 
@@ -247,6 +250,7 @@ If `llm_live_ready=false`, the hosted demo is still deterministic mock mode and 
 | 2026-10-26 | Reconciled current-state docs and added historical banners to planning documents | `README.md`, `DECISIONS.md`, `STRATEGY.md`, `BUILD_PLAN.md`, `PRODUCT_SPEC.md`, `docs/*` | `make check` clean; fresh-database migration test; `make seed` baseline 5/13/11/8/21/5/12/13 |
 | 2026-10-26 | Committed and pushed the P0 implementation and documentation reconciliation; verified the public design link | `main` at `5f224ca` | Design URL `200`; hosted health still on `2bfaed71372c` (`mock`/`fixture`) pending Render deploy |
 | 2026-10-26 | Render deployed the new code; verified hosted five-stream UI and new health fields; corrected docs to distinguish deployed code from pending env cutover | `main` at `8caca3e` | Hosted health `revision=5f224ca4e060`, `llm_mode=mock`, `data_mode=fixture`; Netlify pilot login + `/sources` five-stream check passed |
+| 2026-10-26 | Render applied the hybrid/scheduler environment; verified hosted Federal Register live sync, dedupe, GDELT fallback, and a full pipeline run; added `scheduler_running` to meta | `main` after `ef6de4a`; `meta.py`, `test_api_contract.py`, docs | Hosted health at `8caca3eef555`: `data_mode=hybrid`, `scheduler_running=true`, `llm_live_ready=false`; FedReg `mode=live` 8→0; GDELT `fixture_fallback`; pipeline 8 signals → 8 risks → 16 actions, 0 errors, all verified |
 
 ---
 

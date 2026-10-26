@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from app.connectors import live_connector_keys
 from app.core.config import get_settings
+from app.services.scheduler import scheduler_running
 
 router = APIRouter(prefix="/meta", tags=["meta"])
 
@@ -91,6 +92,7 @@ async def meta() -> dict:
         "live_connectors": live_connector_keys(),
         "live_connectors_enabled": live_capable,
         "scheduler_enabled": settings.enable_scheduler,
+        "scheduler_running": scheduler_running(),
         "storage_backend": settings.storage_backend,
         "roles": ["admin", "analyst", "approver", "viewer"],
     }

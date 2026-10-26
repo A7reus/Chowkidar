@@ -3,8 +3,8 @@
 **Use:** preliminary submission deck, 3-minute pitch, or design source.
 **Rule:** every slide must be supportable by the repo or a demo screenshot. Claim
 only the two implemented live connectors (GDELT + US Federal Register) with
-their honest fallback labels; do not claim hosted live inference before the
-Render cutover, legal advice, or customer traction that does not exist.
+their honest fallback labels; do not claim hosted live inference while
+`llm_live_ready=false`, legal advice, or customer traction that does not exist.
 
 ---
 
@@ -128,14 +128,15 @@ Visual: eval dashboard screenshot with a “demo-scale” caption.
 
 **Live:** Supabase email/password auth, local role mapping, durable Postgres
 reports, rate limits, production login, settings, hosted QA, and runbook.
-**Implemented, deployed, hosted env pending:** GDELT + Federal Register live
-connectors, hybrid LLM mode, bounded repair loop, and scheduled ingestion. The
-code is on Render at `5f224ca`; the environment still uses `mock`/`fixture` until
-the operator cutover.
+**Deployed and running:** GDELT + Federal Register live connectors, hybrid
+modes, bounded repair loop, and scheduled ingestion. Federal Register live sync
+and dedupe are hosted-verified; GDELT falls back under its public rate limit.
+Hosted `llm_live_ready=false` because provider keys are absent, so hosted
+inference still uses the deterministic fallback.
 
-**Next:** deploy the connector/hybrid cutover, tenant isolation/RLS, HttpOnly
-sessions, MFA/SSO, external audit anchoring, human legal review, and
-design-partner pilots.
+**Next:** add hosted provider keys and verify live hosted inference, observe a
+scheduled cycle, then tenant isolation/RLS, HttpOnly sessions, MFA/SSO, external
+audit anchoring, human legal review, and design-partner pilots.
 
 **Moat:** the evidence graph + approval/audit workflow + domain-specific
 evaluation, not a generic chatbot.
