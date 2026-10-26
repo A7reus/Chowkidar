@@ -49,7 +49,7 @@ More views: [signals](docs/assets/02-signals.png) · [search](docs/assets/05-sea
 | Risk register and risk detail with score breakdown and evidence | Built |
 | LangGraph pipeline: ingest → extract → map → score → remediate → verify → conditional repair → persist | Built |
 | Deterministic weighted risk score + LLM rationale | Built |
-| Hybrid retrieval over cited evidence (pgvector + Postgres FTS) | Built |
+| Hybrid retrieval over cited evidence (pgvector + Postgres FTS) | Built, with structure-aware chunking (one chunk never straddles two articles/sections) and contextual chunk headers |
 | Evidence verifier and legal-advice guard | Built |
 | Bounded evidence-repair loop with routing metadata | Built |
 | Human approval queue with rationale and audit trail | Built |
@@ -57,13 +57,14 @@ More views: [signals](docs/assets/02-signals.png) · [search](docs/assets/05-sea
 | Reports in PDF, JSON, and Markdown | Built |
 | Supply-chain graph and node inspector | Built |
 | Evaluation dashboard with five metric gates | Built, 7/7 golden cases |
-| Read-only MCP server | Built |
+| Read-only MCP server | Built: stdio and Streamable HTTP transports, optional bearer token, Cloudflare quick-tunnel recipe |
 | FastAPI REST API + OpenAPI schema | Built |
 | English + Bengali UI chrome | Built |
 | Demo auth with four roles | Built; local only in `AUTH_MODE=dev` + `DEMO_MODE=true` |
 | Supabase Auth production path | Live: password/refresh/logout proxy, JWKS verification, local role mapping, production login UI; four pilot accounts provisioned and hosted QA passed |
 | Durable report storage | Built: local, Postgres, and private Supabase Storage backends; Postgres is live on the hosted API and survived a redeploy |
 | Live GDELT + US Federal Register connectors | Built, deployed, and hosted-verified for Federal Register; hybrid fallback labels the run honestly |
+| Local LLM path (Ollama) | Built: `OLLAMA_ENABLED` + `LLM_PREFER_LOCAL` route every agent call to a local model; not yet exercised in a recorded run |
 | Hybrid LLM mode | Built and deployed; local runs used Gemini 3.5 Flash + Groq; hosted `llm_live_ready=false` until provider keys are added |
 | In-process scheduled ingestion | Built (APScheduler), deployed, and verified on Render: first cycle fired on 2026-10-26 (`d1f285f50e67`), GDELT `fixture_fallback` + Federal Register `live`, next run `10:29:36Z`; disabled in the local demo |
 | Cloud deployment | Live production pilot: Render API + Netlify web primary, Vercel secondary fallback; see [`docs/CLOUD_DEPLOYMENT_STATUS.md`](docs/CLOUD_DEPLOYMENT_STATUS.md) |
@@ -162,6 +163,8 @@ make typecheck     # Pyright + tsc
 make check         # lint + typecheck + unit tests
 make evals         # golden-set evaluation
 make mcp           # read-only MCP server over stdio
+make mcp-http      # same server over Streamable HTTP (:8765/mcp)
+make mcp-tunnel    # publish mcp-http through a Cloudflare quick tunnel
 make docker        # build the API container from the repo root
 make api-types     # regenerate OpenAPI types (API must be running)
 ```

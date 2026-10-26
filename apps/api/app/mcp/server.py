@@ -7,7 +7,12 @@ web application and its human-in-the-loop workflow.
 Run it with the API available:
 
     cd apps/api
-    uv run python -m app.mcp.server
+    uv run python -m app.mcp.server                      # stdio (local MCP hosts)
+    uv run python -m app.mcp.server --transport http     # Streamable HTTP on :8765/mcp
+
+The HTTP transport lets remote MCP hosts connect by URL, for example through a
+Cloudflare quick tunnel (``make mcp-tunnel``). Set ``CHOWKIDAR_MCP_HTTP_TOKEN``
+to require ``Authorization: Bearer <token>`` on every HTTP request.
 
 Example client configuration:
 
@@ -24,6 +29,7 @@ Example client configuration:
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import os
 from typing import Any
@@ -274,5 +280,26 @@ def methodology() -> str:
     )
 
 
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description="Chowkidar read-only MCP server")
+    parser.add_argument("--transport", choices=["stdio", "http", "sse"], default="stdio")
+    parser.add_argument("--host", default=os.getenv("CHOWKIDAR_MCP_HOST", "127.0.0.1"))
+    parser.add_argument("--port", type=int, default=int(os.getenv("CHOWKIDAR_MCP_PORT", "8765")))
+    args = parser.parse_args(argv)
+
+    if args.transport == "stdio":
+        mcp.run()
+        return
+
+    http_token = os.getenv("CHOWKIDAR_MCP_HTTP_TOKEN", "")
+    if http_token:
+        from fastmcp.server.auth.providers.jwt import StaticTokenVerifier
+
+        mcp.auth = StaticTokenVerifier(
+            tokens={http_token: {"client_id": "chowkidar-mcp-http", "scopes": []}}
+        )
+    mcp.run(transport=args.transport, host=args.host, port=args.port)
+
+
 if __name__ == "__main__":
-    mcp.run()
+    main()

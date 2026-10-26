@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 
+from app.mcp import server
 from app.mcp.server import api, mcp
 
 
@@ -30,3 +31,20 @@ async def _tool_names() -> set[str]:
         return {tool.name for tool in tools}
     finally:
         await api.close()
+
+
+def test_mcp_cli_defaults_to_stdio(monkeypatch) -> None:
+    calls: list[dict] = []
+    monkeypatch.setattr(mcp, "run", lambda **kwargs: calls.append(kwargs))
+    server.main([])
+    assert calls == [{}]
+
+
+def test_mcp_cli_serves_streamable_http_with_optional_bearer_token(monkeypatch) -> None:
+    calls: list[dict] = []
+    monkeypatch.setattr(mcp, "run", lambda **kwargs: calls.append(kwargs))
+    monkeypatch.setattr(mcp, "auth", None)
+    monkeypatch.setenv("CHOWKIDAR_MCP_HTTP_TOKEN", "test-token")
+    server.main(["--transport", "http", "--port", "9999"])
+    assert calls == [{"transport": "http", "host": "127.0.0.1", "port": 9999}]
+    assert mcp.auth is not None

@@ -80,6 +80,11 @@ def test_llm_live_ready_requires_a_non_mock_mode_and_a_key() -> None:
     assert _settings(llm_mode="live", gemini_api_key="key").llm_live_ready is True
 
 
+def test_llm_live_ready_accepts_a_local_ollama_runtime_without_cloud_keys() -> None:
+    assert _settings(llm_mode="live", ollama_enabled=True).llm_live_ready is True
+    assert _settings(llm_mode="mock", ollama_enabled=True).llm_live_ready is False
+
+
 def test_live_connectors_require_live_or_hybrid_data_mode() -> None:
     assert _settings(data_mode="fixture").live_connectors_enabled is False
     assert _settings(data_mode="hybrid").live_connectors_enabled is True

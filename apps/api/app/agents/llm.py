@@ -58,7 +58,15 @@ class LLMClient:
     def _clear_cooldown(self, model: str) -> None:
         self._cooldown_until.pop(self._provider(model), None)
 
+    def is_configured(self, model: str) -> bool:
+        """A provider is only worth trying when it has a key or is a local runtime."""
+        if model.startswith("ollama/"):
+            return self.settings.ollama_enabled
+        return self.api_key_for(model) is not None
+
     def model_for_purpose(self, purpose: str) -> str:
+        if self.settings.llm_prefer_local and self.settings.ollama_enabled:
+            return self.settings.ollama_model
         if purpose in {"classification", "triage"}:
             return self.settings.groq_model
         if purpose in {"verification", "report"}:
@@ -71,7 +79,11 @@ class LLMClient:
             self.settings.groq_model,
             self.settings.ollama_model,
         ]
-        return [model for model in dict.fromkeys(models) if model != primary]
+        return [
+            model
+            for model in dict.fromkeys(models)
+            if model != primary and self.is_configured(model)
+        ]
 
     def api_key_for(self, model: str) -> str | None:
         if model.startswith("gemini/"):
@@ -93,10 +105,15 @@ class LLMClient:
         safe_user, _redactions = redact_pii(user)
         primary = self.model_for_purpose(purpose)
         candidates = [primary, *self.fallback_models(primary)]
-        available = [model for model in candidates if not self._is_cooling(model)]
+        available = [
+            model
+            for model in candidates
+            if self.is_configured(model) and not self._is_cooling(model)
+        ]
         if not available:
             raise LLMUnavailable(
-                "All configured live LLM providers are in cooldown after recent failures"
+                "No configured live LLM provider is available "
+                "(missing key, Ollama disabled, or cooldown)"
             )
         errors: list[str] = []
         for model in available:

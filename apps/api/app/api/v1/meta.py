@@ -86,6 +86,8 @@ async def meta() -> dict:
         ),
         "llm_mode": settings.llm_mode,
         "llm_live_ready": settings.llm_live_ready,
+        "llm_local_enabled": settings.ollama_enabled,
+        "llm_prefer_local": settings.llm_prefer_local,
         "embedding_mode": settings.embedding_mode,
         "auth_mode": settings.auth_mode,
         "data_mode": settings.data_mode,

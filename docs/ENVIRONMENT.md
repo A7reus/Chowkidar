@@ -128,7 +128,9 @@ deployment needs a shared store. Clients receive `429` with `Retry-After`.
 | `live` | Require the live path; a provider failure raises `LLMUnavailable` and the pipeline records the error. |
 
 `/healthz` exposes `llm_mode` and `llm_live_ready`; `llm_live_ready` is true only
-when the mode is `live` or `hybrid` and at least one provider key is present.
+when the mode is `live` or `hybrid` and at least one provider is usable: a Gemini
+or Groq key, or `OLLAMA_ENABLED=true`. Providers without a key (or Ollama while
+disabled) are skipped instead of being tried and failing.
 
 | Variable                          | Required             | Purpose                                       |
 | --------------------------------- | -------------------- | --------------------------------------------- |
@@ -137,7 +139,9 @@ when the mode is `live` or `hybrid` and at least one provider key is present.
 | `GEMINI_FLASH_MODEL`              | no                   | Default `gemini/gemini-3.5-flash`             |
 | `GEMINI_PRO_MODEL`                | no                   | Default `gemini/gemini-3.5-flash`             |
 | `GROQ_MODEL`                      | no                   | Default `groq/openai/gpt-oss-120b`            |
-| `OLLAMA_BASE_URL`, `OLLAMA_MODEL` | no                   | Local fallback when Ollama is running         |
+| `OLLAMA_BASE_URL`, `OLLAMA_MODEL` | no                   | Local runtime endpoint and model              |
+| `OLLAMA_ENABLED`                  | no                   | `true` adds Ollama to the chain; default `false` |
+| `LLM_PREFER_LOCAL`                | no                   | `true` routes every purpose to Ollama first   |
 | `LLM_TIMEOUT_SECONDS`             | no                   | Per-provider timeout; default `25`            |
 | `LLM_PROVIDER_COOLDOWN_SECONDS`   | no                   | Cooldown after a provider failure; default `90` |
 
@@ -154,6 +158,23 @@ GEMINI_PRO_MODEL=groq/openai/gpt-oss-120b
 GROQ_MODEL=groq/openai/gpt-oss-120b
 LLM_TIMEOUT_SECONDS=20
 ```
+
+Fully local inference (no cloud keys, nothing leaves the machine):
+
+```bash
+ollama serve &                 # in another terminal
+make ollama-pull               # qwen2.5:7b by default; OLLAMA_PULL_MODEL=llama3.2:3b for a smaller one
+```
+
+```dotenv
+LLM_MODE=hybrid
+OLLAMA_ENABLED=true
+LLM_PREFER_LOCAL=true
+OLLAMA_MODEL=ollama/qwen2.5:7b
+```
+
+`/api/v1/meta` reports `llm_local_enabled` and `llm_prefer_local`. Only claim a
+local model on the submission form after a pipeline run has actually used it.
 
 Model routing is prefix-based, so a `groq/...` value uses `GROQ_API_KEY` even
 when it is assigned to a `GEMINI_*` variable. The model's output still passes
