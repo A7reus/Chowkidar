@@ -16,10 +16,12 @@
 > enabled. `/healthz` reports `data_mode=hybrid`, `llm_mode=hybrid`,
 > `scheduler_enabled=true`, `scheduler_running=true`, and
 > `llm_live_ready=false`. The scheduler job was found paused with
-> `SCHEDULER_RUN_ON_START=false`; the arming fix is deployed at revision
-> `94c2a19f91c4`, and `/healthz`/`/api/v1/meta` report
-> `scheduler_next_run_at=2026-10-26T09:17:40Z`. The job is armed; the first
-> cycle has not been observed. Federal Register live sync and dedupe are
+> `SCHEDULER_RUN_ON_START=false`; the arming fix was verified at revision
+> `94c2a19f91c4`, and the first scheduled cycle fired at revision
+> `d1f285f50e67`: GDELT `09:29:36Z` (`fixture_fallback`, 0 new), Federal
+> Register `09:30:00Z` (`live`, 0 new due to dedupe), next run `10:29:36Z`.
+> Render Free spin-down still pauses the in-process scheduler. Federal Register
+> live sync and dedupe are
 > hosted-verified; GDELT reports `fixture_fallback` under its public rate limit.
 > Gemini/Groq keys are absent on Render, so hosted pipeline inference still uses
 > the deterministic fallback. Working keys exist only in the gitignored local
@@ -56,11 +58,12 @@ cold-start behavior.
   `data_mode: hybrid`, `live_connectors` containing `gdelt` and
   `federal_register`, `scheduler_enabled: true`, `scheduler_running: true`, and a
   revision. The most recent hosted health check on 2026-10-26 reported revision
-  `94c2a19f91c4`; docs-only pushes may advance it without runtime change.
+  `d1f285f50e67`; docs-only pushes may advance it without runtime change.
   The scheduler arming fix adds `scheduler_next_run_at`; revision
-  `94c2a19f91c4` reports `2026-10-26T09:17:40Z`, so the job is armed. A `null`
+  `d1f285f50e67` reported `2026-10-26T09:29:36Z` before the cycle and
+  `10:29:36Z` after it. A `null`
   value still means the job is paused or absent, and arming alone does not prove
-  a cycle has completed.
+  a cycle has completed; the observed `last_synced_at` advance does.
   `llm_live_ready=false` because provider keys are absent on Render; do not
   claim hosted live inference until it is `true`.
 - `GET /api/v1/auth/config` returns `password_auth: true`, `demo_mode: false`,
@@ -272,10 +275,10 @@ placeholders, never the Supabase password/URI, JWTs, or provider keys.
 - Vercel Hobby has no custom-domain cost, but a custom domain itself may cost
   money.
 - The connector/hybrid/repair code and migration are deployed and enabled;
-  Render runs `hybrid` data/LLM modes with the scheduler armed at revision
-  `94c2a19f91c4` (`scheduler_next_run_at=2026-10-26T09:17:40Z`). The first
-  scheduled cycle has not been observed; do not claim one until
-  `last_synced_at` advances. Federal
+  Render runs `hybrid` data/LLM modes with the scheduler verified at revision
+  `d1f285f50e67` (first cycle: GDELT `09:29:36Z`, Federal Register `09:30:00Z`,
+  next run `10:29:36Z`). Render Free spin-down still pauses the in-process
+  scheduler. Federal
   Register live sync is hosted-verified; GDELT falls back under its public rate
   limit. Three streams remain fixture-backed. Supabase Storage, Neo4j, and n8n
   are not part of the hosted pilot. The Supabase Storage code path exists;
@@ -294,9 +297,10 @@ placeholders, never the Supabase password/URI, JWTs, or provider keys.
    modes and scheduler are already applied; see
    [`PRODUCTION.md`](PRODUCTION.md) section 2.8. The keys are present only in the
    gitignored local `.env` and were probed successfully.
-2. Confirm `scheduler_next_run_at` remains non-null and observe one cycle by
-   checking `last_synced_at` on `/api/v1/sources`; do not claim a completed
-   cycle before then.
+2. The first scheduled cycle is verified at revision `d1f285f50e67` (GDELT
+   `09:29:36Z`, Federal Register `09:30:00Z`, next run `10:29:36Z`). After any
+   deploy, confirm `scheduler_next_run_at` is non-null again because each
+   restart re-arms the interval.
 3. Record the 2–3 minute demo video with the live Supabase login; the form packet
    uses a placeholder until then.
 4. Team-diversity facts are intentionally left blank by the user's decision. The

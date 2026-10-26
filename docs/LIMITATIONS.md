@@ -15,11 +15,12 @@ calibrate the claims.
 > bounded repair loop, and the scheduler are deployed and enabled on Render.
 > `/healthz` reports `data_mode=hybrid`, `llm_mode=hybrid`,
 > `scheduler_running=true`, and `llm_live_ready=false`. The scheduler job was
-> found paused when `SCHEDULER_RUN_ON_START=false`; the arming fix is deployed at
-> revision `94c2a19f91c4`, and `/healthz`/`/api/v1/meta` report
-> `scheduler_next_run_at=2026-10-26T09:17:40Z`. The job is armed, but the first
-> cycle has not been observed; do not claim a completed cycle until
-> `last_synced_at` advances. Federal Register live
+> found paused when `SCHEDULER_RUN_ON_START=false`; the arming fix was verified
+> at revision `94c2a19f91c4`, and the first scheduled cycle fired at revision
+> `d1f285f50e67`: GDELT `2026-10-26T09:29:36Z` (`fixture_fallback`, 0 new),
+> Federal Register `09:30:00Z` (`live`, 0 new due to dedupe), next run
+> `10:29:36Z`. Render Free spin-down still pauses the in-process scheduler.
+> Federal Register live
 > sync and dedupe are hosted-verified; GDELT reports `fixture_fallback` under its
 > public rate limit. Hosted pipeline inference still uses the deterministic
 > fallback because Gemini/Groq keys are absent **on Render**. Working keys exist
@@ -72,17 +73,19 @@ calibrate the claims.
   once, then falls back to fixtures and labels the run `fixture_fallback` with
   `status=degraded`. A hard `DATA_MODE=live` failure returns `502` and is never
   reported as a healthy live sync.
-- **Scheduled ingestion is implemented and deployed; the job is armed, but its
-  first hosted cycle has not been observed.** The in-process APScheduler job runs
-  when `ENABLE_SCHEDULER=true`; it is disabled in the local demo but enabled on
-  Render (`scheduler_running=true`). An arming bug—passing
-  `next_run_time=None` explicitly with `SCHEDULER_RUN_ON_START=false`—left the
-  job paused. The fix omits that argument, is covered by
-  `apps/api/tests/test_scheduler.py`, and exposes `scheduler_next_run_at` in
-  `/healthz` and `/api/v1/meta`. Revision `94c2a19f91c4` reports a non-null
-  next-run time (`2026-10-26T09:17:40Z`), confirming the job is armed. Observe
-  `last_synced_at` advance before claiming a completed scheduled cycle. n8n
-  remains optional and is not the pilot path.
+- **Scheduled ingestion is implemented, deployed, and has fired once.** The
+  in-process APScheduler job runs when `ENABLE_SCHEDULER=true`; it is disabled
+  in the local demo but enabled on Render (`scheduler_running=true`). An arming
+  bug—passing `next_run_time=None` explicitly with
+  `SCHEDULER_RUN_ON_START=false`—left the job paused. The fix omits that
+  argument, is covered by `apps/api/tests/test_scheduler.py`, and exposes
+  `scheduler_next_run_at` in `/healthz` and `/api/v1/meta`. The first scheduled
+  cycle fired on 2026-10-26 at revision `d1f285f50e67`: GDELT
+  `last_synced_at=2026-10-26T09:29:36Z` (`fixture_fallback`, 0 new) and Federal
+  Register `09:30:00Z` (`live`, 0 new due to dedupe), with the next run advanced
+  to `10:29:36Z`. Render Free spin-down still pauses the scheduler, so reliable
+  production ingestion needs an always-on instance or an external scheduler.
+  n8n remains optional and is not the pilot path.
 - **No licensing or terms review** for source ingestion, redistribution, or
   storage. This must precede a real deployment.
 - **Rate-limit handling and connector observability are minimal.** The source row

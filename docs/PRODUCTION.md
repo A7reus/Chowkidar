@@ -6,11 +6,12 @@ pilot accounts are provisioned, demo login is disabled, and reports are stored
 in Postgres. Netlify is the primary web origin and Vercel is the secondary
 fallback. Netlify production browser QA passed 2/2 on 2026-10-25; the most
 recently verified hosted health check on 2026-10-26 reported revision
-`94c2a19f91c4` with `status=ok`, `database=ok`, `auth_mode=supabase`,
+`d1f285f50e67` with `status=ok`, `database=ok`, `auth_mode=supabase`,
 `demo_mode=false`, `llm_mode=hybrid`, `llm_live_ready=false`,
 `data_mode=hybrid`, `scheduler_enabled=true`, `scheduler_running=true`, and
-`scheduler_next_run_at=2026-10-26T09:17:40Z`. The job is armed; the first
-scheduled cycle has not been observed yet.
+`scheduler_next_run_at=2026-10-26T10:29:36Z`. The first scheduled cycle fired:
+GDELT `09:29:36Z` (`fixture_fallback`, 0 new) and Federal Register `09:30:00Z`
+(`live`, 0 new due to dedupe).
 This is a single-workspace production pilot, not a commercial customer
 deployment.
 
@@ -53,15 +54,18 @@ operations, legal review, or universal live source coverage).
   replay fixtures. GDELT is externally rate-limited and may fall back to
   fixtures with a visible `fixture_fallback` label. Federal Register live sync
   and dedupe are hosted-verified.
-- **Scheduled ingestion is implemented and deployed; the job is armed, but its
-  first hosted cycle has not been observed.** The in-process APScheduler job runs
+- **Scheduled ingestion is implemented, deployed, and has fired once.** The
+  in-process APScheduler job runs
   when `ENABLE_SCHEDULER=true`; `/healthz` reports `scheduler_running=true`, but
   an arming bug left the job paused when `SCHEDULER_RUN_ON_START=false`. The fix
   omits `next_run_time=None`, adds `scheduler_next_run_at`, and is covered by
-  `apps/api/tests/test_scheduler.py`. Revision `94c2a19f91c4` reports
-  `scheduler_next_run_at=2026-10-26T09:17:40Z`; wait for `last_synced_at` to
-  advance before claiming a completed scheduled cycle. n8n is optional and not
-  the pilot path.
+  `apps/api/tests/test_scheduler.py`. The first cycle fired at revision
+  `d1f285f50e67`: GDELT `last_synced_at=2026-10-26T09:29:36Z`
+  (`fixture_fallback`, 0 new) and Federal Register `09:30:00Z` (`live`, 0 new
+  due to dedupe), with the next run advanced to `10:29:36Z`. Render Free
+  spin-down still pauses the scheduler, so reliable production ingestion needs an
+  always-on instance or an external scheduler. n8n is optional and not the pilot
+  path.
 - **Hybrid LLM mode is implemented and deployed; hosted live inference is not
   enabled.** Local runs used Gemini 3.5 Flash and Groq `gpt-oss-120b`; the hosted
   service reports `llm_mode=hybrid` but `llm_live_ready=false` because provider
@@ -90,7 +94,7 @@ operations, legal review, or universal live source coverage).
 | Accounts | `admin@chowkidar.app`, `analyst@chowkidar.app`, `approver@chowkidar.app`, `viewer@chowkidar.app` |
 | Credentials | Gitignored `docs/private/supabase-credentials.local.md`, mode `600` |
 | Report storage | Postgres (`STORAGE_BACKEND=database`) |
-| Runtime QA | Netlify run passed 2/2; the most recent hosted health check on 2026-10-26 reported revision `94c2a19f91c4` with `llm_mode=hybrid`, `llm_live_ready=false`, `data_mode=hybrid`, `scheduler_running=true`, and `scheduler_next_run_at=2026-10-26T09:17:40Z`. Federal Register live sync, dedupe, GDELT fallback, and a hosted pipeline run are verified. API, role, report, browser, mobile, CORS, and rate-limit checks passed. |
+| Runtime QA | Netlify run passed 2/2; the most recent hosted health check on 2026-10-26 reported revision `d1f285f50e67` with `llm_mode=hybrid`, `llm_live_ready=false`, `data_mode=hybrid`, `scheduler_running=true`, and `scheduler_next_run_at=2026-10-26T10:29:36Z`. The first scheduled cycle fired (GDELT `09:29:36Z`, Federal Register `09:30:00Z`). Federal Register live sync, dedupe, GDELT fallback, and a hosted pipeline run are verified. API, role, report, browser, mobile, CORS, and rate-limit checks passed. |
 | Remaining external constraint | Vercel default DNS is variable on some networks; it is only the secondary fallback. See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md). |
 
 ---
@@ -295,11 +299,13 @@ Verified cutover state:
 6. The scheduler was found paused when `SCHEDULER_RUN_ON_START=false` because
    `next_run_time=None` was passed explicitly. The fix omits that argument and
    exposes `scheduler_next_run_at`; `apps/api/tests/test_scheduler.py` covers
-   both branches. The fix is deployed at revision `94c2a19f91c4`, and both
-   `/healthz` and `/api/v1/meta` report a non-null next-run time, confirming the
-   job is armed. Every deploy restarts the process and re-arms the interval, so
-   docs-only pushes move `scheduler_next_run_at` forward. The first cycle has not
-   been observed yet.
+   both branches. The fix was verified at revision `94c2a19f91c4`, and both
+   `/healthz` and `/api/v1/meta` reported a non-null next-run time. The first
+   scheduled cycle then fired at revision `d1f285f50e67`: GDELT
+   `last_synced_at=2026-10-26T09:29:36Z` (`fixture_fallback`, 0 new) and Federal
+   Register `09:30:00Z` (`live`, 0 new due to dedupe); `scheduler_next_run_at`
+   advanced from `09:29:36Z` to `10:29:36Z`. Every deploy restarts the process
+   and re-arms the interval, so docs-only pushes move the next run forward.
 
 Remaining steps when provider keys are available:
 
@@ -307,9 +313,9 @@ Remaining steps when provider keys are available:
 2. Confirm `/healthz` reports `llm_live_ready=true`.
 3. Run one pipeline and confirm a real model call with deterministic fallback
    still available.
-4. Confirm `/healthz` and `/api/v1/meta` report a non-null
-   `scheduler_next_run_at` (verified at revision `94c2a19f91c4`), then observe
-   `last_synced_at` advance before claiming a completed scheduled cycle.
+4. Re-check `/healthz` and `/api/v1/meta` after the deploy; each deploy resets
+   `scheduler_next_run_at`, so confirm it is non-null again. The first scheduled
+   cycle was already verified at revision `d1f285f50e67`.
 
 If the provider keys remain absent or the live path is unreliable, keep
 `LLM_MODE=hybrid` for honest fallback or set `LLM_MODE=mock`; never claim hosted
@@ -325,11 +331,12 @@ prior Vercel run retained at `fcd7fd8`:
 
 - [x] `/healthz` returns `status: ok`, `database: ok`, `auth_mode: supabase`,
       `demo_mode: false`.
-- [x] Hosted hybrid env at `94c2a19f91c4` exposes five streams and new health
+- [x] Hosted hybrid env at `d1f285f50e67` exposes five streams and new health
       fields; Federal Register live sync, GDELT fallback, and a pipeline run are
       verified; `llm_live_ready=false` until provider keys are added to Render.
-      The scheduler job is armed (`scheduler_next_run_at=2026-10-26T09:17:40Z`);
-      the first cycle is not yet observed.
+      The first scheduled cycle fired at revision `d1f285f50e67` (GDELT
+      `09:29:36Z`, Federal Register `09:30:00Z`); `scheduler_next_run_at` advanced
+      to `10:29:36Z`.
 - [x] `/api/v1/auth/config` returns `password_auth: true` and no demo users.
 - [x] Login with the admin account; the demo role cards are absent and the
       sidebar says **Pilot**, not **Demo**.

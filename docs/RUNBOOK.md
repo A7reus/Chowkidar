@@ -44,7 +44,9 @@ the local `.env`; never copy them into docs or commits. Do not claim hosted live
 `scheduler_next_run_at=null` means the scheduler job is paused, absent, or the
 API is running a build from before the arming fix. A non-null timestamp proves
 the interval job is armed; it does not by itself prove a cycle has completed.
-Check `last_synced_at` on `/api/v1/sources` for cycle evidence.
+Check `last_synced_at` on `/api/v1/sources` for cycle evidence. The first
+observed cycle on 2026-10-26 advanced the next run from `09:29:36Z` to
+`10:29:36Z`.
 
 The local offline demo still uses `auth_mode: dev` and `demo_mode: true`; those
 values on the public deployment would be a regression.

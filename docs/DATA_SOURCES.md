@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-26
 
-**Status:** Two live connectors implemented and deployed (GDELT + US Federal Register); three streams remain fixture-backed. `DATA_MODE=hybrid` is implemented and hosted-enabled; Federal Register live sync and dedupe are hosted-verified. `DATA_MODE=live` is implemented but externally rate-limited for GDELT; a hard failure is surfaced as `live_failed`. The scheduler job is armed; the first cycle is pending.
+**Status:** Two live connectors implemented and deployed (GDELT + US Federal Register); three streams remain fixture-backed. `DATA_MODE=hybrid` is implemented and hosted-enabled; Federal Register live sync and dedupe are hosted-verified. `DATA_MODE=live` is implemented but externally rate-limited for GDELT; a hard failure is surfaced as `live_failed`. The scheduler fired its first hosted cycle on 2026-10-26; GDELT fell back to fixtures and Federal Register returned 0 new signals due to dedupe.
 
 **Purpose:** Track source access, reliability, licensing, and demo usage. Update as connectors are tested.
 
@@ -200,7 +200,7 @@ operational target, not a guarantee.
 
 | Stream | Intended cadence | Stale warning after | Current evidence |
 |---|---|---|---|
-| US Federal Register | Every scheduler interval (60 min) | 6 hours | Hosted manual sync verified `mode=live`; scheduler job armed at `2026-10-26T09:17:40Z`; first cycle pending |
+| US Federal Register | Every scheduler interval (60 min) | 6 hours | Hosted manual sync verified `mode=live`; first scheduled cycle fired `2026-10-26T09:30:00Z` with 0 new signals due to dedupe |
 | GDELT | Every scheduler interval (60 min) | 6 hours | Hosted sync returned `fixture_fallback` under the public rate limit; retry/backoff only |
 | Bangladesh Bank | Manual fixture refresh | 30 days | Fixture-backed; no live connector |
 | EUR-Lex | Manual fixture refresh | 30 days | Fixture-backed; no live connector |
