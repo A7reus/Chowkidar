@@ -77,6 +77,26 @@ The in-process APScheduler job calls the same service path when `ENABLE_SCHEDULE
 
 > Clearly label synthetic data in the UI and demo. Do not attribute fabricated allegations to real companies.
 
+### 2.4 Licensing and terms review
+
+This is a **pilot disclosure**, not a legal opinion. No source license or terms
+review has been completed. The table records what is known and what must be
+checked before a real deployment.
+
+| Source | Access and terms | Redistribution / storage | Review status |
+|---|---|---|---|
+| US Federal Register API | Public REST/JSON endpoint; no key | Store document metadata, URL, and short verbatim quotes; link to the official document | Public API; formal terms review pending |
+| GDELT DOC 2.0 API | Public endpoint; roughly one request every five seconds | Store article URL, title, and short evidence quotes; do not redistribute article bodies | Public endpoint; GDELT terms and article rights review pending |
+| Bangladesh Bank circulars | Public HTML pages | Curated fixture snapshot only; link to the official page | Fixture-backed; scraping/redistribution review pending |
+| EUR-Lex | Public HTML/RSS/SPARQL | Curated fixture snapshot only; link to the official document | Fixture-backed; reuse terms review pending |
+| DHS/UFLPA Entity List | Public CSV/HTML | Curated fixture snapshot only; link to the official list | Fixture-backed; list-version tracking pending |
+| Synthetic company documents | Generated for the demo | Safe to display with the synthetic-data label | No third-party rights |
+
+**Rules for the pilot:** store the minimum text needed for evidence, preserve the
+source URL and retrieval time, do not republish full third-party articles, and do
+not treat a public endpoint as permission for unrestricted redistribution. A
+real deployment needs a source-by-source terms review and a retention policy.
+
 ---
 
 ## 3. Access and reliability notes
@@ -170,6 +190,39 @@ The in-process APScheduler job calls the same service path when `ENABLE_SCHEDULE
 - Duplicate rate below threshold.
 - Language detection correct.
 - Broken links flagged.
+
+### 6.1 Freshness expectations (pilot)
+
+There is **no enforced freshness SLO** in the pilot. The scheduler is the
+supported path, and each source row exposes `last_synced_at`, `last_sync_mode`,
+`last_signal_count`, and a sanitized `last_error`. The table below is an
+operational target, not a guarantee.
+
+| Stream | Intended cadence | Stale warning after | Current evidence |
+|---|---|---|---|
+| US Federal Register | Every scheduler interval (60 min) | 6 hours | Hosted manual sync verified `mode=live`; scheduler job armed at `2026-10-26T09:17:40Z`; first cycle pending |
+| GDELT | Every scheduler interval (60 min) | 6 hours | Hosted sync returned `fixture_fallback` under the public rate limit; retry/backoff only |
+| Bangladesh Bank | Manual fixture refresh | 30 days | Fixture-backed; no live connector |
+| EUR-Lex | Manual fixture refresh | 30 days | Fixture-backed; no live connector |
+| DHS/UFLPA | Manual fixture refresh | 30 days | Fixture-backed; no live connector |
+
+A stale source is visible in the sources UI but does **not** currently block a
+pipeline run or trigger an alert. Do not describe the pilot as having automated
+freshness enforcement.
+
+### 6.2 Current quality metrics (pilot)
+
+| Check | Current result | Boundary |
+|---|---|---|
+| Dedupe | Implemented on `(source_id, external_id)`; a second Federal Register sync created 0 new signals | Live connector only; fixture replay is separate |
+| Citation coverage | `1.0` on 7 synthetic golden cases | Demo-scale; not a real-world accuracy benchmark |
+| Verifier pass rate | `1.0` on 7 synthetic golden cases | No adversarial corpus or human legal labels |
+| Priority agreement | `1.0` on 7 synthetic golden cases | Expected bands are engineering labels |
+| Freshness | Visible `last_synced_at`; scheduler armed | No enforced SLO or alerting |
+| Source licensing | Disclosure table added | No formal terms review; required before real deployment |
+| PII handling | Regex redaction before LLM/verifier; raw source text retained for evidence | No Presidio/Llama Guard; retention policy not implemented |
+
+These are regression checks, not proof of production accuracy.
 
 ---
 
