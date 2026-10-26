@@ -15,7 +15,9 @@
 > hybrid modes, the bounded repair loop, and the scheduler are deployed and
 > enabled. `/healthz` reports `data_mode=hybrid`, `llm_mode=hybrid`,
 > `scheduler_enabled=true`, `scheduler_running=true`, and
-> `llm_live_ready=false`. Federal Register live sync and dedupe are
+> `llm_live_ready=false`. The scheduler job was found paused with
+> `SCHEDULER_RUN_ON_START=false`; the arming fix and `scheduler_next_run_at`
+> field are committed and awaiting hosted verification. Federal Register live sync and dedupe are
 > hosted-verified; GDELT reports `fixture_fallback` under its public rate limit.
 > Gemini/Groq keys are absent on Render, so hosted pipeline inference still uses
 > the deterministic fallback. Working keys exist only in the gitignored local
@@ -53,6 +55,8 @@ cold-start behavior.
   `federal_register`, `scheduler_enabled: true`, `scheduler_running: true`, and a
   revision. The most recent hosted health check on 2026-10-26 reported revision
   `b423e5b3a001`; docs-only pushes may advance it without runtime change.
+  The scheduler arming fix adds `scheduler_next_run_at`; until that deploy is
+  verified, a `null` value means the job is paused or absent, not healthy.
   `llm_live_ready=false` because provider keys are absent on Render; do not
   claim hosted live inference until it is `true`.
 - `GET /api/v1/auth/config` returns `password_auth: true`, `demo_mode: false`,
@@ -262,7 +266,10 @@ placeholders, never the Supabase password/URI, JWTs, or provider keys.
 - Vercel Hobby has no custom-domain cost, but a custom domain itself may cost
   money.
 - The connector/hybrid/repair code and migration are deployed and enabled;
-  Render runs `hybrid` data/LLM modes with the scheduler running. Federal
+  Render runs `hybrid` data/LLM modes with the scheduler enabled. The scheduler
+  arming fix is committed and awaiting hosted verification; do not claim a
+  scheduled cycle until `scheduler_next_run_at` is non-null and a cycle is
+  observed. Federal
   Register live sync is hosted-verified; GDELT falls back under its public rate
   limit. Three streams remain fixture-backed. Supabase Storage, Neo4j, and n8n
   are not part of the hosted pilot. The Supabase Storage code path exists;

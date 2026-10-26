@@ -17,10 +17,12 @@
 **Tagline:** *See the risk. Approve the fix.*
 
 **Current data reality:** five labelled streams. GDELT and the US Federal Register
-have real live connectors with dedupe and a running scheduler; Bangladesh Bank,
+have real live connectors with dedupe and a deployed scheduler; Bangladesh Bank,
 EUR-Lex, and UFLPA are fixture-backed. A rate-limited GDELT run is labelled
 `fixture_fallback`, never reported as a healthy live sync. Render runs
-`DATA_MODE=hybrid`, and Federal Register live sync is hosted-verified.
+`DATA_MODE=hybrid`, and Federal Register live sync is hosted-verified. The
+scheduler arming fix and `scheduler_next_run_at` field are committed and
+awaiting hosted verification, so no scheduled cycle is claimed yet.
 `llm_live_ready=false` because provider keys are absent **on Render**, so hosted
 pipeline inference still uses the deterministic fallback. Working Gemini and Groq
 keys exist only in the gitignored local `.env`; both providers were probed
@@ -173,7 +175,7 @@ Pilot with an RMG exporter and a compliance reviewer; add Gemini/Groq keys to Re
 ## 7. Known limitations
 
 - **Live connectors are implemented for GDELT and the US Federal Register only.** Bangladesh Bank, EUR-Lex, and DHS/UFLPA remain fixture-backed. GDELT is externally rate-limited and falls back to fixtures with a `fixture_fallback` label. Render runs `DATA_MODE=hybrid`; Federal Register live sync and dedupe are hosted-verified.
-- **Scheduled ingestion is implemented, deployed, and running on Render.** The in-process APScheduler job is enabled by `ENABLE_SCHEDULER=true` and `scheduler_running=true`; no scheduled cycle has been captured yet. n8n remains optional and is not the pilot path.
+- **Scheduled ingestion is implemented and deployed, but its first hosted cycle has not been observed.** The in-process APScheduler job is enabled by `ENABLE_SCHEDULER=true` and `scheduler_running=true`, but an arming bug left the job paused with `SCHEDULER_RUN_ON_START=false`. The fix and a `scheduler_next_run_at` field are committed and awaiting hosted verification; do not claim a scheduled cycle until the field is non-null and a cycle is observed. n8n remains optional and is not the pilot path.
 - The hosted app is a **single-workspace production pilot**, not demo mode: `AUTH_MODE=supabase`, `DEMO_MODE=false`, four provisioned accounts, demo login `403`. It is not a multi-tenant commercial deployment.
 - Reports use Postgres on the hosted API, with private Supabase Storage as an optional adapter. Local `/tmp` reports are not durable.
 - Rate limits are process-local; browser tokens are in local storage rather than HttpOnly cookies. The Supabase database password is weak but is accepted for this zero-real-user pilot; it is not a submission blocker and must be rotated before any real-user deployment.
@@ -205,8 +207,9 @@ Pilot with an RMG exporter and a compliance reviewer; add Gemini/Groq keys to Re
 - [x] Hosted role restrictions, rate limiting, audit verification, report downloads, and mobile layout checked.
 - [x] Durable reports verified across a Render redeploy with matching checksums.
 - [x] CI green and local `make check` passing after the hosted fixes.
-- [x] Live GDELT + Federal Register connectors, hybrid modes, scheduler, and bounded repair loop implemented, deployed, and locally verified.
+- [x] Live GDELT + Federal Register connectors, hybrid modes, scheduler, and bounded repair loop implemented and locally verified.
 - [x] Hosted hybrid environment applied: `data_mode=hybrid`, `llm_mode=hybrid`, `scheduler_running=true`; Federal Register live sync and dedupe verified; GDELT fallback verified; hosted pipeline run completed with 0 errors.
+- [x] Scheduler arming bug fixed locally with a regression test; `scheduler_next_run_at` added to health/meta. Hosted deploy and first scheduled cycle pending verification.
 - [x] Local Gemini and Groq keys present in gitignored `.env`; both providers probed successfully without exposing the keys.
 - [ ] Hosted live LLM inference verified (`llm_live_ready=true`); currently blocked on adding the provider keys to Render.
 - [x] Validation kit with interview guide, LOI template, pricing hypotheses, and an honest zero-evidence log.

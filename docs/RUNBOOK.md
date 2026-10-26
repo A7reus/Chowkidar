@@ -29,7 +29,8 @@ Expected hosted production pilot (verified 2026-10-26):
   "llm_live_ready": false,
   "data_mode": "hybrid",
   "scheduler_enabled": true,
-  "scheduler_running": true
+  "scheduler_running": true,
+  "scheduler_next_run_at": "2026-10-26T09:10:00+00:00"
 }
 ```
 
@@ -39,6 +40,11 @@ the local `.env`; never copy them into docs or commits. Do not claim hosted live
 `true`. Once keys are added, the same endpoint should report
 `llm_live_ready: true`; `live_connectors` should contain `gdelt` and
 `federal_register`.
+
+`scheduler_next_run_at=null` means the scheduler job is paused, absent, or the
+API is running a build from before the arming fix. A non-null timestamp proves
+the interval job is armed; it does not by itself prove a cycle has completed.
+Check `last_synced_at` on `/api/v1/sources` for cycle evidence.
 
 The local offline demo still uses `auth_mode: dev` and `demo_mode: true`; those
 values on the public deployment would be a regression.
@@ -91,9 +97,14 @@ intend to replace it.
 ### Connectors and scheduler
 
 - `DATA_MODE=fixture|hybrid|live`; `ENABLE_SCHEDULER=true` starts the in-process
-  APScheduler job. `SCHEDULER_RUN_ON_START=false` avoids a burst on cold start.
+  APScheduler job. `SCHEDULER_RUN_ON_START=false` avoids a burst on cold start;
+  the interval trigger still arms the first run. Never pass
+  `next_run_time=None` explicitly, which pauses the job.
 - The scheduler and manual sync use the same service path. The job is
   process-local, so it does not coordinate across multiple Render instances.
+- Check `/healthz` or `/api/v1/meta` for `scheduler_next_run_at`; `null` means
+  the job is paused or absent. A non-null timestamp confirms arming, and
+  `last_synced_at` confirms an actual cycle.
 - Check `/api/v1/sources` for `last_sync_mode`, `last_signal_count`,
   `last_synced_at`, and a sanitized `last_error`.
 - A `fixture_fallback` run is **degraded**, not healthy. A hard `live_failed`
@@ -250,6 +261,11 @@ real tenant data.
 - If the scheduler is enabled but not running, check the Render logs for an
   APScheduler startup error and confirm `scheduler_enabled`/`scheduler_running`
   in `/healthz`.
+- If `scheduler_running=true` but `scheduler_next_run_at=null`, the job is
+  paused. This was the behavior when `next_run_time=None` was passed with
+  `SCHEDULER_RUN_ON_START=false`; deploy the arming fix and re-check.
+- If the job is armed but `last_synced_at` never advances, inspect the Render
+  logs for connector errors and remember that GDELT is publicly rate-limited.
 
 ### Report generation fails
 

@@ -72,7 +72,7 @@ def start_scheduler() -> None:
     if _scheduler is not None:
         return
     scheduler = AsyncIOScheduler(timezone="UTC")
-    scheduler.add_job(
+    job = scheduler.add_job(
         run_scheduled_sync,
         trigger="interval",
         minutes=max(1, settings.scheduler_interval_minutes),
@@ -80,8 +80,12 @@ def start_scheduler() -> None:
         replace_existing=True,
         coalesce=True,
         max_instances=1,
-        next_run_time=datetime.now(UTC) if settings.scheduler_run_on_start else None,
     )
+    if settings.scheduler_run_on_start:
+        # Arm the first run immediately; otherwise the interval trigger computes
+        # the first run from now. Passing next_run_time=None explicitly would
+        # leave the job paused, which is not the intended behavior.
+        job.modify(next_run_time=datetime.now(UTC))
     scheduler.start()
     _scheduler = scheduler
     logger.info(
@@ -102,3 +106,13 @@ def shutdown_scheduler() -> None:
 
 def scheduler_running() -> bool:
     return _scheduler is not None and _scheduler.running
+
+
+def scheduler_next_run_at() -> str | None:
+    """Return the armed job's next run time, or None when it is paused/absent."""
+    if _scheduler is None or not _scheduler.running:
+        return None
+    job = _scheduler.get_job("source-sync")
+    if job is None or job.next_run_time is None:
+        return None
+    return job.next_run_time.isoformat()

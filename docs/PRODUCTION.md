@@ -9,6 +9,9 @@ recently verified hosted health check on 2026-10-26 reported revision
 `b423e5b3a001` with `status=ok`, `database=ok`, `auth_mode=supabase`,
 `demo_mode=false`, `llm_mode=hybrid`, `llm_live_ready=false`,
 `data_mode=hybrid`, `scheduler_enabled=true`, and `scheduler_running=true`.
+The scheduler arming fix and `scheduler_next_run_at` field are committed and
+awaiting hosted verification; `scheduler_running=true` alone does not prove the
+job is armed.
 This is a single-workspace production pilot, not a commercial customer
 deployment.
 
@@ -51,10 +54,14 @@ operations, legal review, or universal live source coverage).
   replay fixtures. GDELT is externally rate-limited and may fall back to
   fixtures with a visible `fixture_fallback` label. Federal Register live sync
   and dedupe are hosted-verified.
-- **Scheduled ingestion is implemented, deployed, and running on Render.** The
-  in-process APScheduler job runs when `ENABLE_SCHEDULER=true`;
-  `/healthz` reports `scheduler_running=true`. No scheduled cycle has been
-  captured yet. n8n is optional and not the pilot path.
+- **Scheduled ingestion is implemented and deployed, but its first hosted cycle
+  has not been observed.** The in-process APScheduler job runs when
+  `ENABLE_SCHEDULER=true`; `/healthz` reports `scheduler_running=true`, but an
+  arming bug left the job paused when `SCHEDULER_RUN_ON_START=false`. The fix
+  omits `next_run_time=None`, adds `scheduler_next_run_at`, and is covered by
+  `apps/api/tests/test_scheduler.py`. After the fix deploys, verify a non-null
+  next-run time and observe a cycle before claiming scheduled ingestion works.
+  n8n is optional and not the pilot path.
 - **Hybrid LLM mode is implemented and deployed; hosted live inference is not
   enabled.** Local runs used Gemini 3.5 Flash and Groq `gpt-oss-120b`; the hosted
   service reports `llm_mode=hybrid` but `llm_live_ready=false` because provider
@@ -285,6 +292,11 @@ Verified cutover state:
 5. A pipeline run over 8 Federal Register signals created 8 obligations, 8
    risks, and 16 actions with 0 errors; all risks verified on `verify attempt 0`
    and `repair_attempts=0`.
+6. The scheduler was found paused when `SCHEDULER_RUN_ON_START=false` because
+   `next_run_time=None` was passed explicitly. The fix omits that argument and
+   exposes `scheduler_next_run_at`; `apps/api/tests/test_scheduler.py` covers
+   both branches. Hosted verification of a non-null next-run time and one cycle
+   is pending.
 
 Remaining steps when provider keys are available:
 
@@ -292,8 +304,9 @@ Remaining steps when provider keys are available:
 2. Confirm `/healthz` reports `llm_live_ready=true`.
 3. Run one pipeline and confirm a real model call with deterministic fallback
    still available.
-4. Observe one scheduled cycle, or state honestly that the scheduler is running
-   but no cycle has been captured.
+4. Confirm `/healthz` and `/api/v1/meta` report a non-null
+   `scheduler_next_run_at`, then observe one scheduled cycle before claiming
+   scheduled ingestion works.
 
 If the provider keys remain absent or the live path is unreliable, keep
 `LLM_MODE=hybrid` for honest fallback or set `LLM_MODE=mock`; never claim hosted

@@ -9,7 +9,7 @@ from app.connectors import live_connector_keys
 from app.core.config import get_settings
 from app.db.session import check_database
 from app.schemas import HealthOut
-from app.services.scheduler import scheduler_running
+from app.services.scheduler import scheduler_next_run_at, scheduler_running
 
 router = APIRouter(tags=["health"])
 
@@ -35,6 +35,7 @@ async def healthz() -> HealthOut:
         live_connectors_enabled=settings.live_connectors_enabled,
         scheduler_enabled=settings.enable_scheduler,
         scheduler_running=scheduler_running(),
+        scheduler_next_run_at=scheduler_next_run_at(),
         revision=(os.getenv("RENDER_GIT_COMMIT") or os.getenv("GIT_COMMIT") or "")[:12]
         or None,
         timestamp=datetime.now(UTC),

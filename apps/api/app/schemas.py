@@ -71,6 +71,7 @@ class HealthOut(BaseModel):
     live_connectors_enabled: bool = False
     scheduler_enabled: bool = False
     scheduler_running: bool = False
+    scheduler_next_run_at: str | None = None
     revision: str | None = None
     timestamp: datetime
 

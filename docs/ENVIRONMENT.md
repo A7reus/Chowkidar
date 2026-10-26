@@ -196,7 +196,10 @@ an HTML body; the connector retries once, then hybrid mode falls back.
 | `PIPELINE_MAX_REPAIR_ATTEMPTS` | `1` | Bounded evidence-repair cycles (0–3) |
 
 The scheduler is the supported ingestion path. n8n remains optional and is not
-the pilot path.
+the pilot path. With `SCHEDULER_RUN_ON_START=false`, omit `next_run_time`
+entirely so the interval trigger arms normally; an explicit `None` pauses the
+job. Use `scheduler_next_run_at` in `/healthz` or `/api/v1/meta` to confirm the
+job is armed.
 
 ## Optional integrations
 

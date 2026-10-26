@@ -349,7 +349,7 @@ local seed baseline for offline judging. The full production matrix is in
 | Blocker | Impact |
 |---|---|
 | Hosted LLM keys | `llm_live_ready=false`; hosted inference still uses deterministic fallback until Gemini/Groq keys are added |
-| Scheduled cycle observation | Scheduler is running, but no scheduled cycle has been captured yet |
+| Scheduled cycle observation | Scheduler job was paused by `next_run_time=None` with `SCHEDULER_RUN_ON_START=false`; the arming fix and `scheduler_next_run_at` field are committed and awaiting hosted verification. No cycle is claimed yet. |
 | Supabase database password | Current password is weak; rotate before any real-user deployment |
 | Public demo video | Pending; required for the official form |
 | Design link | `docs/DESIGN.md` is public at the GitHub URL. No Figma file. |

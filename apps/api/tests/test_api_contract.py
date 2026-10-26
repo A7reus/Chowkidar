@@ -36,6 +36,9 @@ async def test_meta_exposes_streams_and_scheduler_state() -> None:
     assert len(payload["streams"]) == 5
     assert isinstance(payload["scheduler_enabled"], bool)
     assert isinstance(payload["scheduler_running"], bool)
+    assert payload["scheduler_next_run_at"] is None or isinstance(
+        payload["scheduler_next_run_at"], str
+    )
 
 
 @pytest.mark.asyncio
