@@ -128,8 +128,10 @@ Visual: eval dashboard screenshot with a “demo-scale” caption.
 
 **Live:** Supabase email/password auth, local role mapping, durable Postgres
 reports, rate limits, production login, settings, hosted QA, and runbook.
-**Implemented locally, hosted cutover pending:** GDELT + Federal Register live
-connectors, hybrid LLM mode, bounded repair loop, and scheduled ingestion.
+**Implemented, deployed, hosted env pending:** GDELT + Federal Register live
+connectors, hybrid LLM mode, bounded repair loop, and scheduled ingestion. The
+code is on Render at `5f224ca`; the environment still uses `mock`/`fixture` until
+the operator cutover.
 
 **Next:** deploy the connector/hybrid cutover, tenant isolation/RLS, HttpOnly
 sessions, MFA/SSO, external audit anchoring, human legal review, and

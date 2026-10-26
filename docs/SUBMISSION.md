@@ -19,8 +19,10 @@
 **Current data reality:** five labelled streams. GDELT and the US Federal Register
 have real live connectors with dedupe and a scheduler; Bangladesh Bank, EUR-Lex,
 and UFLPA are fixture-backed. A rate-limited GDELT run is labelled
-`fixture_fallback`, never reported as a healthy live sync. The hosted service is
-still on the previous revision until the connector/hybrid cutover is deployed.
+`fixture_fallback`, never reported as a healthy live sync. The new code is
+deployed on Render at revision `5f224ca`, but the hosted environment still uses
+`DATA_MODE=fixture`, `LLM_MODE=mock`, and `ENABLE_SCHEDULER=false` until the
+operator cutover.
 
 ---
 
@@ -46,7 +48,7 @@ still on the previous revision until the connector/hybrid cutover is deployed.
 - **Live pilot URL:** <https://ch0wkidar.netlify.app/> — Netlify primary, verified with production browser QA: Supabase email/password auth, four managed accounts, demo login disabled, PDF generation/download, and viewer read-only access. Secondary fallback: <https://chowkidar-wheat.vercel.app/> (Vercel DNS may vary on some networks; see [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md)).
 - **API URL:** <https://chowkidar-api.onrender.com/>
 - **Hosted access:** Supabase accounts use the emails `admin@chowkidar.app`, `analyst@chowkidar.app`, `approver@chowkidar.app`, and `viewer@chowkidar.app`. Passwords are held in the private, gitignored access note and must be supplied to judges only through the form's private access field or another controlled channel.
-- **Production status:** live and verified as a production pilot. Netlify browser QA passed 2/2 at the previously verified revision `2bfaed71372c`: `/healthz` reports `auth_mode=supabase`, `demo_mode=false`, `database=ok`; admin and viewer flows passed; PDF generation/download matched SHA-256; reports use Postgres; viewer role restrictions returned `403`; and both web origins pass CORS preflight. This is a single-workspace pilot, not commercial SaaS readiness. **The connector/hybrid/repair work is implemented locally but not yet deployed to Render**; the hosted service still reports `llm_mode=mock` and `data_mode=fixture` until the cutover.
+- **Production status:** live and verified as a production pilot. Netlify browser QA passed 2/2 at the previously verified revision `2bfaed71372c`: `/healthz` reports `auth_mode=supabase`, `demo_mode=false`, `database=ok`; admin and viewer flows passed; PDF generation/download matched SHA-256; reports use Postgres; viewer role restrictions returned `403`; and both web origins pass CORS preflight. This is a single-workspace pilot, not commercial SaaS readiness. **The connector/hybrid/repair code is deployed on Render at revision `5f224ca`, with the new migration applied and the five-stream UI verified on Netlify; the hosted environment still reports `llm_mode=mock` and `data_mode=fixture` until the operator cutover.**
 - **Video URL:** _to be added after recording — required for the official form_
 
 > The official form and MCP knowledge base both reward a public live demo and a 2–3 minute video. A local-only demo is not enough for maximum preliminary score. See [`COMPETITION_CONTEXT.md`](COMPETITION_CONTEXT.md) for the captured form, scoring signals, and the authoritative domain list.
@@ -168,8 +170,8 @@ Pilot with an RMG exporter and a compliance reviewer; enable scheduled ingestion
 
 ## 7. Known limitations
 
-- **Live connectors are implemented for GDELT and the US Federal Register only.** Bangladesh Bank, EUR-Lex, and DHS/UFLPA remain fixture-backed. GDELT is externally rate-limited and falls back to fixtures with a `fixture_fallback` label. The hosted Render service still runs the previous revision (`DATA_MODE=fixture`, `LLM_MODE=mock`) until the migration and environment cutover are deployed.
-- **Scheduled ingestion is implemented but not hosted.** The in-process APScheduler job is enabled by `ENABLE_SCHEDULER=true`; n8n remains optional and is not the pilot path.
+- **Live connectors are implemented for GDELT and the US Federal Register only.** Bangladesh Bank, EUR-Lex, and DHS/UFLPA remain fixture-backed. GDELT is externally rate-limited and falls back to fixtures with a `fixture_fallback` label. The new code and migration are deployed on Render at revision `5f224ca`, but the hosted environment still uses `DATA_MODE=fixture` and `LLM_MODE=mock` until the operator cutover.
+- **Scheduled ingestion is implemented and deployed but not enabled on Render.** The in-process APScheduler job is enabled by `ENABLE_SCHEDULER=true`; n8n remains optional and is not the pilot path.
 - The hosted app is a **single-workspace production pilot**, not demo mode: `AUTH_MODE=supabase`, `DEMO_MODE=false`, four provisioned accounts, demo login `403`. It is not a multi-tenant commercial deployment.
 - Reports use Postgres on the hosted API, with private Supabase Storage as an optional adapter. Local `/tmp` reports are not durable.
 - Rate limits are process-local; browser tokens are in local storage rather than HttpOnly cookies. The current Supabase database password is weak and rotation is pending.

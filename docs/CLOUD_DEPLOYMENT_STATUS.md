@@ -11,11 +11,12 @@
   admin and viewer accounts. This is not a claim of commercial SaaS readiness;
   see [`LIMITATIONS.md`](LIMITATIONS.md).
 
-> **Hosted vs local (2026-10-26):** live GDELT/Federal Register connectors,
-> hybrid LLM mode, the bounded repair loop, and the scheduler are implemented
-> and locally verified, but they are **not deployed** to Render. The hosted
-> service still reports `llm_mode=mock` and `data_mode=fixture`. The cutover is
-> documented in [`PRODUCTION.md`](PRODUCTION.md) section 2.8.
+> **Code deployed, env pending (2026-10-26):** live GDELT/Federal Register
+> connectors, hybrid LLM mode, the bounded repair loop, and the scheduler are
+> implemented, locally verified, and deployed on Render at revision `5f224ca`.
+> The hosted environment still reports `llm_mode=mock`, `data_mode=fixture`, and
+> `scheduler_enabled=false`. The environment cutover is documented in
+> [`PRODUCTION.md`](PRODUCTION.md) section 2.8.
 
 ---
 
@@ -26,7 +27,7 @@
 | Web — primary | <https://ch0wkidar.netlify.app/> | Live; production browser QA passed 2/2 |
 | Web — secondary | <https://chowkidar-wheat.vercel.app/> | Live; DNS reachability varies by resolver |
 | API | <https://chowkidar-api.onrender.com/> | Live |
-| API health | <https://chowkidar-api.onrender.com/healthz> | Live: database `ok`, Supabase auth |
+| API health | <https://chowkidar-api.onrender.com/healthz> | Live: database `ok`, Supabase auth, new code at `5f224ca`, env `mock`/`fixture` |
 | API docs | <https://chowkidar-api.onrender.com/docs> | Live |
 | Web fallback 2 | `https://chowkidar-web.onrender.com` | Service exists; currently `502` — optional |
 | Repository | <https://github.com/A7reus/Chowkidar> | CI green on `main` |
@@ -72,6 +73,11 @@ cold-start behavior.
   search, evals, audit verification, `/settings`, PDF generation/download,
   viewer read-only state, mobile layout at 390 px, logout/protected-route
   redirect, and console errors.
+- **Post-deploy five-stream check passed** on 2026-10-26 at API revision
+  `5f224ca`: a real pilot login reached `/dashboard`, and `/sources` rendered
+  Bangladesh Bank, EUR-Lex, UFLPA, GDELT, and US Federal Register. The hosted
+  environment was still `mock`/`fixture`; this check verifies the new code and
+  UI, not live hosted ingestion.
 - The prior hosted production-auth Playwright run passed 2/2 against Vercel at
   revision `fcd7fd8`. Vercel remains the secondary fallback.
 - The Netlify login page renders **Secure workspace**, the pilot case file, and
@@ -247,11 +253,11 @@ placeholders, never the Supabase password/URI, JWTs, or provider keys.
   project before a demo/judging session.
 - Vercel Hobby has no custom-domain cost, but a custom domain itself may cost
   money.
-- Two live connectors (GDELT + US Federal Register) are implemented locally but
-  not deployed; three streams remain fixture-backed. Supabase Storage, Neo4j, and
-  n8n are not part of the hosted pilot. The hosted service still uses mock LLM
-  mode and fixture data until the cutover. The Supabase Storage code path exists;
-  Postgres is the active report backend.
+- The new connector/hybrid/repair code and migration are deployed at `5f224ca`;
+  the hosted environment still uses `mock`/`fixture` with the scheduler off.
+  Three streams remain fixture-backed. Supabase Storage, Neo4j, and n8n are not
+  part of the hosted pilot. The Supabase Storage code path exists; Postgres is
+  the active report backend.
 - Rate limits are process-local and sized for one Render instance. Browser
   tokens are in local storage rather than HttpOnly cookies.
 - The pilot is single-workspace, has no MFA/SSO, and has no external audit

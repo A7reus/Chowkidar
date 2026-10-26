@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-26
 
-**Status:** Active — base build complete; hosted production pilot live; connector/hybrid/repair work implemented locally, hosted cutover pending
+**Status:** Active — base build complete; hosted production pilot live; connector/hybrid/repair code deployed, hosted env cutover pending
 
 **Owner:** JU_StackMind  
 **Purpose:** Single source of truth for decisions, constraints, assumptions, and session history. Read this before starting any new work session.
@@ -281,7 +281,7 @@ To avoid losing details between sessions:
 - Fixed frontend runtime issues: `Button asChild`, Zustand hydration, signal source icons, graph clipping, search deep links.
 - Reduced Pyright errors to zero across the API.
 - Added Render Docker blueprint, Vercel framework config, CI workflow, architecture/deployment/MCP docs, and refreshed README and build log.
-- Confirmed demo baseline: 8 risks (3 critical, 3 high, 1 medium, 1 low), 4 pending approvals, 12 signals, 11 audit events, 7/7 evals.
+- Confirmed demo baseline at that time: 8 risks (3 critical, 3 high, 1 medium, 1 low), 4 pending approvals, 12 signals, 11 audit events, 7/7 evals.
 - Next: generate submission screenshots, record demo video, deploy once accounts/keys exist, and add the public URL/video link.
 - Blockers: cloud accounts/keys; no legal/compliance advisor; no Git remote configured.
 
@@ -310,7 +310,7 @@ To avoid losing details between sessions:
 - Created `docs/VALIDATION.md` (interview guide, LOI template, pricing hypotheses, evidence log at 0) and `docs/DESIGN.md` (design artifact and wireframes).
 - Reconciled `LIMITATIONS.md`, `SUBMISSION.md`, `DATA_SOURCES.md`, `ARCHITECTURE.md`, `ENVIRONMENT.md`, `README.md`, `PRODUCTION.md`, `CLOUD_DEPLOYMENT_STATUS.md`, and `RESPONSIBLE_AI.md`.
 - Tests: API 75 passed; Ruff and Pyright clean; web typecheck/lint clean; web tests 8/8 passed.
-- Blockers: hosted cutover not applied; team-diversity facts, design-link push, video, and Supabase password rotation remain user/operator actions; official form untouched.
+- Blockers: hosted environment cutover not applied; team-diversity facts, video, and Supabase password rotation remain user/operator actions. The design link is pushed and verified; the official form remains untouched.
 
 ### Template for future sessions
 ```

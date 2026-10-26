@@ -123,7 +123,7 @@ Pipeline runs are also exposed as `POST /api/v1/pipeline/run` and recorded in `a
 | Offline/demo | Deterministic mock | — |
 | Embeddings | BGE-M3 (optional) | Hash-based mock |
 
-`LLM_MODE=mock` is the default for a reproducible demo. `LLM_MODE=hybrid` tries a live provider and falls back deterministically; local hybrid runs succeeded with Gemini 3.5 Flash and Groq. A 90-second per-provider cooldown limits repeated timeouts. The hosted service still reports `llm_mode=mock` until the env cutover.
+`LLM_MODE=mock` is the default for a reproducible demo. `LLM_MODE=hybrid` tries a live provider and falls back deterministically; local hybrid runs succeeded with Gemini 3.5 Flash and Groq. A 90-second per-provider cooldown limits repeated timeouts. The hosted service still reports `llm_mode=mock` until the operator applies keys and the env cutover.
 
 ---
 
@@ -289,7 +289,7 @@ Current mock-path result: **7/7 cases**, all metrics **1.0**. The golden set and
 | Auth | Supabase Auth proxy | Live: email/password, JWKS verification, four provisioned accounts, demo login disabled |
 | Report storage | Postgres (default hosted) or Supabase Storage | Live on Postgres; checksum-verified across a Render redeploy; Storage optional |
 | Graph | Neo4j Aura | Optional; pending account |
-| Scheduling | In-process APScheduler (`ENABLE_SCHEDULER=true`) | Implemented; local only; hosted cutover pending |
+| Scheduling | In-process APScheduler (`ENABLE_SCHEDULER=true`) | Implemented and deployed; hosted env cutover pending |
 | Monitoring | Sentry + PostHog | Optional keys pending |
 
 See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md) for URLs and verification details.

@@ -65,7 +65,7 @@ More views: [signals](docs/assets/02-signals.png) · [search](docs/assets/05-sea
 | Durable report storage | Built: local, Postgres, and private Supabase Storage backends; Postgres is live on the hosted API and survived a redeploy |
 | Live GDELT + US Federal Register connectors | Built and locally verified; hybrid fallback labels the run honestly |
 | Hybrid LLM mode | Built and locally verified with Gemini 3.5 Flash + Groq; mock remains the hosted default until cutover |
-| In-process scheduled ingestion | Built (APScheduler); disabled locally, hosted cutover pending |
+| In-process scheduled ingestion | Built (APScheduler) and deployed; disabled locally and in the hosted environment until the env cutover |
 | Cloud deployment | Live production pilot: Render API + Netlify web primary, Vercel secondary fallback; see [`docs/CLOUD_DEPLOYMENT_STATUS.md`](docs/CLOUD_DEPLOYMENT_STATUS.md) |
 
 ### Demo accounts
@@ -199,7 +199,7 @@ cd apps/api && uv run python -m app.db.seed
 
 ### Current limitations
 
-- **Two live connectors exist (GDELT + US Federal Register); three streams remain fixture-backed.** GDELT is externally rate-limited and may fall back to fixtures with a visible `fixture_fallback` label. The hosted Render service still runs the previous revision with `DATA_MODE=fixture` and `LLM_MODE=mock` until the migration and environment cutover are deployed.
+- **Two live connectors exist (GDELT + US Federal Register); three streams remain fixture-backed.** GDELT is externally rate-limited and may fall back to fixtures with a visible `fixture_fallback` label. The new code and migration are deployed on Render at revision `5f224ca`, but the hosted environment still uses `DATA_MODE=fixture` and `LLM_MODE=mock` until the operator cutover.
 - Scheduled ingestion is implemented via the in-process APScheduler job, but it is disabled locally and not yet enabled on Render. n8n is optional and not the pilot path.
 - No legal/compliance advisor; the product is deliberately positioned as decision support.
 - The **live service is a production pilot**, not a demo: `AUTH_MODE=supabase`, `DEMO_MODE=false`, four provisioned accounts, and demo login disabled. It is still a single-workspace pilot, not a commercial multi-tenant service.

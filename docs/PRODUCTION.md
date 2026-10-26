@@ -10,11 +10,11 @@ recently verified hosted health check on 2026-10-26 reported revision
 `demo_mode=false`, `llm_mode=mock`, and `data_mode=fixture`. This is a
 single-workspace production pilot, not a commercial customer deployment.
 
-> **Local vs hosted (2026-10-26):** live connectors, hybrid LLM mode, the
-> bounded repair loop, and the scheduler are implemented and locally verified.
-> They are **not deployed** to Render yet. The hosted service remains
-> `DATA_MODE=fixture` and `LLM_MODE=mock` until the migration and environment
-> cutover in section 2.8 is executed.
+> **Code deployed, env pending (2026-10-26):** live connectors, hybrid LLM mode,
+> the bounded repair loop, and the scheduler are implemented, locally verified,
+> and deployed on Render at revision `5f224ca`. The hosted environment remains
+> `DATA_MODE=fixture`, `LLM_MODE=mock`, and `ENABLE_SCHEDULER=false` until the
+> environment cutover in section 2.8 is executed.
 
 This document defines “production-ready” for Chowkidar's preliminary round as
 the production path required by `prompts/MASTER_PROMPT.md`: real authentication,
@@ -47,11 +47,13 @@ operations, legal review, or universal live source coverage).
   fixtures with a visible `fixture_fallback` label. The hosted service has not
   yet been cut over to the new modes.
 - **Scheduled ingestion is implemented but not enabled on Render.** The
-  in-process APScheduler job runs when `ENABLE_SCHEDULER=true`; n8n is optional
-  and not the pilot path.
-- **Hybrid LLM mode is implemented but not hosted yet.** Local runs used Gemini
-  3.5 Flash and Groq `gpt-oss-120b`; the hosted service still reports
-  `llm_mode=mock` until keys and the environment cutover are applied.
+  in-process APScheduler job runs when `ENABLE_SCHEDULER=true`; it is deployed
+  with the new code but disabled in the hosted environment. n8n is optional and
+  not the pilot path.
+- **Hybrid LLM mode is implemented and deployed, but not enabled on Render yet.**
+  Local runs used Gemini 3.5 Flash and Groq `gpt-oss-120b`; the hosted service
+  still reports `llm_mode=mock` until keys and the environment cutover are
+  applied.
 - **Tokens are held in browser storage** by the current client (Zustand
   `persist`). A hardened deployment should move refresh tokens to HttpOnly,
   SameSite cookies with CSRF protection. Treat this as a pilot limitation.
@@ -289,6 +291,8 @@ prior Vercel run retained at `fcd7fd8`:
 
 - [x] `/healthz` returns `status: ok`, `database: ok`, `auth_mode: supabase`,
       `demo_mode: false`.
+- [x] New code at `5f224ca` exposes the five-stream UI and new health fields;
+      hosted env remains `mock`/`fixture` until the operator cutover.
 - [x] `/api/v1/auth/config` returns `password_auth: true` and no demo users.
 - [x] Login with the admin account; the demo role cards are absent and the
       sidebar says **Pilot**, not **Demo**.

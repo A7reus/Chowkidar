@@ -37,7 +37,7 @@
 
 | ID | Shortcoming | Evidence (2026-10-26) | Scoring / risk impact | Required outcome | Status |
 |---|---|---|---|---|---|
-| **P0-1** | No autonomous live monitoring; source sync replays fixtures | Originally `DATA_MODE=fixture`; `sources.py` loaded only `data/fixtures/demo.json`; no scheduler. **Now:** live GDELT + US Federal Register connectors, `fixture|live|hybrid` data modes, dedupe by `(source_id, external_id)`, APScheduler job, and honest `last_sync_mode` labels | Fails the challenge's first specific ask; weakens Story, AI-Native Build, Data Lifecycle, Innovation, and Impact | Implement at least two real live connectors (GDELT + Federal Register), persist signals with dedupe, expose live/fallback mode, and schedule ingestion. Fixture mode must remain available and clearly labeled. | `implemented` — local live verified; hosted cutover pending |
+| **P0-1** | No autonomous live monitoring; source sync replays fixtures | Originally `DATA_MODE=fixture`; `sources.py` loaded only `data/fixtures/demo.json`; no scheduler. **Now:** live GDELT + US Federal Register connectors, `fixture|live|hybrid` data modes, dedupe by `(source_id, external_id)`, APScheduler job, and honest `last_sync_mode` labels | Fails the challenge's first specific ask; weakens Story, AI-Native Build, Data Lifecycle, Innovation, and Impact | Implement at least two real live connectors (GDELT + Federal Register), persist signals with dedupe, expose live/fallback mode, and schedule ingestion. Fixture mode must remain available and clearly labeled. | `implemented` — local live verified; hosted env cutover pending |
 | **P0-2** | Hosted AI is deterministic mock mode; no real model inference | Originally `/healthz` reported `llm_mode=mock`; no hosted Gemini/Groq call. **Now:** `LLM_MODE=mock|live|hybrid`, LiteLLM calls with deterministic fallback, provider cooldown, sanitized errors, and `llm_live_ready` in health/meta | Judges may see a rules engine, not AI; weakens AI-Native and agent scores | Add a truthful `hybrid` LLM mode: try Gemini/Groq through LiteLLM, fall back to deterministic mock, and expose `llm_live_ready` in health/meta. Enable on the hosted service only when keys are present. | `implemented` — local hybrid verified; hosted keys/cutover pending |
 | **P0-3** | "Agentic" is a fixed linear DAG | Originally `_build_graph()` had fixed edges only. **Now:** conditional `verify → repair|persist`, one bounded repair cycle, verbatim-quote re-retrieval, routing metadata, and `repair_attempts` persisted on the run and risk | Undercuts the central agentic claim and the agent/orchestration form field | Add conditional routing and a bounded repair loop: verifier failure triggers evidence re-retrieval and one re-verification; unresolved risks are marked `needs_review`. Persist routing/attempt metadata. | `implemented` — local smoke verified |
 | **P0-4** | No commercial validation | `STRATEGY.md` validation plan was future tense; no interviews, LOIs, design partners, revenue, or pricing tests in the repo | Business Value 20%; Story/Proof credibility | Create a validation kit and evidence log. Execute interviews/LOIs only if real evidence can be collected; never invent traction. If not executed, disclose `0 interviews` in the form. | `implemented` — kit created; evidence log is honestly `0 interviews` |
@@ -61,14 +61,14 @@
   - Migration `9c1e4f2a7b10_live_connectors.py` applied; `make migrate` and `make seed` passed with 5 sources, 13 signals, 11 obligations, 8 risks, 21 actions, 5 approvals, 12 audit events, and 13 evidence chunks.
   - **Federal Register live evidence:** `mode=live`, 8 signals created, source `healthy`; a second run returned `mode=live` and `0` new signals because of dedupe.
   - **GDELT fallback evidence:** the public API returned `429` and rate-limit HTML despite the connector's five-second retry. Hybrid sync returned `mode=fixture_fallback`, source `degraded`, `0` new signals, and a sanitized `last_error`. It never reported a fake healthy live sync.
-  - **Hosted status:** Render still runs the pre-connector revision and `DATA_MODE=fixture` until the migration and env cutover are deployed. Hosted live verification is therefore still pending.
+  - **Hosted status:** the code and migration are deployed on Render at revision `5f224ca`; the hosted environment still uses `DATA_MODE=fixture` and `ENABLE_SCHEDULER=false`. Hosted live verification is therefore still pending.
 
 - **P0-2 — hybrid LLM path**
   - `apps/api/app/agents/llm.py` accepts `mock|live|hybrid`, routes by model prefix, adds a 90-second per-provider cooldown after failures, and stores only sanitized provider error types.
   - Default model slots now use `gemini/gemini-3.5-flash`; `gemini-3.8-flash` timed out locally and `gemini-pro-latest` had zero free-tier quota. Groq `openai/gpt-oss-120b` remains the fallback.
   - `/healthz` exposes `llm_live_ready`; `/api/v1/meta` lists five streams with connector/mode and exposes live-connector and scheduler readiness.
   - **Local hybrid evidence:** a live pipeline run completed in 18.4 seconds with 2 signals, 2 obligations, 2 risks, 4 actions, and no errors. Gemini/Groq calls succeeded; one risk verified and one persisted as `needs_review`.
-  - **Hosted status:** Render still reports `llm_mode=mock` until the env cutover. Do not claim live hosted inference until `/healthz` shows `llm_live_ready=true`.
+  - **Hosted status:** the code is deployed at `5f224ca`, but Render still reports `llm_mode=mock` and `llm_live_ready=false` until the keys and env cutover. Do not claim live hosted inference until `/healthz` shows `llm_live_ready=true`.
 
 - **P0-3 — bounded repair loop**
   - `route_after_verify()` sends unresolved risks to one repair cycle, then persists; `pipeline_max_repair_attempts` bounds the cycle.
@@ -161,7 +161,7 @@ Do not claim any of the following unless the status changes to `verified` with e
 | 4 | Add conditional routing + bounded repair loop to the LangGraph pipeline | Closes P0-3 | `implemented` |
 | 5 | Add `docs/VALIDATION.md` and `docs/DESIGN.md` + design artifact | Closes P0-4/P0-5 documentation portions | `implemented` |
 | 6 | Reconcile current-state docs and update `LIMITATIONS.md` | Prevents judge-visible contradictions | `implemented` |
-| 7 | Run tests, local live-connector smoke, and hosted QA | Verify before form | `in_progress` — local checks and live smoke pass; hosted cutover pending |
+| 7 | Run tests, local live-connector smoke, and hosted QA | Verify before form | `in_progress` — local checks and live smoke pass; hosted code/UI deployed and checked; env cutover pending |
 | 8 | Fill the official form only after user approval | Required by instruction | `blocked` |
 
 ---
@@ -246,6 +246,7 @@ If `llm_live_ready=false`, the hosted demo is still deterministic mock mode and 
 | 2026-10-26 | Implemented live connectors, hybrid modes, scheduler, and bounded repair loop; added validation/design artifacts | API, web, fixtures, migration, tests, docs | Local live connector smoke, hybrid pipeline smoke, API 75 tests |
 | 2026-10-26 | Reconciled current-state docs and added historical banners to planning documents | `README.md`, `DECISIONS.md`, `STRATEGY.md`, `BUILD_PLAN.md`, `PRODUCT_SPEC.md`, `docs/*` | `make check` clean; fresh-database migration test; `make seed` baseline 5/13/11/8/21/5/12/13 |
 | 2026-10-26 | Committed and pushed the P0 implementation and documentation reconciliation; verified the public design link | `main` at `5f224ca` | Design URL `200`; hosted health still on `2bfaed71372c` (`mock`/`fixture`) pending Render deploy |
+| 2026-10-26 | Render deployed the new code; verified hosted five-stream UI and new health fields; corrected docs to distinguish deployed code from pending env cutover | `main` at `8caca3e` | Hosted health `revision=5f224ca4e060`, `llm_mode=mock`, `data_mode=fixture`; Netlify pilot login + `/sources` five-stream check passed |
 
 ---
 

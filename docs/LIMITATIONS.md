@@ -12,11 +12,11 @@ enabled**, and what is **pilot-only**, so judges and future maintainers can
 calibrate the claims.
 
 > **Current split (2026-10-26):** live connectors, hybrid LLM mode, the bounded
-> repair loop, and the scheduler are implemented and locally verified. The hosted
-> Render service still runs the previous revision with `DATA_MODE=fixture` and
-> `LLM_MODE=mock` until the migration and environment cutover are deployed. Do not
-> claim hosted live inference or hosted live ingestion until `/healthz` shows the
-> new fields and `llm_live_ready=true`.
+> repair loop, and the scheduler are implemented, locally verified, and deployed
+> on Render at revision `5f224ca`. The hosted environment still runs with
+> `DATA_MODE=fixture`, `LLM_MODE=mock`, and `ENABLE_SCHEDULER=false` until the
+> operator cutover. Do not claim hosted live inference or hosted live ingestion
+> until `/healthz` shows `llm_live_ready=true` and `data_mode=hybrid`.
 
 ---
 
@@ -60,10 +60,10 @@ calibrate the claims.
   once, then falls back to fixtures and labels the run `fixture_fallback` with
   `status=degraded`. A hard `DATA_MODE=live` failure returns `502` and is never
   reported as a healthy live sync.
-- **Scheduled ingestion is implemented but not hosted.** The in-process
-  APScheduler job runs when `ENABLE_SCHEDULER=true`; it is disabled in the local
-  demo and not yet enabled on Render. n8n remains optional and is not the pilot
-  path.
+- **Scheduled ingestion is implemented and deployed but not enabled.** The
+  in-process APScheduler job runs when `ENABLE_SCHEDULER=true`; it is disabled in
+  the local demo and in the hosted environment. n8n remains optional and is not
+  the pilot path.
 - **No licensing or terms review** for source ingestion, redistribution, or
   storage. This must precede a real deployment.
 - **Rate-limit handling and connector observability are minimal.** The source row
@@ -79,7 +79,7 @@ calibrate the claims.
 
 ## 3. AI and evaluation
 
-- **Hybrid mode is implemented; mock remains the default and the safest demo
+- **Hybrid mode is implemented and deployed; mock remains the enabled hosted
   path.** Local hybrid runs completed with Gemini 3.5 Flash and Groq
   `gpt-oss-120b`; the hosted service still reports `llm_mode=mock` until keys and
   the env cutover are applied. The deterministic mock path remains the fallback.

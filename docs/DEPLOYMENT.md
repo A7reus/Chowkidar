@@ -11,10 +11,12 @@ recent hosted health check on 2026-10-26 reported revision `2bfaed71372c` with
 [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md). This is a
 single-workspace pilot, not a commercial multi-tenant deployment.
 
-> **Not yet deployed (2026-10-26):** live GDELT/Federal Register connectors,
-> hybrid LLM mode, the bounded repair loop, and the scheduler are implemented and
-> locally verified, but Render still runs the previous revision. The cutover is
-> documented in [`PRODUCTION.md`](PRODUCTION.md) section 2.8.
+> **Code deployed, env pending (2026-10-26):** live GDELT/Federal Register
+> connectors, hybrid LLM mode, the bounded repair loop, and the scheduler are
+> implemented, locally verified, and deployed on Render at revision `5f224ca`.
+> The hosted environment still uses `DATA_MODE=fixture`, `LLM_MODE=mock`, and
+> `ENABLE_SCHEDULER=false`; the operator cutover is in
+> [`PRODUCTION.md`](PRODUCTION.md) section 2.8.
 
 **Target region:** Supabase `ap-northeast-1` (Tokyo); Render `singapore`;
 Netlify and Vercel global edge. The cross-region API/database hop is acceptable
@@ -33,7 +35,7 @@ for the pilot.
 | Reports | Postgres (`STORAGE_BACKEND=database`) or Supabase Storage | Durable; local disk remains for offline demos |
 | Auth | Supabase Auth (production path) | Demo adapter remains available only with `AUTH_MODE=dev` + `DEMO_MODE=true` |
 | Graph | Neo4j Aura | Optional; the API graph view uses seeded relational data |
-| Scheduling | In-process APScheduler | Implemented; enabled with `ENABLE_SCHEDULER=true`; hosted cutover pending |
+| Scheduling | In-process APScheduler | Implemented and deployed; enabled with `ENABLE_SCHEDULER=true`; hosted env cutover pending |
 | Monitoring | Sentry / PostHog | Optional keys |
 
 The free Render service has no persistent disk. `infra/render.yaml` therefore
@@ -341,7 +343,7 @@ local seed baseline for offline judging. The full production matrix is in
 
 | Blocker | Impact |
 |---|---|
-| Hosted connector/hybrid cutover | Live connectors, hybrid LLM, and the scheduler are implemented locally but not deployed; the hosted service still reports `mock`/`fixture` |
+| Hosted connector/hybrid cutover | The code and migration are deployed at `5f224ca`, but the hosted environment still uses `mock`/`fixture` with the scheduler off |
 | Supabase database password | Current password is weak; rotate before any real-user deployment |
 | Public demo video | Pending; required for the official form |
 | Design link | `docs/DESIGN.md` is public at the GitHub URL. No Figma file. |
