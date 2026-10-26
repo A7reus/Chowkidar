@@ -21,8 +21,9 @@ have real live connectors with dedupe and a deployed scheduler; Bangladesh Bank,
 EUR-Lex, and UFLPA are fixture-backed. A rate-limited GDELT run is labelled
 `fixture_fallback`, never reported as a healthy live sync. Render runs
 `DATA_MODE=hybrid`, and Federal Register live sync is hosted-verified. The
-scheduler arming fix and `scheduler_next_run_at` field are committed and
-awaiting hosted verification, so no scheduled cycle is claimed yet.
+scheduler arming fix is deployed at revision `94c2a19f91c4` and
+`scheduler_next_run_at` reports `2026-10-26T09:17:40Z`; the first cycle has not
+been observed yet, so no completed scheduled cycle is claimed.
 `llm_live_ready=false` because provider keys are absent **on Render**, so hosted
 pipeline inference still uses the deterministic fallback. Working Gemini and Groq
 keys exist only in the gitignored local `.env`; both providers were probed
@@ -52,7 +53,7 @@ successfully, and the keys are never committed or shown in the form.
 - **Live pilot URL:** <https://ch0wkidar.netlify.app/> — Netlify primary, verified with production browser QA: Supabase email/password auth, four managed accounts, demo login disabled, PDF generation/download, and viewer read-only access. Secondary fallback: <https://chowkidar-wheat.vercel.app/> (Vercel DNS may vary on some networks; see [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md)).
 - **API URL:** <https://chowkidar-api.onrender.com/>
 - **Hosted access:** Supabase accounts use the emails `admin@chowkidar.app`, `analyst@chowkidar.app`, `approver@chowkidar.app`, and `viewer@chowkidar.app`. Passwords are held in the private, gitignored access note and must be supplied to judges only through the form's private access field or another controlled channel.
-- **Production status:** live and verified as a production pilot. Netlify browser QA passed 2/2 at the previously verified revision `2bfaed71372c`: `/healthz` reports `auth_mode=supabase`, `demo_mode=false`, `database=ok`; admin and viewer flows passed; PDF generation/download matched SHA-256; reports use Postgres; viewer role restrictions returned `403`; and both web origins pass CORS preflight. This is a single-workspace pilot, not commercial SaaS readiness. **Render runs the hybrid environment; the hosted health check on 2026-10-26 reported revision `b423e5b3a001` (`data_mode=hybrid`, `llm_mode=hybrid`, `scheduler_running=true`); docs-only pushes may advance the reported revision without runtime change. Federal Register live sync, dedupe, GDELT fallback, and a hosted pipeline run are verified. `llm_live_ready=false` because provider keys are absent on Render; hosted inference still falls back deterministically. Working Gemini/Groq keys are present only in the local `.env`.**
+- **Production status:** live and verified as a production pilot. Netlify browser QA passed 2/2 at the previously verified revision `2bfaed71372c`: `/healthz` reports `auth_mode=supabase`, `demo_mode=false`, `database=ok`; admin and viewer flows passed; PDF generation/download matched SHA-256; reports use Postgres; viewer role restrictions returned `403`; and both web origins pass CORS preflight. This is a single-workspace pilot, not commercial SaaS readiness. **Render runs the hybrid environment; the hosted health check on 2026-10-26 reported revision `94c2a19f91c4` (`data_mode=hybrid`, `llm_mode=hybrid`, `scheduler_running=true`, `scheduler_next_run_at=2026-10-26T09:17:40Z`); docs-only pushes may advance the reported revision without runtime change. The scheduler job is armed, but the first cycle has not been observed. Federal Register live sync, dedupe, GDELT fallback, and a hosted pipeline run are verified. `llm_live_ready=false` because provider keys are absent on Render; hosted inference still falls back deterministically. Working Gemini/Groq keys are present only in the local `.env`.**
 - **Video URL:** `[PLACEHOLDER — not recorded]` — required for the official form; no recording is claimed.
 
 > The official form and MCP knowledge base both reward a public live demo and a 2–3 minute video. A local-only demo is not enough for maximum preliminary score. See [`COMPETITION_CONTEXT.md`](COMPETITION_CONTEXT.md) for the captured form, scoring signals, and the authoritative domain list.
@@ -175,7 +176,7 @@ Pilot with an RMG exporter and a compliance reviewer; add Gemini/Groq keys to Re
 ## 7. Known limitations
 
 - **Live connectors are implemented for GDELT and the US Federal Register only.** Bangladesh Bank, EUR-Lex, and DHS/UFLPA remain fixture-backed. GDELT is externally rate-limited and falls back to fixtures with a `fixture_fallback` label. Render runs `DATA_MODE=hybrid`; Federal Register live sync and dedupe are hosted-verified.
-- **Scheduled ingestion is implemented and deployed, but its first hosted cycle has not been observed.** The in-process APScheduler job is enabled by `ENABLE_SCHEDULER=true` and `scheduler_running=true`, but an arming bug left the job paused with `SCHEDULER_RUN_ON_START=false`. The fix and a `scheduler_next_run_at` field are committed and awaiting hosted verification; do not claim a scheduled cycle until the field is non-null and a cycle is observed. n8n remains optional and is not the pilot path.
+- **Scheduled ingestion is implemented and deployed; the job is armed, but its first hosted cycle has not been observed.** The in-process APScheduler job is enabled by `ENABLE_SCHEDULER=true` and `scheduler_running=true`. An arming bug left the job paused with `SCHEDULER_RUN_ON_START=false`; the fix is deployed at revision `94c2a19f91c4`, and `/healthz`/`/api/v1/meta` report `scheduler_next_run_at=2026-10-26T09:17:40Z`. Do not claim a completed scheduled cycle until `last_synced_at` advances. n8n remains optional and is not the pilot path.
 - The hosted app is a **single-workspace production pilot**, not demo mode: `AUTH_MODE=supabase`, `DEMO_MODE=false`, four provisioned accounts, demo login `403`. It is not a multi-tenant commercial deployment.
 - Reports use Postgres on the hosted API, with private Supabase Storage as an optional adapter. Local `/tmp` reports are not durable.
 - Rate limits are process-local; browser tokens are in local storage rather than HttpOnly cookies. The Supabase database password is weak but is accepted for this zero-real-user pilot; it is not a submission blocker and must be rotated before any real-user deployment.
@@ -209,7 +210,7 @@ Pilot with an RMG exporter and a compliance reviewer; add Gemini/Groq keys to Re
 - [x] CI green and local `make check` passing after the hosted fixes.
 - [x] Live GDELT + Federal Register connectors, hybrid modes, scheduler, and bounded repair loop implemented and locally verified.
 - [x] Hosted hybrid environment applied: `data_mode=hybrid`, `llm_mode=hybrid`, `scheduler_running=true`; Federal Register live sync and dedupe verified; GDELT fallback verified; hosted pipeline run completed with 0 errors.
-- [x] Scheduler arming bug fixed locally with a regression test; `scheduler_next_run_at` added to health/meta. Hosted deploy and first scheduled cycle pending verification.
+- [x] Scheduler arming bug fixed with a regression test; `scheduler_next_run_at` added to health/meta and verified on the hosted revision `94c2a19f91c4` (`2026-10-26T09:17:40Z`). First scheduled cycle pending observation.
 - [x] Local Gemini and Groq keys present in gitignored `.env`; both providers probed successfully without exposing the keys.
 - [ ] Hosted live LLM inference verified (`llm_live_ready=true`); currently blocked on adding the provider keys to Render.
 - [x] Validation kit with interview guide, LOI template, pricing hypotheses, and an honest zero-evidence log.

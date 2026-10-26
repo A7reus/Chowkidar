@@ -16,8 +16,10 @@
 > enabled. `/healthz` reports `data_mode=hybrid`, `llm_mode=hybrid`,
 > `scheduler_enabled=true`, `scheduler_running=true`, and
 > `llm_live_ready=false`. The scheduler job was found paused with
-> `SCHEDULER_RUN_ON_START=false`; the arming fix and `scheduler_next_run_at`
-> field are committed and awaiting hosted verification. Federal Register live sync and dedupe are
+> `SCHEDULER_RUN_ON_START=false`; the arming fix is deployed at revision
+> `94c2a19f91c4`, and `/healthz`/`/api/v1/meta` report
+> `scheduler_next_run_at=2026-10-26T09:17:40Z`. The job is armed; the first
+> cycle has not been observed. Federal Register live sync and dedupe are
 > hosted-verified; GDELT reports `fixture_fallback` under its public rate limit.
 > Gemini/Groq keys are absent on Render, so hosted pipeline inference still uses
 > the deterministic fallback. Working keys exist only in the gitignored local
@@ -33,7 +35,7 @@
 | Web — primary | <https://ch0wkidar.netlify.app/> | Live; production browser QA passed 2/2 |
 | Web — secondary | <https://chowkidar-wheat.vercel.app/> | Live; DNS reachability varies by resolver |
 | API | <https://chowkidar-api.onrender.com/> | Live |
-| API health | <https://chowkidar-api.onrender.com/healthz> | Live: database `ok`, Supabase auth, `hybrid` modes, scheduler running, revision `b423e5b3a001` |
+| API health | <https://chowkidar-api.onrender.com/healthz> | Live: database `ok`, Supabase auth, `hybrid` modes, scheduler armed, revision `94c2a19f91c4` |
 | API docs | <https://chowkidar-api.onrender.com/docs> | Live |
 | Web fallback 2 | `https://chowkidar-web.onrender.com` | Service exists; currently `502` — optional |
 | Repository | <https://github.com/A7reus/Chowkidar> | CI green on `main` |
@@ -54,9 +56,11 @@ cold-start behavior.
   `data_mode: hybrid`, `live_connectors` containing `gdelt` and
   `federal_register`, `scheduler_enabled: true`, `scheduler_running: true`, and a
   revision. The most recent hosted health check on 2026-10-26 reported revision
-  `b423e5b3a001`; docs-only pushes may advance it without runtime change.
-  The scheduler arming fix adds `scheduler_next_run_at`; until that deploy is
-  verified, a `null` value means the job is paused or absent, not healthy.
+  `94c2a19f91c4`; docs-only pushes may advance it without runtime change.
+  The scheduler arming fix adds `scheduler_next_run_at`; revision
+  `94c2a19f91c4` reports `2026-10-26T09:17:40Z`, so the job is armed. A `null`
+  value still means the job is paused or absent, and arming alone does not prove
+  a cycle has completed.
   `llm_live_ready=false` because provider keys are absent on Render; do not
   claim hosted live inference until it is `true`.
 - `GET /api/v1/auth/config` returns `password_auth: true`, `demo_mode: false`,
@@ -266,10 +270,10 @@ placeholders, never the Supabase password/URI, JWTs, or provider keys.
 - Vercel Hobby has no custom-domain cost, but a custom domain itself may cost
   money.
 - The connector/hybrid/repair code and migration are deployed and enabled;
-  Render runs `hybrid` data/LLM modes with the scheduler enabled. The scheduler
-  arming fix is committed and awaiting hosted verification; do not claim a
-  scheduled cycle until `scheduler_next_run_at` is non-null and a cycle is
-  observed. Federal
+  Render runs `hybrid` data/LLM modes with the scheduler armed at revision
+  `94c2a19f91c4` (`scheduler_next_run_at=2026-10-26T09:17:40Z`). The first
+  scheduled cycle has not been observed; do not claim one until
+  `last_synced_at` advances. Federal
   Register live sync is hosted-verified; GDELT falls back under its public rate
   limit. Three streams remain fixture-backed. Supabase Storage, Neo4j, and n8n
   are not part of the hosted pilot. The Supabase Storage code path exists;

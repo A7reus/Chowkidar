@@ -6,8 +6,10 @@ Netlify is the primary web origin, Vercel is the secondary fallback, and
 Supabase email/password auth (`AUTH_MODE=supabase`, `DEMO_MODE=false`) is
 enabled with four provisioned accounts, demo login disabled, and durable
 Postgres report storage. Netlify production browser QA passed 2/2; the most
-recent hosted health check on 2026-10-26 reported revision `b423e5b3a001` with
-`llm_mode=hybrid`, `data_mode=hybrid`, and `scheduler_running=true`. Federal
+recent hosted health check on 2026-10-26 reported revision `94c2a19f91c4` with
+`llm_mode=hybrid`, `data_mode=hybrid`, `scheduler_running=true`, and
+`scheduler_next_run_at=2026-10-26T09:17:40Z`. The scheduler job is armed; the
+first cycle has not been observed. Federal
 Register live sync, GDELT fallback, and a hosted pipeline run are verified;
 hosted LLM inference is not enabled because provider keys are absent on Render.
 Working keys exist only in the gitignored local `.env`. See
@@ -349,7 +351,7 @@ local seed baseline for offline judging. The full production matrix is in
 | Blocker | Impact |
 |---|---|
 | Hosted LLM keys | `llm_live_ready=false`; hosted inference still uses deterministic fallback until Gemini/Groq keys are added |
-| Scheduled cycle observation | Scheduler job was paused by `next_run_time=None` with `SCHEDULER_RUN_ON_START=false`; the arming fix and `scheduler_next_run_at` field are committed and awaiting hosted verification. No cycle is claimed yet. |
+| Scheduled cycle observation | The arming fix is deployed at revision `94c2a19f91c4`; `/healthz` and `/api/v1/meta` report `scheduler_next_run_at=2026-10-26T09:17:40Z`, so the job is armed. The first cycle is not observed yet. |
 | Supabase database password | Current password is weak; rotate before any real-user deployment |
 | Public demo video | Pending; required for the official form |
 | Design link | `docs/DESIGN.md` is public at the GitHub URL. No Figma file. |

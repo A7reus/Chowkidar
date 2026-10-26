@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-26
 
-**Status:** Active — base build complete; hosted production pilot live; hybrid data/LLM modes and scheduler deployed; scheduler arming fix pending hosted verification; Federal Register live sync verified; hosted LLM keys absent
+**Status:** Active — base build complete; hosted production pilot live; hybrid data/LLM modes and scheduler deployed; scheduler job armed at revision `94c2a19f91c4`; first scheduled cycle pending observation; Federal Register live sync verified; hosted LLM keys absent
 
 **Owner:** JU_StackMind  
 **Purpose:** Single source of truth for decisions, constraints, assumptions, and session history. Read this before starting any new work session.
@@ -320,8 +320,8 @@ To avoid losing details between sessions:
 - User decisions recorded: keep `JU_StackMind` only and leave other team fields blank; accept the weak Supabase password for the zero-real-user pilot; keep a video placeholder; fill the official form with placeholders but do not submit.
 - Prepared the official form fill packet in `docs/SUBMISSION.md` section 10, including long-form copy, structured-tab copy, and explicit "not used" disclosures for fine-tuning, local models, external MCP, and tunneling.
 - Tests after the hosted-state reconciliation: API 76 passed; web 8/8 passed; Ruff, Pyright, ESLint, and `tsc` clean.
-- Found a scheduler arming bug: with `SCHEDULER_RUN_ON_START=false`, explicit `next_run_time=None` left the APScheduler job paused even though `scheduler_running=true`. Fixed by omitting the argument, added `scheduler_next_run_at` to health/meta, and added `apps/api/tests/test_scheduler.py` for both branches. `make check` then passed with API 78 tests and web 8/8.
-- Blockers: hosted provider keys absent (`llm_live_ready=false`), scheduler arming fix and first scheduled cycle pending hosted verification, and no portal session for the official form. Team/video fields remain intentional placeholders; the form remains unsubmitted.
+- Found a scheduler arming bug: with `SCHEDULER_RUN_ON_START=false`, explicit `next_run_time=None` left the APScheduler job paused even though `scheduler_running=true`. Fixed by omitting the argument, added `scheduler_next_run_at` to health/meta, and added `apps/api/tests/test_scheduler.py` for both branches. `make check` then passed with API 78 tests and web 8/8. Pushed as `94c2a19`; Render deployed `94c2a19f91c4` and both endpoints report `scheduler_next_run_at=2026-10-26T09:17:40Z`, confirming the job is armed.
+- Blockers: hosted provider keys absent (`llm_live_ready=false`), first scheduled cycle not yet observed, and no portal session for the official form. Team/video fields remain intentional placeholders; the form remains unsubmitted.
 
 ### Template for future sessions
 ```

@@ -289,7 +289,7 @@ Current mock-path result: **7/7 cases**, all metrics **1.0**. The golden set and
 | Auth | Supabase Auth proxy | Live: email/password, JWKS verification, four provisioned accounts, demo login disabled |
 | Report storage | Postgres (default hosted) or Supabase Storage | Live on Postgres; checksum-verified across a Render redeploy; Storage optional |
 | Graph | Neo4j Aura | Optional; pending account |
-| Scheduling | In-process APScheduler (`ENABLE_SCHEDULER=true`) | Implemented and deployed; arming fix and `scheduler_next_run_at` pending hosted verification; no cycle claimed yet |
+| Scheduling | In-process APScheduler (`ENABLE_SCHEDULER=true`) | Deployed at `94c2a19f91c4`; job armed (`scheduler_next_run_at=2026-10-26T09:17:40Z`); first cycle not yet observed |
 | Monitoring | Sentry + PostHog | Optional keys pending |
 
 See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md) for URLs and verification details.
