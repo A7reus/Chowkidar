@@ -6,7 +6,7 @@ pilot accounts are provisioned, demo login is disabled, and reports are stored
 in Postgres. Netlify is the primary web origin and Vercel is the secondary
 fallback. Netlify production browser QA passed 2/2 on 2026-10-25; the most
 recently verified hosted health check on 2026-10-26 reported revision
-`8caca3eef555` with `status=ok`, `database=ok`, `auth_mode=supabase`,
+`8710ab2aedce` with `status=ok`, `database=ok`, `auth_mode=supabase`,
 `demo_mode=false`, `llm_mode=hybrid`, `llm_live_ready=false`,
 `data_mode=hybrid`, `scheduler_enabled=true`, and `scheduler_running=true`.
 This is a single-workspace production pilot, not a commercial customer
@@ -80,7 +80,7 @@ operations, legal review, or universal live source coverage).
 | Accounts | `admin@chowkidar.app`, `analyst@chowkidar.app`, `approver@chowkidar.app`, `viewer@chowkidar.app` |
 | Credentials | Gitignored `docs/private/supabase-credentials.local.md`, mode `600` |
 | Report storage | Postgres (`STORAGE_BACKEND=database`) |
-| Runtime QA | Netlify run passed 2/2; the most recent hosted health check on 2026-10-26 reported revision `8caca3eef555` with `llm_mode=hybrid`, `llm_live_ready=false`, `data_mode=hybrid`, and `scheduler_running=true`. Federal Register live sync, dedupe, GDELT fallback, and a hosted pipeline run are verified. API, role, report, browser, mobile, CORS, and rate-limit checks passed. |
+| Runtime QA | Netlify run passed 2/2; the most recent hosted health check on 2026-10-26 reported revision `8710ab2aedce` with `llm_mode=hybrid`, `llm_live_ready=false`, `data_mode=hybrid`, and `scheduler_running=true`. Federal Register live sync, dedupe, GDELT fallback, and a hosted pipeline run are verified. API, role, report, browser, mobile, CORS, and rate-limit checks passed. |
 | Remaining external constraint | Vercel default DNS is variable on some networks; it is only the secondary fallback. See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md). |
 
 ---
@@ -299,12 +299,12 @@ live inference while `llm_live_ready=false`.
 ## 3. Hosted QA matrix
 
 Completed against Netlify and the hosted API on 2026-10-25; the most recent
-hosted health check on 2026-10-26 reported revision `8caca3eef555`, with the
+hosted health check on 2026-10-26 reported revision `8710ab2aedce`, with the
 prior Vercel run retained at `fcd7fd8`:
 
 - [x] `/healthz` returns `status: ok`, `database: ok`, `auth_mode: supabase`,
       `demo_mode: false`.
-- [x] Hosted hybrid env at `8caca3eef555` exposes five streams and new health
+- [x] Hosted hybrid env at `8710ab2aedce` exposes five streams and new health
       fields; Federal Register live sync, GDELT fallback, and a pipeline run are
       verified; `llm_live_ready=false` until provider keys are added.
 - [x] `/api/v1/auth/config` returns `password_auth: true` and no demo users.

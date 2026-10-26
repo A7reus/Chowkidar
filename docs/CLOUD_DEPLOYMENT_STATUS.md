@@ -30,7 +30,7 @@
 | Web — primary | <https://ch0wkidar.netlify.app/> | Live; production browser QA passed 2/2 |
 | Web — secondary | <https://chowkidar-wheat.vercel.app/> | Live; DNS reachability varies by resolver |
 | API | <https://chowkidar-api.onrender.com/> | Live |
-| API health | <https://chowkidar-api.onrender.com/healthz> | Live: database `ok`, Supabase auth, `hybrid` modes, scheduler running, revision `8caca3eef555` |
+| API health | <https://chowkidar-api.onrender.com/healthz> | Live: database `ok`, Supabase auth, `hybrid` modes, scheduler running, revision `8710ab2aedce` |
 | API docs | <https://chowkidar-api.onrender.com/docs> | Live |
 | Web fallback 2 | `https://chowkidar-web.onrender.com` | Service exists; currently `502` — optional |
 | Repository | <https://github.com/A7reus/Chowkidar> | CI green on `main` |
@@ -51,7 +51,7 @@ cold-start behavior.
   `data_mode: hybrid`, `live_connectors` containing `gdelt` and
   `federal_register`, `scheduler_enabled: true`, `scheduler_running: true`, and a
   revision. The most recent hosted health check on 2026-10-26 reported revision
-  `8caca3eef555`. `llm_live_ready=false` because provider keys are absent; do
+  `8710ab2aedce`. `llm_live_ready=false` because provider keys are absent; do
   not claim hosted live inference until it is `true`.
 - `GET /api/v1/auth/config` returns `password_auth: true`, `demo_mode: false`,
   and an empty `demo_users` list.
