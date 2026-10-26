@@ -6,10 +6,11 @@ Netlify is the primary web origin, Vercel is the secondary fallback, and
 Supabase email/password auth (`AUTH_MODE=supabase`, `DEMO_MODE=false`) is
 enabled with four provisioned accounts, demo login disabled, and durable
 Postgres report storage. Netlify production browser QA passed 2/2; the most
-recent hosted health check on 2026-10-26 reported revision `8710ab2aedce` with
+recent hosted health check on 2026-10-26 reported revision `b423e5b3a001` with
 `llm_mode=hybrid`, `data_mode=hybrid`, and `scheduler_running=true`. Federal
 Register live sync, GDELT fallback, and a hosted pipeline run are verified;
-hosted LLM inference is not enabled because provider keys are absent. See
+hosted LLM inference is not enabled because provider keys are absent on Render.
+Working keys exist only in the gitignored local `.env`. See
 [`PRODUCTION.md`](PRODUCTION.md) and
 [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md). This is a
 single-workspace pilot, not a commercial multi-tenant deployment.

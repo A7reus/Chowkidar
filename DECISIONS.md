@@ -52,6 +52,10 @@
 | 2026-10-24 | Report storage supports **local / database / Supabase Storage** | Database gives durable reports on free Render immediately; Supabase Storage is an optional object-store path with Postgres fallback | Accepted |
 | 2026-10-24 | Rate limits are **process-local** for now | Single Render free instance; document the multi-instance limitation rather than add unverified infrastructure | Accepted |
 | 2026-10-24 | Keep demo auth live until **all** production keys and hosted QA are ready | Avoid breaking the working judge URL; never claim the live URL is production before cutover | Accepted |
+| 2026-10-26 | Use **JU_StackMind only** and leave all other team fields blank | User decision; team size, member names, lead, NRB status, and female-member status are not confirmed and must not be invented; no diversity bonus claimed | Accepted |
+| 2026-10-26 | Accept the weak Supabase database password for the **zero-real-user pilot** | No real users or customer data; not a submission blocker. Rotate before any real-user or multi-tenant deployment | Accepted (pilot only) |
+| 2026-10-26 | Use a **placeholder** for the demo video | Video production is out of scope for this work and no recording exists; never claim a video that is not real | Accepted |
+| 2026-10-26 | Prepare and fill the official form with **placeholders** for unknown or unfinished data, but do not submit | User approved filling; submission still requires separate explicit approval. Portal access was not available in this session | Accepted |
 
 ### 2.1 Approved stack decisions (batches 1–3)
 
@@ -146,8 +150,10 @@ Flash timed out locally and Gemini Pro Latest had zero free-tier quota, so the
 defaults use Gemini 3.5 Flash.
 
 **Remaining external action:** Supabase, Render, Netlify, and Vercel are live.
-The hybrid/scheduler cutover is applied; provider keys on Render and the Supabase
-password rotation remain operator actions.
+The hybrid/scheduler cutover is applied. Gemini/Groq keys exist in the gitignored
+local `.env` and were probed successfully, but they still need to be added to
+Render to enable hosted live inference. The Supabase password is accepted for the
+zero-real-user pilot and is not a submission blocker.
 
 ### 2.2 Secrets handling
 
@@ -310,7 +316,11 @@ To avoid losing details between sessions:
 - Created `docs/VALIDATION.md` (interview guide, LOI template, pricing hypotheses, evidence log at 0) and `docs/DESIGN.md` (design artifact and wireframes).
 - Reconciled `LIMITATIONS.md`, `SUBMISSION.md`, `DATA_SOURCES.md`, `ARCHITECTURE.md`, `ENVIRONMENT.md`, `README.md`, `PRODUCTION.md`, `CLOUD_DEPLOYMENT_STATUS.md`, and `RESPONSIBLE_AI.md`.
 - Tests: API 75 passed; Ruff and Pyright clean; web typecheck/lint clean; web tests 8/8 passed.
-- Blockers: hosted provider keys absent (`llm_live_ready=false`), no scheduled cycle captured yet, and team-diversity facts, video, and Supabase password rotation remain user/operator actions. The design link is pushed and verified; the official form remains untouched.
+- User supplied working Gemini and Groq keys. They were written only to the gitignored `.env` (mode `600`) and both providers were probed successfully with minimal LiteLLM calls; the keys were never printed or committed. Render still lacks the keys, so hosted `llm_live_ready=false`.
+- User decisions recorded: keep `JU_StackMind` only and leave other team fields blank; accept the weak Supabase password for the zero-real-user pilot; keep a video placeholder; fill the official form with placeholders but do not submit.
+- Prepared the official form fill packet in `docs/SUBMISSION.md` section 10, including long-form copy, structured-tab copy, and explicit "not used" disclosures for fine-tuning, local models, external MCP, and tunneling.
+- Tests after the hosted-state reconciliation: API 76 passed; web 8/8 passed; Ruff, Pyright, ESLint, and `tsc` clean.
+- Blockers: hosted provider keys absent (`llm_live_ready=false`), no scheduled cycle captured yet, and no portal session for the official form. Team/video fields remain intentional placeholders; the form remains unsubmitted.
 
 ### Template for future sessions
 ```

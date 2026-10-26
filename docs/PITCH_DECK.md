@@ -131,8 +131,9 @@ reports, rate limits, production login, settings, hosted QA, and runbook.
 **Deployed and running:** GDELT + Federal Register live connectors, hybrid
 modes, bounded repair loop, and scheduled ingestion. Federal Register live sync
 and dedupe are hosted-verified; GDELT falls back under its public rate limit.
-Hosted `llm_live_ready=false` because provider keys are absent, so hosted
-inference still uses the deterministic fallback.
+Hosted `llm_live_ready=false` because provider keys are absent on Render, so
+hosted inference still uses the deterministic fallback. Working keys exist only
+in the gitignored local `.env` and were probed successfully.
 
 **Next:** add hosted provider keys and verify live hosted inference, observe a
 scheduled cycle, then tenant isolation/RLS, HttpOnly sessions, MFA/SSO, external

@@ -38,10 +38,10 @@
 | ID | Shortcoming | Evidence (2026-10-26) | Scoring / risk impact | Required outcome | Status |
 |---|---|---|---|---|---|
 | **P0-1** | No autonomous live monitoring; source sync replays fixtures | Originally `DATA_MODE=fixture`; `sources.py` loaded only `data/fixtures/demo.json`; no scheduler. **Now:** live GDELT + US Federal Register connectors, `fixture|live|hybrid` data modes, dedupe by `(source_id, external_id)`, APScheduler job, and honest `last_sync_mode` labels | Fails the challenge's first specific ask; weakens Story, AI-Native Build, Data Lifecycle, Innovation, and Impact | Implement at least two real live connectors (GDELT + Federal Register), persist signals with dedupe, expose live/fallback mode, and schedule ingestion. Fixture mode must remain available and clearly labeled. | `verified` — hosted Federal Register `mode=live` (8 signals, second run 0), GDELT `fixture_fallback`, scheduler running; scheduled cycle not yet observed |
-| **P0-2** | Hosted AI is deterministic mock mode; no real model inference | Originally `/healthz` reported `llm_mode=mock`; no hosted Gemini/Groq call. **Now:** `LLM_MODE=mock|live|hybrid`, LiteLLM calls with deterministic fallback, provider cooldown, sanitized errors, and `llm_live_ready` in health/meta. Hosted env is `LLM_MODE=hybrid` but `llm_live_ready=false` because no provider keys are set | Judges may see a rules engine, not AI; weakens AI-Native and agent scores | Add a truthful `hybrid` LLM mode: try Gemini/Groq through LiteLLM, fall back to deterministic mock, and expose `llm_live_ready` in health/meta. Enable on the hosted service only when keys are present. | `implemented` — local hybrid verified; hosted keys missing, so hosted inference is still deterministic fallback |
+| **P0-2** | Hosted AI is deterministic mock mode; no real model inference | Originally `/healthz` reported `llm_mode=mock`; no hosted Gemini/Groq call. **Now:** `LLM_MODE=mock|live|hybrid`, LiteLLM calls with deterministic fallback, provider cooldown, sanitized errors, and `llm_live_ready` in health/meta. Hosted env is `LLM_MODE=hybrid` but `llm_live_ready=false` because no provider keys are set on Render; working Gemini/Groq keys exist only in the gitignored local `.env` and were probed successfully | Judges may see a rules engine, not AI; weakens AI-Native and agent scores | Add a truthful `hybrid` LLM mode: try Gemini/Groq through LiteLLM, fall back to deterministic mock, and expose `llm_live_ready` in health/meta. Enable on the hosted service only when keys are present. | `implemented` — local hybrid verified; hosted keys missing, so hosted inference is still deterministic fallback |
 | **P0-3** | "Agentic" is a fixed linear DAG | Originally `_build_graph()` had fixed edges only. **Now:** conditional `verify → repair|persist`, one bounded repair cycle, verbatim-quote re-retrieval, routing metadata, and `repair_attempts` persisted on the run and risk | Undercuts the central agentic claim and the agent/orchestration form field | Add conditional routing and a bounded repair loop: verifier failure triggers evidence re-retrieval and one re-verification; unresolved risks are marked `needs_review`. Persist routing/attempt metadata. | `implemented` — local repair smoke + tests; hosted pipeline run completed (8 verified risks, no repair triggered) |
 | **P0-4** | No commercial validation | `STRATEGY.md` validation plan was future tense; no interviews, LOIs, design partners, revenue, or pricing tests in the repo | Business Value 20%; Story/Proof credibility | Create a validation kit and evidence log. Execute interviews/LOIs only if real evidence can be collected; never invent traction. If not executed, disclose `0 interviews` in the form. | `implemented` — kit created; evidence log is honestly `0 interviews` |
-| **P0-5** | Submission data gaps | No Figma/design link; team size, NRB status, and female-member status unknown; video not produced (out of scope per instruction) | Up to 19 form points at risk; presentation criterion | Create a public design artifact (architecture + wireframes) usable as the design link; add a team-data checklist with blanks; assign video owner. Do not invent team data. | `implemented` — `docs/DESIGN.md` public link verified `200`; team/video data still blocked |
+| **P0-5** | Submission data gaps | No Figma/design link; team size, NRB status, and female-member status unknown; video not produced (out of scope per instruction) | Up to 19 form points at risk; presentation criterion | Create a public design artifact (architecture + wireframes) usable as the design link; add a team-data checklist with blanks; assign video owner. Do not invent team data. | `implemented` — `docs/DESIGN.md` public link verified `200`; team fields intentionally blank and video placeholder per user decision; form packet prepared |
 
 ### P0 acceptance criteria
 
@@ -61,7 +61,7 @@
   - Migration `9c1e4f2a7b10_live_connectors.py` applied; `make migrate` and `make seed` passed with 5 sources, 13 signals, 11 obligations, 8 risks, 21 actions, 5 approvals, 12 audit events, and 13 evidence chunks.
   - **Federal Register live evidence:** `mode=live`, 8 signals created, source `healthy`; a second run returned `mode=live` and `0` new signals because of dedupe.
   - **GDELT fallback evidence:** the public API returned `429` and rate-limit HTML despite the connector's five-second retry. Hybrid sync returned `mode=fixture_fallback`, source `degraded`, `0` new signals, and a sanitized `last_error`. It never reported a fake healthy live sync.
-  - **Hosted status (verified):** Render reports `data_mode=hybrid`, `live_connectors_enabled=true`, `scheduler_enabled=true`, and `scheduler_running=true`. The live connector evidence was captured at revision `8caca3eef555`; the current deploy at `8710ab2aedce` also exposes `scheduler_running` in `/api/v1/meta`. A hosted Federal Register sync returned `mode=live` with 8 signals and source `healthy`; a second sync returned `mode=live` with 0 signals because of dedupe. A hosted GDELT sync returned `mode=fixture_fallback`, source `degraded`, and the sanitized rate-limit error. No scheduled cycle has been observed yet; the scheduler is running, but the first interval has not been captured.
+  - **Hosted status (verified):** Render reports `data_mode=hybrid`, `live_connectors_enabled=true`, `scheduler_enabled=true`, and `scheduler_running=true`. The live connector evidence was captured at revision `8caca3eef555`; the current deploy at `b423e5b3a001` also exposes `scheduler_running` in `/api/v1/meta`. Docs-only pushes may advance the reported revision without changing runtime behavior. A hosted Federal Register sync returned `mode=live` with 8 signals and source `healthy`; a second sync returned `mode=live` with 0 signals because of dedupe. A hosted GDELT sync returned `mode=fixture_fallback`, source `degraded`, and the sanitized rate-limit error. No scheduled cycle has been observed yet; the scheduler is running, but the first interval has not been captured.
 
 - **P0-2 — hybrid LLM path**
   - `apps/api/app/agents/llm.py` accepts `mock|live|hybrid`, routes by model prefix, adds a 90-second per-provider cooldown after failures, and stores only sanitized provider error types.
@@ -85,7 +85,7 @@
 - **P0-5 — design artifact**
   - `docs/DESIGN.md` contains the design principles, information architecture, user flows, screen wireframes, design tokens, component inventory, accessibility notes, and the evidence/approval interaction model.
   - The public link is the GitHub-rendered file: `https://github.com/A7reus/Chowkidar/blob/main/docs/DESIGN.md` (verified `200` on 2026-10-26). No Figma account was created; this document is the design artifact substitute.
-  - Team size, member names, NRB status, female-member status, and the video owner remain unknown. They are not invented.
+  - Team size, member names, team lead, NRB status, and female-member status are intentionally left blank by the user's 2026-10-26 decision; no diversity bonus is claimed. The video remains a placeholder and no recording is claimed.
 
 ---
 
@@ -163,7 +163,7 @@ Do not claim any of the following unless the status changes to `verified` with e
 | 5 | Add `docs/VALIDATION.md` and `docs/DESIGN.md` + design artifact | Closes P0-4/P0-5 documentation portions | `implemented` |
 | 6 | Reconcile current-state docs and update `LIMITATIONS.md` | Prevents judge-visible contradictions | `implemented` |
 | 7 | Run tests, local live-connector smoke, and hosted QA | Verify before form | `in_progress` — local checks pass; hosted hybrid env, Federal Register live sync, GDELT fallback, and pipeline run verified; scheduled cycle and hosted LLM keys pending |
-| 8 | Fill the official form only after user approval | Required by instruction | `blocked` |
+| 8 | Fill the official form with placeholders and stop before submission | User approved filling with placeholders on 2026-10-26; submission still needs separate explicit approval | `in_progress` — form packet prepared in `docs/SUBMISSION.md` section 10; portal session unavailable |
 
 ---
 
@@ -224,7 +224,7 @@ Expected health after enabling hybrid mode with keys:
 }
 ```
 
-Current hosted state (2026-10-26): `llm_mode=hybrid`, `llm_live_ready=false`, `data_mode=hybrid`, `scheduler_enabled=true`, `scheduler_running=true`. The hosted pipeline is therefore deterministic until provider keys are added; the form must say so.
+Current hosted state (2026-10-26): `llm_mode=hybrid`, `llm_live_ready=false`, `data_mode=hybrid`, `scheduler_enabled=true`, `scheduler_running=true`. The hosted pipeline is therefore deterministic until provider keys are added to Render; the form must say so. Working Gemini/Groq keys are present only in the gitignored local `.env` and were probed successfully.
 
 ---
 
@@ -232,12 +232,12 @@ Current hosted state (2026-10-26): `llm_mode=hybrid`, `llm_live_ready=false`, `d
 
 | Blocker | Why it matters | Owner | Status |
 |---|---|---|---|
-| Team size, member names, NRB status, female-member status | Up to 7 Team points; cannot be invented | User | `blocked` |
+| Team size, member names, team lead, NRB status, female-member status | Up to 7 Team points; cannot be invented | User | `accepted` — intentionally blank per user decision; no bonus claimed |
 | Public design link | `docs/DESIGN.md` is public at the GitHub URL (verified 2026-10-26). A Figma file would need a user account. | User/operator | `resolved` — substitute live |
-| Gemini/Groq keys available on Render | Real LLM inference on hosted service; currently `llm_live_ready=false` and the pipeline falls back deterministically | User/operator | `blocked` |
+| Gemini/Groq keys available on Render | Real LLM inference on hosted service; currently `llm_live_ready=false` and the pipeline falls back deterministically. Keys are in the local `.env` and both providers were probed successfully. | User/operator | `blocked` — Render dashboard/API access unavailable |
 | Observe one scheduled ingestion cycle | Confirms the APScheduler path fires on Render, not just that it is running | Operator | `pending` — scheduler is running; no cycle observed yet |
-| Video owner and recording | Official form requires a YouTube URL; explicitly out of scope for this work | User | `blocked` |
-| Supabase database password rotation | Security hygiene; requires updating Render `DATABASE_URL` | User/operator | `blocked` |
+| Video owner and recording | Official form requires a YouTube URL; explicitly out of scope for this work | User | `accepted` — placeholder only; no recording claimed |
+| Supabase database password rotation | Security hygiene; requires updating Render `DATABASE_URL` | User/operator | `accepted` — zero-real-user pilot; rotate before real users; not a submission blocker |
 
 ---
 
@@ -252,6 +252,9 @@ Current hosted state (2026-10-26): `llm_mode=hybrid`, `llm_live_ready=false`, `d
 | 2026-10-26 | Render deployed the new code; verified hosted five-stream UI and new health fields; corrected docs to distinguish deployed code from pending env cutover | `main` at `8caca3e` | Hosted health `revision=5f224ca4e060`, `llm_mode=mock`, `data_mode=fixture`; Netlify pilot login + `/sources` five-stream check passed |
 | 2026-10-26 | Render applied the hybrid/scheduler environment; verified hosted Federal Register live sync, dedupe, GDELT fallback, and a full pipeline run; added `scheduler_running` to meta | `main` after `ef6de4a`; `meta.py`, `test_api_contract.py`, docs | Hosted health at `8caca3eef555`: `data_mode=hybrid`, `scheduler_running=true`, `llm_live_ready=false`; FedReg `mode=live` 8→0; GDELT `fixture_fallback`; pipeline 8 signals → 8 risks → 16 actions, 0 errors, all verified |
 | 2026-10-26 | Committed and pushed the hosted-state reconciliation and `scheduler_running` meta field; verified the new deploy | `main` at `8710ab2` | Hosted health and `/api/v1/meta` at `8710ab2aedce`: `data_mode=hybrid`, `llm_mode=hybrid`, `llm_live_ready=false`, `scheduler_enabled=true`, `scheduler_running=true`, five streams; `make check` 76 API + 8 web tests |
+| 2026-10-26 | Stored user-supplied Gemini/Groq keys only in the gitignored local `.env` (mode `600`) and probed both providers with minimal calls | `.env` (untracked) | Gemini 3.5 Flash OK (~2.1s), Groq `gpt-oss-120b` OK (~0.5s); Render still lacks the keys, so hosted `llm_live_ready=false` |
+| 2026-10-26 | Recorded user decisions on team data, Supabase password, video, and form filling; prepared the form-ready packet with placeholders | `DECISIONS.md`, `docs/SUBMISSION.md`, `docs/LIMITATIONS.md`, `README.md` | Team fields intentionally blank; password accepted for zero-real-user pilot; video placeholder; form packet prepared, not submitted |
+| 2026-10-26 | Verified current hosted deploy and refreshed current-state docs | `main` after `b423e5b` | Hosted health at `b423e5b3a001`: `status=ok`, `database=ok`, `auth_mode=supabase`, `llm_mode=hybrid`, `llm_live_ready=false`, `data_mode=hybrid`, `scheduler_running=true`; design link `200` |
 
 ---
 

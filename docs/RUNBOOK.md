@@ -33,8 +33,9 @@ Expected hosted production pilot (verified 2026-10-26):
 }
 ```
 
-`llm_live_ready=false` means Gemini/Groq keys are absent and hosted inference is
-using the deterministic fallback. Do not claim hosted live inference until it is
+`llm_live_ready=false` means Gemini/Groq keys are absent on Render and hosted
+inference is using the deterministic fallback. The keys may still be present in
+the local `.env`; never copy them into docs or commits. Do not claim hosted live inference until it is
 `true`. Once keys are added, the same endpoint should report
 `llm_live_ready: true`; `live_connectors` should contain `gdelt` and
 `federal_register`.

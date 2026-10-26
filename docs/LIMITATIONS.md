@@ -17,8 +17,9 @@ calibrate the claims.
 > `scheduler_running=true`, and `llm_live_ready=false`. Federal Register live
 > sync and dedupe are hosted-verified; GDELT reports `fixture_fallback` under its
 > public rate limit. Hosted pipeline inference still uses the deterministic
-> fallback because Gemini/Groq keys are absent. Do not claim hosted live LLM
-> inference until `/healthz` shows `llm_live_ready=true`.
+> fallback because Gemini/Groq keys are absent **on Render**. Working keys exist
+> only in the gitignored local `.env` and were probed successfully. Do not claim
+> hosted live LLM inference until `/healthz` shows `llm_live_ready=true`.
 
 ---
 
@@ -43,10 +44,12 @@ calibrate the claims.
   On 2026-10-24 the default resolver sometimes returned unreachable Vercel edge
   IPs. Netlify is now primary, so this affects only the fallback path. The Render
   web fallback returned `502` and is not a reliable backup yet.
-- **The Supabase database password is still weak** and rotation is pending.
+- **The Supabase database password is still weak.** This is accepted for the
+  zero-real-user pilot and is not treated as a submission blocker; rotate it
+  before any real-user or multi-tenant deployment.
 - **No demo video or completed submission form** exists yet. The design artifact
-  is [`DESIGN.md`](DESIGN.md), not a Figma file. The form has deliberately not
-  been filled.
+  is [`DESIGN.md`](DESIGN.md), not a Figma file. The form packet is prepared with
+  placeholders, but the portal has not been opened or filled.
 
 ## 2. Data and connectors
 
@@ -84,7 +87,8 @@ calibrate the claims.
 - **Hybrid mode is implemented and deployed; hosted live inference is not
   enabled.** Local hybrid runs completed with Gemini 3.5 Flash and Groq
   `gpt-oss-120b`; the hosted service reports `llm_mode=hybrid` but
-  `llm_live_ready=false` because provider keys are absent. Hosted pipeline
+  `llm_live_ready=false` because provider keys are absent on Render. Working
+  Gemini/Groq keys exist only in the gitignored local `.env`. Hosted pipeline
   inference therefore uses the deterministic fallback. The deterministic mock
   path remains the safe fallback.
 - **Provider reliability is variable.** Gemini 3.8 Flash timed out locally and
@@ -189,14 +193,16 @@ calibrate the claims.
   validation kit exists in [`VALIDATION.md`](VALIDATION.md), but the evidence log
   records `0 interviews`, `0 LOIs`, and `0 paying customers`.
 - **No measured accuracy on real exporter data.**
-- **No final public demo video.** [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) is ready.
+- **No final public demo video.** [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) is ready;
+  the form packet uses a clearly marked placeholder.
 - **No Figma file.** [`DESIGN.md`](DESIGN.md) is the design artifact and the
   public GitHub link is the substitute.
-- **Team-size, NRB, and female-member facts** for the diversity question are not
-  confirmed.
+- **Team-size, NRB, and female-member facts** are intentionally left blank by
+  the user's 2026-10-26 decision. No diversity bonus is claimed.
 - **No legal review of the submission copy.**
-- **The official form has not been started**, by explicit instruction, until the
-  product is finalized.
+- **The official form has not been opened or filled.** The user approved filling
+  it with placeholders for unknown or unfinished data, but submission requires a
+  separate explicit approval. See [`SUBMISSION.md`](SUBMISSION.md) section 10.
 
 ## 9. What “production-ready” means here
 
@@ -204,5 +210,5 @@ It means the master-prompt production path is **live and verified**: Supabase
 email/password auth, local role authorization, demo lockout, durable report
 storage, rate limits, settings, hosted browser QA, and operational
 documentation. It does **not** mean commercial SaaS readiness, validated legal
-accuracy, hosted live connectors, hosted live LLM inference, or a security
-certification. The remaining gaps are listed above rather than hidden.
+accuracy, live coverage for all five streams, hosted live LLM inference, or a
+security certification. The remaining gaps are listed above rather than hidden.

@@ -278,6 +278,12 @@ Captured in `preli-submission-ss/` (local-only, gitignored).
 - The **Proof** and **Prompt Library** tabs say “Save the submission first” before links/build provenance can be added.
 - The submit button is disabled until the required fields are filled.
 
+> **Fill decision (2026-10-26):** the user approved filling the form with
+> placeholders for unknown or unfinished data, but **not** submitting it. The
+> form packet is in [`SUBMISSION.md`](SUBMISSION.md) section 10. The portal
+> session was not available in this environment, so the form itself remains
+> untouched.
+
 ### Required fields shown by the portal
 
 1. Project Name
@@ -493,13 +499,14 @@ These are ranked by score and credibility per unit of work. They do **not** requ
 
 These cannot be answered from the repository:
 
-- Registered team size and member names.
-- NRB status for any member.
-- Female-member status for the team-diversity bonus.
+- ~~Registered team size and member names.~~ **Resolved 2026-10-26:** use `JU_StackMind` only; leave all other team fields blank. No diversity bonus is claimed.
+- ~~NRB status for any member.~~ **Resolved 2026-10-26:** leave blank / prefer not to say.
+- ~~Female-member status for the team-diversity bonus.~~ **Resolved 2026-10-26:** leave blank / prefer not to say.
 - Cloud accounts: Supabase, Render, Netlify, and Vercel are configured. Neo4j Aura, Sentry, and PostHog remain optional and unconfigured.
-- Whether a Figma/design file exists, or whether an architecture diagram can serve as the design link.
-- YouTube channel access for uploading the demo.
-- Permission to install/run Ollama and n8n for extra truthful checkboxes.
+- ~~Whether a Figma/design file exists, or whether an architecture diagram can serve as the design link.~~ **Resolved:** no Figma; `docs/DESIGN.md` is the public design artifact.
+- ~~YouTube channel access for uploading the demo.~~ **Open:** video remains a placeholder; no recording exists.
+- ~~Permission to install/run Ollama and n8n for extra truthful checkboxes.~~ **Resolved:** not used; do not claim them.
+- **Official form access:** user approved filling with placeholders, but the portal session is not available in this environment. The form packet is in [`SUBMISSION.md`](SUBMISSION.md) section 10; the form remains unsubmitted.
 
 ---
 

@@ -6,7 +6,7 @@ pilot accounts are provisioned, demo login is disabled, and reports are stored
 in Postgres. Netlify is the primary web origin and Vercel is the secondary
 fallback. Netlify production browser QA passed 2/2 on 2026-10-25; the most
 recently verified hosted health check on 2026-10-26 reported revision
-`8710ab2aedce` with `status=ok`, `database=ok`, `auth_mode=supabase`,
+`b423e5b3a001` with `status=ok`, `database=ok`, `auth_mode=supabase`,
 `demo_mode=false`, `llm_mode=hybrid`, `llm_live_ready=false`,
 `data_mode=hybrid`, `scheduler_enabled=true`, and `scheduler_running=true`.
 This is a single-workspace production pilot, not a commercial customer
@@ -15,10 +15,11 @@ deployment.
 > **Hosted hybrid state (2026-10-26):** live connectors, hybrid modes, the
 > bounded repair loop, and the scheduler are deployed and enabled on Render.
 > Federal Register live sync and dedupe are hosted-verified; GDELT reports
-> `fixture_fallback` under its public rate limit. Gemini/Groq keys are absent,
-> so `llm_live_ready=false` and hosted pipeline inference uses the deterministic
-> fallback. The remaining operator action is to add provider keys and verify one
-> live hosted pipeline run.
+> `fixture_fallback` under its public rate limit. Gemini/Groq keys are absent on
+> Render, so `llm_live_ready=false` and hosted pipeline inference uses the
+> deterministic fallback. Working keys exist only in the gitignored local `.env`.
+> The remaining operator action is to add the keys to Render and verify one live
+> hosted pipeline run.
 
 This document defines “production-ready” for Chowkidar's preliminary round as
 the production path required by `prompts/MASTER_PROMPT.md`: real authentication,
@@ -57,7 +58,9 @@ operations, legal review, or universal live source coverage).
 - **Hybrid LLM mode is implemented and deployed; hosted live inference is not
   enabled.** Local runs used Gemini 3.5 Flash and Groq `gpt-oss-120b`; the hosted
   service reports `llm_mode=hybrid` but `llm_live_ready=false` because provider
-  keys are absent, so hosted inference still falls back deterministically.
+  keys are absent on Render, so hosted inference still falls back
+  deterministically. The keys are present in the local `.env` and were probed
+  successfully.
 - **Tokens are held in browser storage** by the current client (Zustand
   `persist`). A hardened deployment should move refresh tokens to HttpOnly,
   SameSite cookies with CSRF protection. Treat this as a pilot limitation.
@@ -80,7 +83,7 @@ operations, legal review, or universal live source coverage).
 | Accounts | `admin@chowkidar.app`, `analyst@chowkidar.app`, `approver@chowkidar.app`, `viewer@chowkidar.app` |
 | Credentials | Gitignored `docs/private/supabase-credentials.local.md`, mode `600` |
 | Report storage | Postgres (`STORAGE_BACKEND=database`) |
-| Runtime QA | Netlify run passed 2/2; the most recent hosted health check on 2026-10-26 reported revision `8710ab2aedce` with `llm_mode=hybrid`, `llm_live_ready=false`, `data_mode=hybrid`, and `scheduler_running=true`. Federal Register live sync, dedupe, GDELT fallback, and a hosted pipeline run are verified. API, role, report, browser, mobile, CORS, and rate-limit checks passed. |
+| Runtime QA | Netlify run passed 2/2; the most recent hosted health check on 2026-10-26 reported revision `b423e5b3a001` with `llm_mode=hybrid`, `llm_live_ready=false`, `data_mode=hybrid`, and `scheduler_running=true`. Federal Register live sync, dedupe, GDELT fallback, and a hosted pipeline run are verified. API, role, report, browser, mobile, CORS, and rate-limit checks passed. |
 | Remaining external constraint | Vercel default DNS is variable on some networks; it is only the secondary fallback. See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md). |
 
 ---
@@ -248,8 +251,10 @@ fresh synthetic demo deployment.
 
 **Applied on 2026-10-26, except provider keys.** The deployed revision includes
 migration `9c1e4f2a7b10_live_connectors.py`, and Render runs the environment
-below. `GEMINI_API_KEY` and `GROQ_API_KEY` are still absent, so
-`llm_live_ready=false` and hosted inference falls back deterministically.
+below. `GEMINI_API_KEY` and `GROQ_API_KEY` are still absent on Render, so
+`llm_live_ready=false` and hosted inference falls back deterministically. The
+same keys are present in the gitignored local `.env` (mode `600`) and were probed
+successfully; never commit them or copy them into docs.
 
 ```dotenv
 DATA_MODE=hybrid
@@ -299,14 +304,14 @@ live inference while `llm_live_ready=false`.
 ## 3. Hosted QA matrix
 
 Completed against Netlify and the hosted API on 2026-10-25; the most recent
-hosted health check on 2026-10-26 reported revision `8710ab2aedce`, with the
+hosted health check on 2026-10-26 reported revision `b423e5b3a001`, with the
 prior Vercel run retained at `fcd7fd8`:
 
 - [x] `/healthz` returns `status: ok`, `database: ok`, `auth_mode: supabase`,
       `demo_mode: false`.
-- [x] Hosted hybrid env at `8710ab2aedce` exposes five streams and new health
+- [x] Hosted hybrid env at `b423e5b3a001` exposes five streams and new health
       fields; Federal Register live sync, GDELT fallback, and a pipeline run are
-      verified; `llm_live_ready=false` until provider keys are added.
+      verified; `llm_live_ready=false` until provider keys are added to Render.
 - [x] `/api/v1/auth/config` returns `password_auth: true` and no demo users.
 - [x] Login with the admin account; the demo role cards are absent and the
       sidebar says **Pilot**, not **Demo**.
@@ -338,8 +343,9 @@ prior Vercel run retained at `fcd7fd8`:
 - Keep `docs/private/` out of git. The credentials file is generated at mode
   `0600`; provide access to judges only through the submission's private access
   field or another controlled channel, never a public commit.
-- The Supabase database password is currently weak and should be rotated before
-  any real-user deployment. Update Render's `DATABASE_URL` after rotation.
+- The Supabase database password is currently weak. This is accepted for the
+  zero-real-user pilot and is not a submission blocker; rotate it before any
+  real-user or multi-tenant deployment and update Render's `DATABASE_URL`.
 - The report storage migration is `82eceac00bcf_durable_report_storage.py`.
 - The append-only audit chain remains the system of record for material actions;
   production cutover does not change that behavior.

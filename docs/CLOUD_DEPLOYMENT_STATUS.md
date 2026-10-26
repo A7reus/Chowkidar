@@ -17,9 +17,10 @@
 > `scheduler_enabled=true`, `scheduler_running=true`, and
 > `llm_live_ready=false`. Federal Register live sync and dedupe are
 > hosted-verified; GDELT reports `fixture_fallback` under its public rate limit.
-> Gemini/Groq keys are absent, so hosted pipeline inference still uses the
-> deterministic fallback. The remaining operator action is to add provider keys
-> and verify one live hosted pipeline run.
+> Gemini/Groq keys are absent on Render, so hosted pipeline inference still uses
+> the deterministic fallback. Working keys exist only in the gitignored local
+> `.env` and were probed successfully. The remaining operator action is to add
+> the keys to Render and verify one live hosted pipeline run.
 
 ---
 
@@ -30,7 +31,7 @@
 | Web — primary | <https://ch0wkidar.netlify.app/> | Live; production browser QA passed 2/2 |
 | Web — secondary | <https://chowkidar-wheat.vercel.app/> | Live; DNS reachability varies by resolver |
 | API | <https://chowkidar-api.onrender.com/> | Live |
-| API health | <https://chowkidar-api.onrender.com/healthz> | Live: database `ok`, Supabase auth, `hybrid` modes, scheduler running, revision `8710ab2aedce` |
+| API health | <https://chowkidar-api.onrender.com/healthz> | Live: database `ok`, Supabase auth, `hybrid` modes, scheduler running, revision `b423e5b3a001` |
 | API docs | <https://chowkidar-api.onrender.com/docs> | Live |
 | Web fallback 2 | `https://chowkidar-web.onrender.com` | Service exists; currently `502` — optional |
 | Repository | <https://github.com/A7reus/Chowkidar> | CI green on `main` |
@@ -51,8 +52,9 @@ cold-start behavior.
   `data_mode: hybrid`, `live_connectors` containing `gdelt` and
   `federal_register`, `scheduler_enabled: true`, `scheduler_running: true`, and a
   revision. The most recent hosted health check on 2026-10-26 reported revision
-  `8710ab2aedce`. `llm_live_ready=false` because provider keys are absent; do
-  not claim hosted live inference until it is `true`.
+  `b423e5b3a001`; docs-only pushes may advance it without runtime change.
+  `llm_live_ready=false` because provider keys are absent on Render; do not
+  claim hosted live inference until it is `true`.
 - `GET /api/v1/auth/config` returns `password_auth: true`, `demo_mode: false`,
   and an empty `demo_users` list.
 - `POST /api/v1/auth/demo-login` returns `403` with `Demo login is disabled`.
@@ -274,15 +276,21 @@ placeholders, never the Supabase password/URI, JWTs, or provider keys.
 
 ## 6. Next actions
 
-1. Record the 2–3 minute demo video with the live Supabase login.
-2. Confirm the team-diversity facts. The design artifact is
-   [`DESIGN.md`](DESIGN.md); the public GitHub link is live (verified
-   2026-10-26). No Figma file is planned.
-3. Add `GEMINI_API_KEY` and `GROQ_API_KEY` on Render and redeploy; verify
+1. Add `GEMINI_API_KEY` and `GROQ_API_KEY` on Render and redeploy; verify
    `llm_live_ready=true` and one live hosted pipeline run. The hybrid data/LLM
    modes and scheduler are already applied; see
-   [`PRODUCTION.md`](PRODUCTION.md) section 2.8.
-4. Rotate the Supabase database password; the current one is weak and was shared
-   during setup. Update Render's `DATABASE_URL` after rotation.
+   [`PRODUCTION.md`](PRODUCTION.md) section 2.8. The keys are present only in the
+   gitignored local `.env` and were probed successfully.
+2. Observe one scheduled ingestion cycle, or state honestly that the scheduler
+   is running but no cycle has been captured.
+3. Record the 2–3 minute demo video with the live Supabase login; the form packet
+   uses a placeholder until then.
+4. Team-diversity facts are intentionally left blank by the user's decision. The
+   design artifact is [`DESIGN.md`](DESIGN.md); the public GitHub link is live
+   (verified 2026-10-26). No Figma file is planned.
 5. Optional: fix or remove the Render web fallback.
-6. Fill and submit the official form only after finalization is complete.
+6. Fill the official form using [`SUBMISSION.md`](SUBMISSION.md) section 10 and
+   submit only after separate explicit approval.
+
+The weak Supabase database password is accepted for this zero-real-user pilot;
+it is not a submission blocker, but rotate it before any real-user deployment.

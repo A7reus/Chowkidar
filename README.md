@@ -191,7 +191,7 @@ cd apps/api && uv run python -m app.db.seed
 - Every risk carries a **verbatim quote** and **citation URL** from the source signal.
 - A deterministic verifier returns `verified`, `needs_review`, or `insufficient_evidence`.
 - Output is checked for prohibited legal-advice phrases and prompt-injection markers.
-- PII is redacted with regex and allowlists before storage/display.
+- PII is redacted with regex before LLM and verifier processing; raw source text remains stored for evidence.
 - The risk score is transparent and auditable:
   `((severity × 0.40 + likelihood × 0.35 + exposure × 0.25) / 4) × 100`.
 - Priority bands: `critical ≥ 80`, `high ≥ 60`, `medium ≥ 35`, `low < 35`.
@@ -199,16 +199,17 @@ cd apps/api && uv run python -m app.db.seed
 
 ### Current limitations
 
-- **Two live connectors exist (GDELT + US Federal Register); three streams remain fixture-backed.** GDELT is externally rate-limited and may fall back to fixtures with a visible `fixture_fallback` label. Render runs `DATA_MODE=hybrid`; Federal Register live sync and dedupe are hosted-verified. Hosted `llm_live_ready=false` because provider keys are absent, so hosted inference still falls back deterministically.
+- **Two live connectors exist (GDELT + US Federal Register); three streams remain fixture-backed.** GDELT is externally rate-limited and may fall back to fixtures with a visible `fixture_fallback` label. Render runs `DATA_MODE=hybrid`; Federal Register live sync and dedupe are hosted-verified. Hosted `llm_live_ready=false` because provider keys are absent on Render, so hosted inference still falls back deterministically. Working Gemini/Groq keys are present only in the gitignored local `.env`.
 - Scheduled ingestion runs via the in-process APScheduler job on Render (`ENABLE_SCHEDULER=true`, `scheduler_running=true`); no scheduled cycle has been captured yet. n8n is optional and not the pilot path.
 - No legal/compliance advisor; the product is deliberately positioned as decision support.
 - The **live service is a production pilot**, not a demo: `AUTH_MODE=supabase`, `DEMO_MODE=false`, four provisioned accounts, and demo login disabled. It is still a single-workspace pilot, not a commercial multi-tenant service.
 - Reports use the durable Postgres backend on the hosted API (`STORAGE_BACKEND=database`), with private Supabase Storage as an optional object-store adapter. Hosted reports survived an API redeploy with matching checksums; local `/tmp` reports remain only for offline demos.
 - Rate limits are process-local (suitable for the single Render instance); browser tokens are stored in local storage rather than HttpOnly cookies.
-- Hybrid LLM mode is implemented and deployed; local runs used Gemini 3.5 Flash and Groq, and hosted `llm_live_ready=false` because provider keys are absent, so hosted inference falls back deterministically. Provider reliability is not an SLA; Gemini 3.8 Flash timed out and Gemini Pro Latest had zero free-tier quota, so the defaults use Gemini 3.5 Flash.
+- Hybrid LLM mode is implemented and deployed; local runs used Gemini 3.5 Flash and Groq, and hosted `llm_live_ready=false` because provider keys are absent on Render, so hosted inference falls back deterministically. The local `.env` keys were probed successfully and are never committed. Provider reliability is not an SLA; Gemini 3.8 Flash timed out and Gemini Pro Latest had zero free-tier quota, so the defaults use Gemini 3.5 Flash.
 - Optional BGE-M3 embeddings, Docling, RAGAS, and Phoenix are not required for the demo path.
 - No customer interviews, LOIs, design partners, or revenue. The validation kit is at [`docs/VALIDATION.md`](docs/VALIDATION.md) and the evidence log is honestly at zero.
-- No Figma file; [`docs/DESIGN.md`](docs/DESIGN.md) is the design artifact. No final demo video yet.
+- No Figma file; [`docs/DESIGN.md`](docs/DESIGN.md) is the design artifact. No final demo video yet; the form packet uses a placeholder.
+- Team-diversity facts are intentionally blank except the team name `JU_StackMind`; no bonus is claimed. The official form has not been opened or submitted; the fill packet is prepared with placeholders and needs separate approval.
 - Cloud deployment is live for the API and web build. Netlify is the primary web origin with production browser QA passed 2/2; Vercel remains a secondary fallback and still has DNS variability on some networks. See [`docs/CLOUD_DEPLOYMENT_STATUS.md`](docs/CLOUD_DEPLOYMENT_STATUS.md).
 
 ---

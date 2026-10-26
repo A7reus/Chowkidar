@@ -35,7 +35,7 @@
 └────────────────────────────────────────────────────────────────────┘
 ```
 
-The pilot keeps a seeded Postgres database so the story is reproducible. Connectors and the agent pipeline can run again over the same signals; mutation tools are role-gated and audited. The hosted service runs `DATA_MODE=hybrid`, `LLM_MODE=hybrid`, and the scheduler; Federal Register live sync is verified, while GDELT falls back under its public rate limit. Hosted LLM inference still falls back deterministically because provider keys are absent (`llm_live_ready=false`).
+The pilot keeps a seeded Postgres database so the story is reproducible. Connectors and the agent pipeline can run again over the same signals; mutation tools are role-gated and audited. The hosted service runs `DATA_MODE=hybrid`, `LLM_MODE=hybrid`, and the scheduler; Federal Register live sync is verified, while GDELT falls back under its public rate limit. Hosted LLM inference still falls back deterministically because provider keys are absent on Render (`llm_live_ready=false`); working keys exist only in the gitignored local `.env`.
 
 ---
 
@@ -123,7 +123,7 @@ Pipeline runs are also exposed as `POST /api/v1/pipeline/run` and recorded in `a
 | Offline/demo | Deterministic mock | — |
 | Embeddings | BGE-M3 (optional) | Hash-based mock |
 
-`LLM_MODE=mock` is the default for a reproducible local demo. `LLM_MODE=hybrid` tries a live provider and falls back deterministically; local hybrid runs succeeded with Gemini 3.5 Flash and Groq. A 90-second per-provider cooldown limits repeated timeouts. The hosted service reports `llm_mode=hybrid` but `llm_live_ready=false` because provider keys are absent, so hosted inference still falls back deterministically.
+`LLM_MODE=mock` is the default for a reproducible local demo. `LLM_MODE=hybrid` tries a live provider and falls back deterministically; local hybrid runs succeeded with Gemini 3.5 Flash and Groq. A 90-second per-provider cooldown limits repeated timeouts. The hosted service reports `llm_mode=hybrid` but `llm_live_ready=false` because provider keys are absent on Render, so hosted inference still falls back deterministically; the local `.env` has working keys.
 
 ---
 
@@ -255,7 +255,7 @@ OpenAPI JSON: `/openapi.json`. The web app’s schema types are generated from i
 - CORS restricted by `CORS_ORIGINS`.
 - Sliding-window rate limits on auth and mutating endpoints; process-local for the single Render instance.
 - Report downloads are authenticated and never expose storage paths or public bucket URLs.
-- PII redaction (email, phone, NID, passport) before evidence display/storage paths that require it. IBAN is **not** in the current pattern set.
+- PII redaction (email, phone, NID, passport) before LLM and verifier processing; raw source text remains stored for evidence. IBAN is **not** in the current pattern set.
 - Prompt-injection markers detected and treated as review findings.
 - Prohibited legal-advice phrases block verification.
 - Sentry hooks for API errors; PostHog is anonymized and optional.
