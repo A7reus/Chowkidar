@@ -254,6 +254,7 @@ See [`docs/MCP.md`](docs/MCP.md).
 
 | Doc | Purpose |
 |---|---|
+| [`CREDITS.md`](CREDITS.md) | Attribution for adapted contributions |
 | [`DECISIONS.md`](DECISIONS.md) | Decision log, constraints, session history |
 | [`PRODUCT_SPEC.md`](PRODUCT_SPEC.md) | Personas, workflows, data model, agents, evals |
 | [`BUILD_PLAN.md`](BUILD_PLAN.md) | Plan, cut list, submission checklist |
@@ -284,6 +285,12 @@ See [`docs/MCP.md`](docs/MCP.md).
 ## Build provenance
 
 The base implementation was produced by an AI coding agent from a single master prompt (`prompts/MASTER_PROMPT.md` v1.0), with no iterative human prompting during the initial build pass. Subsequent QA fixes, tests, and documentation are recorded in [`docs/BUILD_LOG.md`](docs/BUILD_LOG.md). The event's build-level classification is left to the submission form; this repo reports what was actually done.
+
+---
+
+## Credits
+
+Selected parts of the local LLM routing, MCP Streamable HTTP/SSE transport, and structure-aware legal-heading chunking were adapted from [PR #1](https://github.com/A7reus/Chowkidar/pull/1) by [@shihab3point14](https://github.com/shihab3point14) (Shihab). The PR was not merged as a whole; the keep-warm workflow and its README hunk were not taken. Full scope and original commit references are in [`CREDITS.md`](CREDITS.md).
 
 ---
 
