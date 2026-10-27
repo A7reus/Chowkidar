@@ -1,8 +1,8 @@
 # Chowkidar — Decision Log & Persistent Context
 
-**Last updated:** 2026-10-26
+**Last updated:** 2026-10-27
 
-**Status:** Active — base build complete; hosted production pilot live; hybrid data/LLM modes and scheduler deployed; first scheduled cycle verified at revision `d1f285f50e67`; Federal Register live sync verified; hosted LLM keys absent
+**Status:** Active — base build complete; hosted production pilot live; hybrid data/LLM modes and scheduler deployed; first scheduled cycle verified at revision `d1f285f50e67`; Federal Register live sync verified; hosted live LLM inference verified on 2026-10-27
 
 **Owner:** JU_StackMind  
 **Purpose:** Single source of truth for decisions, constraints, assumptions, and session history. Read this before starting any new work session.
@@ -316,13 +316,20 @@ To avoid losing details between sessions:
 - Created `docs/VALIDATION.md` (interview guide, LOI template, pricing hypotheses, evidence log at 0) and `docs/DESIGN.md` (design artifact and wireframes).
 - Reconciled `LIMITATIONS.md`, `SUBMISSION.md`, `DATA_SOURCES.md`, `ARCHITECTURE.md`, `ENVIRONMENT.md`, `README.md`, `PRODUCTION.md`, `CLOUD_DEPLOYMENT_STATUS.md`, and `RESPONSIBLE_AI.md`.
 - Tests: API 75 passed; Ruff and Pyright clean; web typecheck/lint clean; web tests 8/8 passed.
-- User supplied working Gemini and Groq keys. They were written only to the gitignored `.env` (mode `600`) and both providers were probed successfully with minimal LiteLLM calls; the keys were never printed or committed. Render still lacks the keys, so hosted `llm_live_ready=false`.
+- User supplied working Gemini and Groq keys. They were written only to the gitignored `.env` (mode `600`) and both providers were probed successfully with minimal LiteLLM calls; the keys were never printed or committed. They were later added to Render, and hosted live inference is now verified.
 - User decisions recorded: keep `JU_StackMind` only and leave other team fields blank; accept the weak Supabase password for the zero-real-user pilot; keep a video placeholder; fill the official form with placeholders but do not submit.
 - Prepared the official form fill packet in `docs/SUBMISSION.md` section 10, including long-form copy, structured-tab copy, and explicit "not used" disclosures for fine-tuning, local models, external MCP, and tunneling.
 - Tests after the hosted-state reconciliation: API 76 passed; web 8/8 passed; Ruff, Pyright, ESLint, and `tsc` clean.
 - Found a scheduler arming bug: with `SCHEDULER_RUN_ON_START=false`, explicit `next_run_time=None` left the APScheduler job paused even though `scheduler_running=true`. Fixed by omitting the argument, added `scheduler_next_run_at` to health/meta, and added `apps/api/tests/test_scheduler.py` for both branches. `make check` then passed with API 78 tests and web 8/8. Pushed as `94c2a19`; Render deployed `94c2a19f91c4` and both endpoints reported a non-null next-run time.
 - Observed the first hosted scheduled cycle at revision `d1f285f50e67`: GDELT `last_synced_at=2026-10-26T09:29:36.732196Z` (`fixture_fallback`, 0 new) and Federal Register `09:30:00.053271Z` (`live`, 0 new due to dedupe); `scheduler_next_run_at` advanced from `09:29:36Z` to `10:29:36Z`.
-- Blockers: hosted provider keys absent (`llm_live_ready=false`) and no portal session for the official form. The scheduled-cycle blocker is resolved. Team/video fields remain intentional placeholders; the form remains unsubmitted.
+- Blockers: no portal session for the official form. The hosted provider-key and scheduled-cycle blockers are resolved. Team/video fields remain intentional placeholders; the form remains unsubmitted.
+
+### 2026-10-27 — Session 7
+- User set `GEMINI_API_KEY` and `GROQ_API_KEY` on Render, saved, and redeployed; no secret was printed or committed.
+- Verified hosted readiness at revision `698773f1800d`: `status=ok`, `database=ok`, `auth_mode=supabase`, `demo_mode=false`, `data_mode=hybrid`, `llm_mode=hybrid`, `llm_live_ready=true`, `live_connectors=["federal_register","gdelt"]`, `scheduler_running=true`, `scheduler_next_run_at=2026-10-27T13:08:49Z`.
+- Ran one hosted `mode=live` pipeline over a temporary duplicate Federal Register signal: 1 obligation, 1 risk, 2 actions, 0 errors, 1 verified risk, `repair_attempts=0`; the rationale was model-generated with confidence `0.96`.
+- Removed the temporary signal, risk, obligation, actions, evidence chunks, and agent run; counts returned to 20 signals, 21 obligations, and 18 risks. Audit events were retained.
+- Reconciled the current-state docs with the verified hosted live-inference evidence. The official form remains unopened and unsubmitted.
 
 ### Template for future sessions
 ```

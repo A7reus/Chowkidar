@@ -24,11 +24,12 @@ EUR-Lex, and UFLPA are fixture-backed. A rate-limited GDELT run is labelled
 scheduler arming fix was verified at revision `94c2a19f91c4`, and the first
 scheduled cycle fired at revision `d1f285f50e67`: GDELT `09:29:36Z`
 (`fixture_fallback`, 0 new) and Federal Register `09:30:00Z` (`live`, 0 new due
-to dedupe), with the next run advanced to `10:29:36Z`.
-`llm_live_ready=false` because provider keys are absent **on Render**, so hosted
-pipeline inference still uses the deterministic fallback. Working Gemini and Groq
-keys exist only in the gitignored local `.env`; both providers were probed
-successfully, and the keys are never committed or shown in the form.
+to dedupe), with the next run advanced to `10:29:36Z`. Hosted LLM inference is
+enabled and verified: on 2026-10-27 `/healthz` reported `llm_live_ready=true`,
+and a hosted `mode=live` pipeline run produced a model-generated rationale with
+confidence `0.96`, 0 errors, and 1 verified risk. Deterministic fallback remains
+available when a provider fails; provider keys are never committed or shown in
+the form.
 
 ---
 
@@ -54,7 +55,7 @@ successfully, and the keys are never committed or shown in the form.
 - **Live pilot URL:** <https://ch0wkidar.netlify.app/> — Netlify primary, verified with production browser QA: Supabase email/password auth, four managed accounts, demo login disabled, PDF generation/download, and viewer read-only access. Secondary fallback: <https://chowkidar-wheat.vercel.app/> (Vercel DNS may vary on some networks; see [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md)).
 - **API URL:** <https://chowkidar-api.onrender.com/>
 - **Hosted access:** Supabase accounts use the emails `admin@chowkidar.app`, `analyst@chowkidar.app`, `approver@chowkidar.app`, and `viewer@chowkidar.app`. Passwords are held in the private, gitignored access note and must be supplied to judges only through the form's private access field or another controlled channel.
-- **Production status:** live and verified as a production pilot. Netlify browser QA passed 2/2 at the previously verified revision `2bfaed71372c`: `/healthz` reports `auth_mode=supabase`, `demo_mode=false`, `database=ok`; admin and viewer flows passed; PDF generation/download matched SHA-256; reports use Postgres; viewer role restrictions returned `403`; and both web origins pass CORS preflight. This is a single-workspace pilot, not commercial SaaS readiness. **Render runs the hybrid environment; the hosted health check on 2026-10-26 reported revision `d1f285f50e67` (`data_mode=hybrid`, `llm_mode=hybrid`, `scheduler_running=true`, `scheduler_next_run_at=2026-10-26T10:29:36Z`); docs-only pushes may advance the reported revision without runtime change. The first scheduled cycle fired: GDELT `09:29:36Z` (`fixture_fallback`, 0 new) and Federal Register `09:30:00Z` (`live`, 0 new due to dedupe). Federal Register live sync, dedupe, GDELT fallback, and a hosted pipeline run are verified. `llm_live_ready=false` because provider keys are absent on Render; hosted inference still falls back deterministically. Working Gemini/Groq keys are present only in the local `.env`.**
+- **Production status:** live and verified as a production pilot. Netlify browser QA passed 2/2 at the previously verified revision `2bfaed71372c`: `/healthz` reports `auth_mode=supabase`, `demo_mode=false`, `database=ok`; admin and viewer flows passed; PDF generation/download matched SHA-256; reports use Postgres; viewer role restrictions returned `403`; and both web origins pass CORS preflight. This is a single-workspace pilot, not commercial SaaS readiness. **Render runs the hybrid environment; the hosted health check on 2026-10-27 reported revision `698773f1800d` (`status=ok`, `database=ok`, `auth_mode=supabase`, `demo_mode=false`, `data_mode=hybrid`, `llm_mode=hybrid`, `llm_live_ready=true`, `scheduler_running=true`, `scheduler_next_run_at=2026-10-27T13:08:49Z`); docs-only pushes may advance the reported revision without runtime change. The first scheduled cycle fired: GDELT `09:29:36Z` (`fixture_fallback`, 0 new) and Federal Register `09:30:00Z` (`live`, 0 new due to dedupe). Federal Register live sync, dedupe, GDELT fallback, and hosted pipeline runs are verified. Hosted live LLM inference is verified: a `mode=live` run produced a model-generated rationale with confidence `0.96`, 0 errors, and 1 verified risk; deterministic fallback remains available.**
 - **Video URL:** `[PLACEHOLDER — not recorded]` — required for the official form; no recording is claimed.
 
 > The official form and MCP knowledge base both reward a public live demo and a 2–3 minute video. A local-only demo is not enough for maximum preliminary score. See [`COMPETITION_CONTEXT.md`](COMPETITION_CONTEXT.md) for the captured form, scoring signals, and the authoritative domain list.
@@ -160,7 +161,7 @@ JU_StackMind combines AI/full-stack engineering and data engineering. The build 
 
 ### Next
 
-Pilot with an RMG exporter and a compliance reviewer; add Gemini/Groq keys to Render and verify one live hosted pipeline; optionally enable the private Supabase Storage adapter; expand the golden set; add tenant isolation, HttpOnly sessions, MFA/SSO, and external audit anchoring. The first scheduled ingestion cycle is already verified.
+Pilot with an RMG exporter and a compliance reviewer; monitor hosted provider reliability and re-verify live inference after environment changes; optionally enable the private Supabase Storage adapter; expand the golden set; add tenant isolation, HttpOnly sessions, MFA/SSO, and external audit anchoring. The first scheduled ingestion cycle and hosted live LLM inference are already verified.
 
 ---
 
@@ -210,10 +211,10 @@ Pilot with an RMG exporter and a compliance reviewer; add Gemini/Groq keys to Re
 - [x] Durable reports verified across a Render redeploy with matching checksums.
 - [x] CI green and local `make check` passing after the hosted fixes.
 - [x] Live GDELT + Federal Register connectors, hybrid modes, scheduler, and bounded repair loop implemented and locally verified.
-- [x] Hosted hybrid environment applied: `data_mode=hybrid`, `llm_mode=hybrid`, `scheduler_running=true`; Federal Register live sync and dedupe verified; GDELT fallback verified; hosted pipeline run completed with 0 errors.
+- [x] Hosted hybrid environment applied: `data_mode=hybrid`, `llm_mode=hybrid`, `llm_live_ready=true`, `scheduler_running=true`; Federal Register live sync and dedupe verified; GDELT fallback verified; hosted pipeline runs completed with 0 errors.
 - [x] Scheduler arming bug fixed with a regression test; `scheduler_next_run_at` added to health/meta and verified on hosted revision `94c2a19f91c4`. The first scheduled cycle fired at revision `d1f285f50e67` (GDELT `09:29:36Z`, Federal Register `09:30:00Z`, next run `10:29:36Z`).
-- [x] Local Gemini and Groq keys present in gitignored `.env`; both providers probed successfully without exposing the keys.
-- [ ] Hosted live LLM inference verified (`llm_live_ready=true`); currently blocked on adding the provider keys to Render.
+- [x] Gemini and Groq keys set in Render and the gitignored `.env`; both providers probed successfully without exposing the keys.
+- [x] Hosted live LLM inference verified (`llm_live_ready=true`; hosted `mode=live` run produced a model-generated rationale with confidence `0.96`, 0 errors, and 1 verified risk).
 - [x] Validation kit with interview guide, LOI template, pricing hypotheses, and an honest zero-evidence log.
 - [x] Design artifact [`DESIGN.md`](DESIGN.md) with wireframes, flows, tokens, and accessibility notes.
 - [ ] Two-to-three-minute demo video recorded and linked; the form packet uses a placeholder.
@@ -294,7 +295,7 @@ Chowkidar turns monitored signals into an evidence-first risk workflow. It (1) m
 
 **Data & AI Provenance**
 
-The base product was built by an AI coding agent (OpenCode) from one frozen master prompt, v1.0, with no iterative implementation prompts; the build story, model names, manual changes, and test evidence are in `docs/BUILD_LOG.md`. Runtime AI uses LangGraph for the ingest → extract → map → score → remediate → verify → conditional repair → persist workflow, LiteLLM for provider fallback, Gemini 3.5 Flash and Groq `gpt-oss-120b` on free tiers, and a deterministic mock path for reproducibility. Data comes from five labelled streams: US Federal Register and GDELT have real live connectors with dedupe; Bangladesh Bank, EUR-Lex, and DHS/UFLPA remain fixture-backed. GDELT is publicly rate-limited and is labelled `fixture_fallback` when it fails. The hosted service currently reports `llm_live_ready=false` because provider keys are absent on Render, so hosted inference falls back deterministically; the local `.env` has working keys but they are never committed. No fine-tuning, LoRA, or training-data pipeline was used.
+The base product was built by an AI coding agent (OpenCode) from one frozen master prompt, v1.0, with no iterative implementation prompts; the build story, model names, manual changes, and test evidence are in `docs/BUILD_LOG.md`. Runtime AI uses LangGraph for the ingest → extract → map → score → remediate → verify → conditional repair → persist workflow, LiteLLM for provider fallback, Gemini 3.5 Flash and Groq `gpt-oss-120b` on free tiers, and a deterministic mock path for reproducibility. Data comes from five labelled streams: US Federal Register and GDELT have real live connectors with dedupe; Bangladesh Bank, EUR-Lex, and DHS/UFLPA remain fixture-backed. GDELT is publicly rate-limited and is labelled `fixture_fallback` when it fails. Hosted live inference is verified: `/healthz` reports `llm_live_ready=true`, and a hosted `mode=live` run produced a model-generated rationale with confidence `0.96`; deterministic fallback remains available when a provider fails. Provider keys are never committed. No fine-tuning, LoRA, or training-data pipeline was used.
 
 **Tooling & IDE**
 
@@ -323,7 +324,7 @@ OpenCode (AI coding agent), Python 3.14 with `uv`, FastAPI, SQLAlchemy 2, Alembi
 | MCP Usage | A read-only FastMCP server over stdio exposes six tools, one prompt, and one resource for inspecting risks, evidence, approvals, and the supply-chain graph. Transport is stdio only; no SSE or HTTP transport is implemented. No external MCP server is integrated into the product path, and the pipeline does not call MCP. | Built, not used in product path |
 | Outbound APIs & Integrations | Public OpenAPI docs and a read-only FastMCP stdio server; no outbound webhooks, no external MCP server, and no third-party write integration. Supabase is the auth/database provider; Render and Netlify are hosting. | Implemented subset |
 | Agent Frameworks | LangGraph is the only agent framework used. CrewAI, AutoGen, OpenAI Swarm, and similar frameworks are not used. | Implemented |
-| AI Models Used | Gemini 3.5 Flash through LiteLLM for extraction and rationale; Groq `gpt-oss-120b` as the fallback provider; a deterministic mock path for reproducible runs. The hosted service currently uses the deterministic fallback because provider keys are absent on Render. | Implemented; hosted live inference pending keys |
+| AI Models Used | Gemini 3.5 Flash through LiteLLM for extraction and rationale; Groq `gpt-oss-120b` as the fallback provider; a deterministic mock path for reproducible runs. Hosted live inference is verified (`llm_live_ready=true`; a hosted `mode=live` run produced a model-generated rationale with confidence `0.96`), with deterministic fallback when a provider fails. | Implemented and hosted-verified |
 | Local / Open-Source LLMs | An optional Ollama adapter exists in the LiteLLM client, but no local model was run for the hosted pilot or claimed in the submission. BGE-M3 embeddings and Docling are optional and not on the hosted path. | Not used in pilot |
 | Frontend AI Tools | None. The web UI was built directly with Next.js, TypeScript, Tailwind CSS, and shadcn-style components; no Lovable, v0, Bolt.new, Cursor, or canvas tool was used. | Honest zero |
 | Workflow Automation Tools | LangGraph and the in-process APScheduler are used for the agent workflow and scheduled ingestion. n8n, Zapier, Make, Airflow, Temporal, Dagster, Prefect, and Windmill are not used. | Implemented subset |
@@ -337,9 +338,11 @@ OpenCode (AI coding agent), Python 3.14 with `uv`, FastAPI, SQLAlchemy 2, Alembi
   leave blank or use "prefer not to say." The user chose this on 2026-10-26.
 - **YouTube URL:** leave the placeholder until a real 2–3 minute recording
   exists. Do not link an unrelated video.
-- **Hosted live inference:** do not claim it while `/healthz` reports
-  `llm_live_ready=false`. After the keys are added to Render, verify
-  `llm_live_ready=true` and one pipeline run before changing the wording.
+- **Hosted live inference:** verified on 2026-10-27. `/healthz` reported
+  `llm_live_ready=true`, and a hosted `mode=live` pipeline run produced a
+  model-generated rationale with confidence `0.96`, 0 errors, and 1 verified
+  risk. The wording above reflects that evidence; fallback remains available
+  when a provider fails.
 - **Fine-tuning, local models, external MCP integration, tunneling:** record the
   honest "not used" status above. Do not check boxes for them.
 

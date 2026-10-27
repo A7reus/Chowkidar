@@ -17,7 +17,7 @@ curl -sSI https://ch0wkidar.netlify.app/
 curl -sSI https://chowkidar-wheat.vercel.app/
 ```
 
-Expected hosted production pilot (verified 2026-10-26):
+Expected hosted production pilot (verified 2026-10-27):
 
 ```json
 {
@@ -26,20 +26,21 @@ Expected hosted production pilot (verified 2026-10-26):
   "auth_mode": "supabase",
   "demo_mode": false,
   "llm_mode": "hybrid",
-  "llm_live_ready": false,
+  "llm_live_ready": true,
   "data_mode": "hybrid",
   "scheduler_enabled": true,
   "scheduler_running": true,
-  "scheduler_next_run_at": "2026-10-26T09:10:00+00:00"
+  "scheduler_next_run_at": "2026-10-27T13:08:49+00:00"
 }
 ```
 
-`llm_live_ready=false` means Gemini/Groq keys are absent on Render and hosted
-inference is using the deterministic fallback. The keys may still be present in
-the local `.env`; never copy them into docs or commits. Do not claim hosted live inference until it is
-`true`. Once keys are added, the same endpoint should report
-`llm_live_ready: true`; `live_connectors` should contain `gdelt` and
-`federal_register`.
+`llm_live_ready=true` means provider keys are configured and the live LLM path
+is ready. It was verified on 2026-10-27 by a hosted `mode=live` pipeline run that
+produced a model-generated rationale with confidence `0.96`, 0 errors, and 1
+verified risk. A provider failure can still fall back deterministically; check
+the pipeline `errors` array and risk metadata before claiming a live call. The
+keys are set in Render and the local `.env`; never copy them into docs or
+commits. `live_connectors` should contain `gdelt` and `federal_register`.
 
 `scheduler_next_run_at=null` means the scheduler job is paused, absent, or the
 API is running a build from before the arming fix. A non-null timestamp proves

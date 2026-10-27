@@ -327,7 +327,7 @@
     "gateVerifier": "Verifier must accept or flag for review",
     "gateLanguage": "No prohibited legal-advice language",
     "stack": "Model stack",
-    "stackBody": "Configured stack: Gemini Flash for extraction, Groq GPT-OSS for classification, and Gemini Pro for verification, with automatic fallback. The hosted pilot runs deterministic mock mode.",
+    "stackBody": "Configured stack: Gemini Flash for extraction, Groq GPT-OSS for classification, and Gemini Pro for verification, with automatic fallback. Hosted live inference is verified, with deterministic fallback available.",
     "lastRun": "Last run",
     "switchAnalyst": "Switch to Analyst",
     "restricted": "Evaluations require analyst or admin access."

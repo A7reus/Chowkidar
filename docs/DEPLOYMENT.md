@@ -1,6 +1,6 @@
 # Chowkidar — Deployment
 
-**Status (2026-10-26):** the Supabase database is provisioned, migrated, and
+**Status (2026-10-27):** the Supabase database is provisioned, migrated, and
 seeded. The Render API and both web builds are live as a **production pilot**:
 Netlify is the primary web origin, Vercel is the secondary fallback, and
 Supabase email/password auth (`AUTH_MODE=supabase`, `DEMO_MODE=false`) is
@@ -9,23 +9,24 @@ Postgres report storage. Netlify production browser QA passed 2/2. The first
 scheduled cycle was captured on 2026-10-26 at revision `d1f285f50e67` with
 `llm_mode=hybrid`, `data_mode=hybrid`, `scheduler_running=true`, and a non-null
 `scheduler_next_run_at`. The cycle synced GDELT `09:29:36Z` (`fixture_fallback`,
-0 new) and Federal Register `09:30:00Z` (`live`, 0 new due to dedupe). A later
-docs-only deploy at `56df4142eda8` re-armed the scheduler; every deploy resets
-the interval. Federal
-Register live sync, GDELT fallback, and a hosted pipeline run are verified;
-hosted LLM inference is not enabled because provider keys are absent on Render.
-Working keys exist only in the gitignored local `.env`. See
-[`PRODUCTION.md`](PRODUCTION.md) and
+0 new) and Federal Register `09:30:00Z` (`live`, 0 new due to dedupe). Federal
+Register live sync, GDELT fallback, and hosted pipeline runs are verified.
+Hosted live LLM inference is verified: `/healthz` at revision `698773f1800d`
+reported `llm_live_ready=true`, and a hosted `mode=live` pipeline run produced a
+model-generated rationale with confidence `0.96`, 0 errors, and 1 verified risk.
+Provider keys are set in Render and the gitignored local `.env`; they are never
+committed. See [`PRODUCTION.md`](PRODUCTION.md) and
 [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md). This is a
 single-workspace pilot, not a commercial multi-tenant deployment.
 
-> **Hosted hybrid state (2026-10-26):** live GDELT/Federal Register connectors,
+> **Hosted hybrid state (2026-10-27):** live GDELT/Federal Register connectors,
 > hybrid modes, the bounded repair loop, and the scheduler are deployed and the
-> Render environment now runs `DATA_MODE=hybrid`, `LLM_MODE=hybrid`, and
+> Render environment runs `DATA_MODE=hybrid`, `LLM_MODE=hybrid`, and
 > `ENABLE_SCHEDULER=true`. Federal Register sync is hosted-verified live; GDELT
-> is externally rate-limited and reports `fixture_fallback`. `llm_live_ready`
-> is `false` because Gemini/Groq keys are not set, so hosted inference still
-> falls back deterministically. See [`PRODUCTION.md`](PRODUCTION.md) section 2.8.
+> is externally rate-limited and reports `fixture_fallback`. `llm_live_ready` is
+> `true`; hosted live inference was verified with a `mode=live` pipeline run.
+> Deterministic fallback remains available when a provider fails. See
+> [`PRODUCTION.md`](PRODUCTION.md) section 2.8.
 
 **Target region:** Supabase `ap-northeast-1` (Tokyo); Render `singapore`;
 Netlify and Vercel global edge. The cross-region API/database hop is acceptable
@@ -352,7 +353,7 @@ local seed baseline for offline judging. The full production matrix is in
 
 | Blocker | Impact |
 |---|---|
-| Hosted LLM keys | `llm_live_ready=false`; hosted inference still uses deterministic fallback until Gemini/Groq keys are added |
+| Hosted LLM keys | Resolved: keys are set in Render; `llm_live_ready=true` and a hosted `mode=live` pipeline run were verified on 2026-10-27. Deterministic fallback remains available |
 | Supabase database password | Current password is weak; rotate before any real-user deployment |
 | Public demo video | Pending; required for the official form |
 | Design link | `docs/DESIGN.md` is public at the GitHub URL. No Figma file. |

@@ -162,11 +162,12 @@ per-provider cooldown prevents repeated 25-second timeouts after a failure.
 
 For the stage, `LLM_MODE=mock` remains the recommended local path: it is fast,
 has no network dependency, and produces the same seeded result every time.
-Local hybrid runs succeeded with Gemini 3.5 Flash and Groq. Working Gemini/Groq
-keys are present in the gitignored local `.env` (mode `600`) and were probed
-successfully; never commit them. The hosted service runs `LLM_MODE=hybrid` but
-reports `llm_live_ready=false` because provider keys are absent on Render, so
-hosted inference still falls back deterministically.
+Local hybrid runs succeeded with Gemini 3.5 Flash and Groq. Gemini/Groq keys are
+set in the gitignored local `.env` (mode `600`) and in Render; never commit them.
+The hosted service runs `LLM_MODE=hybrid` and reports `llm_live_ready=true`. A
+hosted `mode=live` pipeline run on 2026-10-27 produced a model-generated
+rationale with confidence `0.96`, 0 errors, and 1 verified risk. Deterministic
+fallback remains available when a provider fails.
 
 ## Data modes and connectors
 

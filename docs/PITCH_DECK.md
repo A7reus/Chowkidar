@@ -3,8 +3,8 @@
 **Use:** preliminary submission deck, 3-minute pitch, or design source.
 **Rule:** every slide must be supportable by the repo or a demo screenshot. Claim
 only the two implemented live connectors (GDELT + US Federal Register) with
-their honest fallback labels; do not claim hosted live inference while
-`llm_live_ready=false`, legal advice, or customer traction that does not exist.
+their honest fallback labels; do not claim legal advice or customer traction that
+does not exist. Hosted live inference is verified, but fallback remains possible.
 
 ---
 
@@ -131,13 +131,14 @@ reports, rate limits, production login, settings, hosted QA, and runbook.
 **Deployed and running:** GDELT + Federal Register live connectors, hybrid
 modes, bounded repair loop, and scheduled ingestion. Federal Register live sync
 and dedupe are hosted-verified; GDELT falls back under its public rate limit.
-Hosted `llm_live_ready=false` because provider keys are absent on Render, so
-hosted inference still uses the deterministic fallback. Working keys exist only
-in the gitignored local `.env` and were probed successfully.
+Hosted live inference is verified: `/healthz` reports `llm_live_ready=true`, and
+a hosted `mode=live` pipeline run produced a model-generated rationale with
+confidence `0.96`, 0 errors, and 1 verified risk. Deterministic fallback remains
+available when a provider fails; provider keys are never committed.
 
-**Next:** add hosted provider keys and verify live hosted inference, observe a
-scheduled cycle, then tenant isolation/RLS, HttpOnly sessions, MFA/SSO, external
-audit anchoring, human legal review, and design-partner pilots.
+**Next:** monitor hosted provider reliability and re-verify live inference after
+environment changes, then tenant isolation/RLS, HttpOnly sessions, MFA/SSO,
+external audit anchoring, human legal review, and design-partner pilots.
 
 **Moat:** the evidence graph + approval/audit workflow + domain-specific
 evaluation, not a generic chatbot.

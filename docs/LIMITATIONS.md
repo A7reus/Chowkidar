@@ -1,6 +1,6 @@
 # Chowkidar — Limitations
 
-**Last updated:** 2026-10-26
+**Last updated:** 2026-10-27
 
 **Status:** Honest inventory for the preliminary submission. This file takes
 precedence over any optimistic wording elsewhere.
@@ -11,23 +11,22 @@ for legal counsel. The list below records what is **not** built, what is **not
 enabled**, and what is **pilot-only**, so judges and future maintainers can
 calibrate the claims.
 
-> **Current hosted state (2026-10-26):** live connectors, hybrid modes, the
+> **Current hosted state (2026-10-27):** live connectors, hybrid modes, the
 > bounded repair loop, and the scheduler are deployed and enabled on Render.
 > `/healthz` reports `data_mode=hybrid`, `llm_mode=hybrid`,
-> `scheduler_running=true`, and `llm_live_ready=false`. The scheduler job was
-> found paused when `SCHEDULER_RUN_ON_START=false`; the arming fix was verified
-> at revision `94c2a19f91c4`, and the first scheduled cycle fired at revision
-> `d1f285f50e67`: GDELT `2026-10-26T09:29:36Z` (`fixture_fallback`, 0 new),
-> Federal Register `09:30:00Z` (`live`, 0 new due to dedupe), next run advanced
-> to `10:29:36Z`. A later docs-only deploy at `56df4142eda8` re-armed the
-> scheduler; every deploy resets the interval. Render Free spin-down still
-> pauses the in-process scheduler.
-> Federal Register live
-> sync and dedupe are hosted-verified; GDELT reports `fixture_fallback` under its
-> public rate limit. Hosted pipeline inference still uses the deterministic
-> fallback because Gemini/Groq keys are absent **on Render**. Working keys exist
-> only in the gitignored local `.env` and were probed successfully. Do not claim
-> hosted live LLM inference until `/healthz` shows `llm_live_ready=true`.
+> `llm_live_ready=true`, and `scheduler_running=true`, with
+> `scheduler_next_run_at=2026-10-27T13:08:49Z` at revision `698773f1800d`.
+> The scheduler job was found paused when `SCHEDULER_RUN_ON_START=false`; the
+> arming fix was verified at revision `94c2a19f91c4`, and the first scheduled
+> cycle fired at revision `d1f285f50e67`: GDELT `2026-10-26T09:29:36Z`
+> (`fixture_fallback`, 0 new), Federal Register `09:30:00Z` (`live`, 0 new due
+> to dedupe), next run advanced to `10:29:36Z`. Every deploy resets the
+> interval. Render Free spin-down still pauses the in-process scheduler.
+> Federal Register live sync and dedupe are hosted-verified; GDELT reports
+> `fixture_fallback` under its public rate limit. Hosted live LLM inference is
+> verified: a `mode=live` pipeline run produced a model-generated rationale with
+> confidence `0.96`, 0 errors, and 1 verified risk. Deterministic fallback
+> remains available when a provider fails.
 
 ---
 
@@ -103,13 +102,13 @@ calibrate the claims.
 
 ## 3. AI and evaluation
 
-- **Hybrid mode is implemented and deployed; hosted live inference is not
-  enabled.** Local hybrid runs completed with Gemini 3.5 Flash and Groq
-  `gpt-oss-120b`; the hosted service reports `llm_mode=hybrid` but
-  `llm_live_ready=false` because provider keys are absent on Render. Working
-  Gemini/Groq keys exist only in the gitignored local `.env`. Hosted pipeline
-  inference therefore uses the deterministic fallback. The deterministic mock
-  path remains the safe fallback.
+- **Hybrid mode is implemented, deployed, and hosted-verified.** Local hybrid
+  runs completed with Gemini 3.5 Flash and Groq `gpt-oss-120b`; the hosted
+  service reports `llm_mode=hybrid` and `llm_live_ready=true`. On 2026-10-27 a
+  hosted `mode=live` pipeline run produced a model-generated rationale with
+  confidence `0.96`, 0 errors, and 1 verified risk. Deterministic fallback
+  remains the safe path when providers fail, and provider keys are never
+  committed.
 - **Provider reliability is variable.** Gemini 3.8 Flash timed out locally and
   Gemini Pro Latest had zero free-tier quota; the defaults now use Gemini 3.5
   Flash. A 90-second per-provider cooldown prevents repeated timeouts. This is

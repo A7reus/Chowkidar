@@ -1,6 +1,6 @@
 # Chowkidar — Cloud Deployment Status
 
-- **Updated:** 2026-10-26
+- **Updated:** 2026-10-27
 - **Scope:** Supabase Free + Render Free API + Netlify Free primary web + Vercel Hobby secondary web
 - **Status:** The API and both web builds are live as a **production pilot**.
   Netlify is the primary web origin at <https://ch0wkidar.netlify.app/>. Vercel
@@ -11,22 +11,22 @@
   admin and viewer accounts. This is not a claim of commercial SaaS readiness;
   see [`LIMITATIONS.md`](LIMITATIONS.md).
 
-> **Hosted hybrid state (2026-10-26):** live GDELT/Federal Register connectors,
+> **Hosted hybrid state (2026-10-27):** live GDELT/Federal Register connectors,
 > hybrid modes, the bounded repair loop, and the scheduler are deployed and
 > enabled. `/healthz` reports `data_mode=hybrid`, `llm_mode=hybrid`,
 > `scheduler_enabled=true`, `scheduler_running=true`, and
-> `llm_live_ready=false`. The scheduler job was found paused with
-> `SCHEDULER_RUN_ON_START=false`; the arming fix was verified at revision
-> `94c2a19f91c4`, and the first scheduled cycle fired at revision
+> `llm_live_ready=true` at revision `698773f1800d`, with
+> `scheduler_next_run_at=2026-10-27T13:08:49Z`. The scheduler job was found
+> paused with `SCHEDULER_RUN_ON_START=false`; the arming fix was verified at
+> revision `94c2a19f91c4`, and the first scheduled cycle fired at revision
 > `d1f285f50e67`: GDELT `09:29:36Z` (`fixture_fallback`, 0 new), Federal
 > Register `09:30:00Z` (`live`, 0 new due to dedupe), next run `10:29:36Z`.
 > Render Free spin-down still pauses the in-process scheduler. Federal Register
-> live sync and dedupe are
-> hosted-verified; GDELT reports `fixture_fallback` under its public rate limit.
-> Gemini/Groq keys are absent on Render, so hosted pipeline inference still uses
-> the deterministic fallback. Working keys exist only in the gitignored local
-> `.env` and were probed successfully. The remaining operator action is to add
-> the keys to Render and verify one live hosted pipeline run.
+> live sync and dedupe are hosted-verified; GDELT reports `fixture_fallback`
+> under its public rate limit. Hosted live LLM inference is verified: a
+> `mode=live` pipeline run produced a model-generated rationale with confidence
+> `0.96`, 0 errors, and 1 verified risk. Deterministic fallback remains
+> available when a provider fails.
 
 ---
 
@@ -37,7 +37,7 @@
 | Web — primary | <https://ch0wkidar.netlify.app/> | Live; production browser QA passed 2/2 |
 | Web — secondary | <https://chowkidar-wheat.vercel.app/> | Live; DNS reachability varies by resolver |
 | API | <https://chowkidar-api.onrender.com/> | Live |
-| API health | <https://chowkidar-api.onrender.com/healthz> | Live: database `ok`, Supabase auth, `hybrid` modes, scheduler armed, revision `94c2a19f91c4` |
+| API health | <https://chowkidar-api.onrender.com/healthz> | Live: database `ok`, Supabase auth, `hybrid` modes, `llm_live_ready=true`, scheduler armed, revision `698773f1800d` |
 | API docs | <https://chowkidar-api.onrender.com/docs> | Live |
 | Web fallback 2 | `https://chowkidar-web.onrender.com` | Service exists; currently `502` — optional |
 | Repository | <https://github.com/A7reus/Chowkidar> | CI green on `main` |
@@ -54,18 +54,18 @@ cold-start behavior.
 ### Runtime and auth
 
 - `GET /healthz` returns `status: ok`, `database: ok`, `auth_mode: supabase`,
-  `demo_mode: false`, `llm_mode: hybrid`, `llm_live_ready: false`,
+  `demo_mode: false`, `llm_mode: hybrid`, `llm_live_ready: true`,
   `data_mode: hybrid`, `live_connectors` containing `gdelt` and
   `federal_register`, `scheduler_enabled: true`, `scheduler_running: true`, and a
-  revision. The first scheduled cycle was captured on 2026-10-26 at revision
-  `d1f285f50e67`; `scheduler_next_run_at` moved from `09:29:36Z` to
-  `10:29:36Z`. A subsequent docs-only deploy at `56df4142eda8` re-armed the
-  scheduler; docs-only pushes may advance the revision and reset the next run
-  without runtime change. A `null`
-  value still means the job is paused or absent, and arming alone does not prove
-  a cycle has completed; the observed `last_synced_at` advance does.
-  `llm_live_ready=false` because provider keys are absent on Render; do not
-  claim hosted live inference until it is `true`.
+  revision. The hosted health snapshot on 2026-10-27 at revision
+  `698773f1800d` reported `scheduler_next_run_at=2026-10-27T13:08:49Z`. The first
+  scheduled cycle was captured on 2026-10-26 at revision `d1f285f50e67`;
+  `scheduler_next_run_at` moved from `09:29:36Z` to `10:29:36Z`. A `null` value
+  still means the job is paused or absent, and arming alone does not prove a
+  cycle has completed; the observed `last_synced_at` advance does.
+  `llm_live_ready=true` was confirmed by a hosted `mode=live` pipeline run that
+  produced a model-generated rationale with confidence `0.96`, 0 errors, and 1
+  verified risk; deterministic fallback remains available when a provider fails.
 - `GET /api/v1/auth/config` returns `password_auth: true`, `demo_mode: false`,
   and an empty `demo_users` list.
 - `POST /api/v1/auth/demo-login` returns `403` with `Demo login is disabled`.
@@ -228,7 +228,7 @@ configured as a fallback; no Supabase or database secrets belong there.
 | `DEMO_MODE` | `false` |
 | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | Set in Render; secret values are not in git |
 | `SUPABASE_JWT_AUDIENCE` | `authenticated` |
-| `LLM_MODE` | `hybrid` (provider keys absent; `llm_live_ready=false`) |
+| `LLM_MODE` | `hybrid` (hosted live inference verified; `llm_live_ready=true`) |
 | `DATA_MODE` | `hybrid` |
 | `ENABLE_SCHEDULER` | `true` |
 | `SCHEDULER_INTERVAL_MINUTES` | `60` |
@@ -241,7 +241,8 @@ configured as a fallback; no Supabase or database secrets belong there.
 | `MUTATION_RATE_LIMIT_PER_MINUTE` | `30` |
 | `LOCAL_STORAGE_DIR` | `/tmp` |
 | `UPLOAD_STORAGE_DIR` | `/tmp/uploads` |
-| `NEO4J_*`, `GEMINI_API_KEY`, `GROQ_API_KEY`, `SENTRY_DSN`, `POSTHOG_KEY` | Blank for the pilot |
+| `NEO4J_*`, `SENTRY_DSN`, `POSTHOG_KEY` | Blank for the pilot |
+| `GEMINI_API_KEY`, `GROQ_API_KEY` | Set in Render; secret values are not in git. Hosted live inference verified on 2026-10-27 |
 
 `CORS_ORIGINS` is a comma-separated list of exact origins. `WEB_URL` is a single
 canonical origin, not a list; it stays on Netlify. Do not use `*`, a trailing
@@ -292,11 +293,11 @@ placeholders, never the Supabase password/URI, JWTs, or provider keys.
 
 ## 6. Next actions
 
-1. Add `GEMINI_API_KEY` and `GROQ_API_KEY` on Render and redeploy; verify
-   `llm_live_ready=true` and one live hosted pipeline run. The hybrid data/LLM
-   modes and scheduler are already applied; see
-   [`PRODUCTION.md`](PRODUCTION.md) section 2.8. The keys are present only in the
-   gitignored local `.env` and were probed successfully.
+1. Hosted live inference is verified: `llm_live_ready=true` and a `mode=live`
+   pipeline run produced a model-generated rationale with confidence `0.96`.
+   Re-check `/healthz` after any environment change; see
+   [`PRODUCTION.md`](PRODUCTION.md) section 2.8. The provider keys are set in
+   Render and the gitignored local `.env`; they are never committed.
 2. The first scheduled cycle is verified at revision `d1f285f50e67` (GDELT
    `09:29:36Z`, Federal Register `09:30:00Z`, next run `10:29:36Z`). After any
    deploy, confirm `scheduler_next_run_at` is non-null again because each

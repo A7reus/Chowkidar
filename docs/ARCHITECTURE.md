@@ -35,7 +35,7 @@
 └────────────────────────────────────────────────────────────────────┘
 ```
 
-The pilot keeps a seeded Postgres database so the story is reproducible. Connectors and the agent pipeline can run again over the same signals; mutation tools are role-gated and audited. The hosted service runs `DATA_MODE=hybrid`, `LLM_MODE=hybrid`, and the scheduler; Federal Register live sync is verified, while GDELT falls back under its public rate limit. Hosted LLM inference still falls back deterministically because provider keys are absent on Render (`llm_live_ready=false`); working keys exist only in the gitignored local `.env`.
+The pilot keeps a seeded Postgres database so the story is reproducible. Connectors and the agent pipeline can run again over the same signals; mutation tools are role-gated and audited. The hosted service runs `DATA_MODE=hybrid`, `LLM_MODE=hybrid`, and the scheduler; Federal Register live sync is verified, while GDELT falls back under its public rate limit. Hosted live LLM inference is verified (`llm_live_ready=true`; a `mode=live` pipeline run produced a model-generated rationale with confidence `0.96`), and deterministic fallback remains available when providers fail. Provider keys are set in Render and the gitignored local `.env`; they are never committed.
 
 ---
 
@@ -123,7 +123,7 @@ Pipeline runs are also exposed as `POST /api/v1/pipeline/run` and recorded in `a
 | Offline/demo | Deterministic mock | — |
 | Embeddings | BGE-M3 (optional) | Hash-based mock |
 
-`LLM_MODE=mock` is the default for a reproducible local demo. `LLM_MODE=hybrid` tries a live provider and falls back deterministically; local hybrid runs succeeded with Gemini 3.5 Flash and Groq. A 90-second per-provider cooldown limits repeated timeouts. The hosted service reports `llm_mode=hybrid` but `llm_live_ready=false` because provider keys are absent on Render, so hosted inference still falls back deterministically; the local `.env` has working keys.
+`LLM_MODE=mock` is the default for a reproducible local demo. `LLM_MODE=hybrid` tries a live provider and falls back deterministically; local hybrid runs succeeded with Gemini 3.5 Flash and Groq. A 90-second per-provider cooldown limits repeated timeouts. The hosted service reports `llm_mode=hybrid` and `llm_live_ready=true`; a hosted `mode=live` pipeline run on 2026-10-27 produced a model-generated rationale with confidence `0.96`, 0 errors, and 1 verified risk. Deterministic fallback remains available when a provider fails, and provider keys are never committed.
 
 ---
 

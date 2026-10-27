@@ -1,7 +1,7 @@
 # Chowkidar — Build Log
 
-**Last updated:** 2026-10-26
-**Status:** Base build complete; local QA and hosted QA against Netlify and Vercel passed. The hosted API and both web builds are live as a production pilot with Supabase email/password auth and durable Postgres reports. Netlify is the primary web origin and passed production browser QA 2/2; Vercel is the secondary fallback. Live GDELT/Federal Register connectors, hybrid modes, the bounded repair loop, and the scheduler are deployed; Render now reports `data_mode=hybrid`, `llm_mode=hybrid`, and `scheduler_running=true`. Federal Register live sync, dedupe, GDELT fallback, and a hosted pipeline run are verified. A scheduler arming bug was found and fixed, and the first scheduled cycle fired at revision `d1f285f50e67`: GDELT `09:29:36Z` (`fixture_fallback`, 0 new) and Federal Register `09:30:00Z` (`live`, 0 new due to dedupe), next run `10:29:36Z`. `llm_live_ready=false` because provider keys are absent on Render, so hosted inference still falls back deterministically; working keys exist only in the gitignored local `.env`. See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md) and [`GAP_ANALYSIS.md`](GAP_ANALYSIS.md).
+**Last updated:** 2026-10-27
+**Status:** Base build complete; local QA and hosted QA against Netlify and Vercel passed. The hosted API and both web builds are live as a production pilot with Supabase email/password auth and durable Postgres reports. Netlify is the primary web origin and passed production browser QA 2/2; Vercel is the secondary fallback. Live GDELT/Federal Register connectors, hybrid modes, the bounded repair loop, and the scheduler are deployed; Render reports `data_mode=hybrid`, `llm_mode=hybrid`, `llm_live_ready=true`, and `scheduler_running=true`. Federal Register live sync, dedupe, GDELT fallback, and hosted pipeline runs are verified. A scheduler arming bug was found and fixed, and the first scheduled cycle fired at revision `d1f285f50e67`: GDELT `09:29:36Z` (`fixture_fallback`, 0 new) and Federal Register `09:30:00Z` (`live`, 0 new due to dedupe), next run `10:29:36Z`. Hosted live LLM inference is verified: a `mode=live` pipeline run on 2026-10-27 produced a model-generated rationale with confidence `0.96`, 0 errors, and 1 verified risk. Provider keys are set in Render and the gitignored local `.env`; they are never committed. See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md) and [`GAP_ANALYSIS.md`](GAP_ANALYSIS.md).
 **Purpose:** Record how the build was produced, especially the master prompt execution, confirmation triggers, and manual changes. This supports the submission's "Build Level" and "Prompt Library" fields.
 
 ---
@@ -33,7 +33,7 @@
 | Lint | Ruff clean; ESLint clean |
 | Evals | 7/7 golden cases; five metrics at 1.0 on the deterministic path |
 | MCP | Read-only FastMCP server implemented and manually exercised |
-| Deployment | Live production pilot: Render API + Netlify primary web + Vercel secondary web + Supabase Auth/Postgres; hosted hybrid env running; Federal Register live sync verified; GDELT fallback verified; hosted LLM keys absent |
+| Deployment | Live production pilot: Render API + Netlify primary web + Vercel secondary web + Supabase Auth/Postgres; hosted hybrid env running; Federal Register live sync verified; GDELT fallback verified; hosted live LLM inference verified |
 
 ### Verified demo baseline
 
@@ -167,6 +167,7 @@ The deterministic mock path (`app/agents/mock.py`) is the default for the demo a
 | 2026-10-26 | `apps/web` sources/dashboard, OpenAPI types, messages, `infra/render.yaml`, `.env.example`, `docs/*` | Five-stream source UI with mode badges, repair stage, hybrid/scheduler Render config, and reconciled current-state docs | Keep the UI and claims aligned with the implementation | AI agent + QA |
 | 2026-10-26 | `apps/api/app/services/scheduler.py`, `api/v1/health.py`, `api/v1/meta.py`, `schemas.py`, `tests/test_scheduler.py`, `tests/test_api_contract.py` | Fix paused APScheduler job: omit `next_run_time` unless `SCHEDULER_RUN_ON_START=true`; expose `scheduler_next_run_at`; add regression coverage for both branches | `/healthz` reported `scheduler_running=true` while the interval job had `next_run_time=None`, so no cycle would fire | AI agent + QA |
 | 2026-10-26 | Hosted Render runtime, no code change | Observe the first scheduled ingestion cycle at revision `d1f285f50e67` | Confirm the interval job fires, not merely that `scheduler_running=true` | Operator + QA |
+| 2026-10-27 | Hosted Render runtime, no code change | Set `GEMINI_API_KEY` and `GROQ_API_KEY` in Render, redeploy, and verify hosted live inference with one `mode=live` pipeline run over a temporary Federal Register duplicate | Prove real hosted model inference, not only readiness; remove temporary records afterward | Operator + QA |
 
 ---
 
@@ -228,7 +229,7 @@ Manual visual QA covered every route at 1440×1000. Known cosmetic trade-off: th
 - Browser tokens are stored in local storage; HttpOnly cookies are a hardening backlog item.
 - The Supabase database password is weak; accepted for the zero-real-user pilot and not a submission blocker, but rotate it before any real-user deployment.
 - Vercel default DNS is variable on some networks; the prior hosted QA used a reachable Vercel edge IP. Netlify is now primary, so this affects only the fallback.
-- Live GDELT and US Federal Register connectors are implemented and deployed; Bangladesh Bank, EUR-Lex, and UFLPA remain fixture-backed. GDELT is externally rate-limited and falls back with a visible label. Hosted `llm_live_ready=false` because provider keys are absent on Render, so hosted inference still falls back deterministically; working keys exist only in the gitignored local `.env`.
+- Live GDELT and US Federal Register connectors are implemented and deployed; Bangladesh Bank, EUR-Lex, and UFLPA remain fixture-backed. GDELT is externally rate-limited and falls back with a visible label. Hosted live LLM inference is verified: `/healthz` reports `llm_live_ready=true`, and a hosted `mode=live` pipeline run produced a model-generated rationale with confidence `0.96`, 0 errors, and 1 verified risk. Deterministic fallback remains available when providers fail, and provider keys are never committed.
 - BGE-M3, Docling, RAGAS, and Phoenix are optional and not required for the demo path.
 - Golden set is small (7 cases) and synthetic; live models and the repair loop are not benchmarked.
 - No legal/compliance advisor reviewed the content.
