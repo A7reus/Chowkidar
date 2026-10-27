@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import asyncio
 
+import pytest
+from app.mcp import server
 from app.mcp.server import api, mcp
 
 
@@ -30,3 +32,65 @@ async def _tool_names() -> set[str]:
         return {tool.name for tool in tools}
     finally:
         await api.close()
+
+
+def test_mcp_cli_defaults_to_stdio(monkeypatch) -> None:
+    calls: list[dict] = []
+    monkeypatch.setattr(mcp, "run", lambda **kwargs: calls.append(kwargs))
+    server.main([])
+    assert calls == [{}]
+
+
+def test_mcp_cli_serves_streamable_http_with_bearer_token(monkeypatch) -> None:
+    calls: list[dict] = []
+    monkeypatch.setattr(mcp, "run", lambda **kwargs: calls.append(kwargs))
+    monkeypatch.setattr(mcp, "auth", None)
+    monkeypatch.setenv("CHOWKIDAR_MCP_HTTP_TOKEN", "test-token")
+    server.main(["--transport", "http", "--port", "9999"])
+    assert calls == [{"transport": "http", "host": "127.0.0.1", "port": 9999}]
+    assert mcp.auth is not None
+
+
+def test_mcp_http_fails_closed_without_a_token(monkeypatch) -> None:
+    calls: list[dict] = []
+    monkeypatch.setattr(mcp, "run", lambda **kwargs: calls.append(kwargs))
+    monkeypatch.delenv("CHOWKIDAR_MCP_HTTP_TOKEN", raising=False)
+    with pytest.raises(SystemExit):
+        server.main(["--transport", "http"])
+    assert calls == []
+
+
+def test_mcp_http_allows_explicit_loopback_unauthenticated_mode(monkeypatch) -> None:
+    calls: list[dict] = []
+    monkeypatch.setattr(mcp, "run", lambda **kwargs: calls.append(kwargs))
+    monkeypatch.setattr(mcp, "auth", object())
+    monkeypatch.delenv("CHOWKIDAR_MCP_HTTP_TOKEN", raising=False)
+    server.main(["--transport", "http", "--allow-unauthenticated"])
+    assert calls == [{"transport": "http", "host": "127.0.0.1", "port": 8765}]
+    assert mcp.auth is None
+
+
+def test_mcp_http_rejects_unauthenticated_non_loopback_host(monkeypatch) -> None:
+    calls: list[dict] = []
+    monkeypatch.setattr(mcp, "run", lambda **kwargs: calls.append(kwargs))
+    monkeypatch.delenv("CHOWKIDAR_MCP_HTTP_TOKEN", raising=False)
+    with pytest.raises(SystemExit):
+        server.main(
+            [
+                "--transport",
+                "http",
+                "--allow-unauthenticated",
+                "--host",
+                "0.0.0.0",  # noqa: S104 - asserting that a non-loopback bind is rejected
+            ]
+        )
+    assert calls == []
+
+
+def test_mcp_http_rejects_token_with_allow_unauthenticated(monkeypatch) -> None:
+    calls: list[dict] = []
+    monkeypatch.setattr(mcp, "run", lambda **kwargs: calls.append(kwargs))
+    monkeypatch.setenv("CHOWKIDAR_MCP_HTTP_TOKEN", "test-token")
+    with pytest.raises(SystemExit):
+        server.main(["--transport", "http", "--allow-unauthenticated"])
+    assert calls == []

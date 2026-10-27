@@ -55,7 +55,7 @@ synthetic data to the baseline.
 ```
 1 company · 4 users · 8 suppliers · 5 sources · 13 signals
 11 obligations · 8 risks (3 critical, 3 high, 1 medium, 1 low)
-21 actions · 5 approvals (4 pending) · 12 audit events · 13 evidence chunks
+21 actions · 5 approvals (4 pending) · 12 audit events · 14 evidence chunks
 ```
 
 ### Demo accounts
@@ -91,6 +91,9 @@ The login page uses one-click role cards when `AUTH_MODE=dev` and
 | `make docker` | Build the API image |
 | `make reset` | Destroy local volumes and rebuild the database |
 | `make mcp` | Run the read-only MCP server over stdio |
+| `make mcp-http` | Run MCP over Streamable HTTP; requires `CHOWKIDAR_MCP_HTTP_TOKEN` |
+| `make mcp-tunnel` | Optional Cloudflare quick tunnel for the local MCP endpoint (not used for the hosted demo) |
+| `make ollama-pull` | Pull a local Ollama model; `OLLAMA_PULL_MODEL=qwen2.5:3b` for the smoke-tested size |
 
 ---
 

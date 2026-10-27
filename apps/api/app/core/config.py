@@ -74,6 +74,9 @@ class Settings(BaseSettings):
     groq_model: str = "groq/openai/gpt-oss-120b"
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "ollama/qwen2.5:7b"
+    ollama_enabled: bool = False
+    llm_prefer_local: bool = False
+    llm_local_only: bool = False
     llm_timeout_seconds: int = 25
     llm_provider_cooldown_seconds: int = 90
 
@@ -124,6 +127,8 @@ class Settings(BaseSettings):
             raise ValueError("AUTH_MODE must be 'dev' or 'supabase'")
         if self.llm_mode not in {"mock", "live", "hybrid"}:
             raise ValueError("LLM_MODE must be 'mock', 'live', or 'hybrid'")
+        if self.llm_local_only and not self.ollama_enabled:
+            raise ValueError("OLLAMA_ENABLED must be true when LLM_LOCAL_ONLY=true")
         if self.data_mode not in {"fixture", "live", "hybrid"}:
             raise ValueError("DATA_MODE must be 'fixture', 'live', or 'hybrid'")
         if self.embedding_mode not in {"mock", "live"}:
@@ -164,10 +169,12 @@ class Settings(BaseSettings):
 
     @property
     def llm_live_ready(self) -> bool:
-        """True when a live/hybrid LLM path has at least one usable provider key."""
+        """True when a live/hybrid path has at least one configured provider."""
         if self.llm_mode == "mock":
             return False
-        return bool(self.gemini_api_key or self.groq_api_key)
+        if self.llm_local_only:
+            return bool(self.ollama_enabled)
+        return bool(self.gemini_api_key or self.groq_api_key or self.ollama_enabled)
 
     @property
     def live_connectors_enabled(self) -> bool:

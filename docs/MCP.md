@@ -2,9 +2,11 @@
 
 Chowkidar exposes a **read-only** [FastMCP](https://gofastmcp.com/) server. It lets another agent inspect the risk register, evidence, pending approvals, and supply-chain graph without mutating state or bypassing human approval.
 
-**Source:** `apps/api/app/mcp/server.py`  
-**Transport:** stdio (default)  
-**Auth:** demo token obtained automatically from the local API; optionally set `CHOWKIDAR_MCP_TOKEN`.
+**Source:** `apps/api/app/mcp/server.py`
+
+**Transports:** stdio (default) and Streamable HTTP (`--transport http`, SSE also available)
+
+**Auth:** demo token obtained automatically from the local API; optionally set `CHOWKIDAR_MCP_TOKEN`. Over HTTP/SSE, `CHOWKIDAR_MCP_HTTP_TOKEN` is **required by default**; `--allow-unauthenticated` is only accepted with a loopback host and cannot be combined with a token.
 
 ---
 
@@ -99,6 +101,47 @@ The demo login endpoint is disabled when `AUTH_MODE=supabase`; set `CHOWKIDAR_MC
 
 ---
 
+## Remote access: Streamable HTTP + tunnel
+
+Stdio only works for an MCP host on the same machine. To let a remote agent or a
+judge connect by URL, serve the same read-only tools over Streamable HTTP and
+publish them through a Cloudflare quick tunnel:
+
+```bash
+# Terminal 1 — API (see Prerequisites)
+make api
+
+# Terminal 2 — MCP over HTTP at http://127.0.0.1:8765/mcp
+export CHOWKIDAR_MCP_HTTP_TOKEN=$(openssl rand -hex 16)   # share this with the client
+make mcp-http
+
+# Terminal 3 — public https://<random>.trycloudflare.com URL
+make mcp-tunnel
+```
+
+Client configuration for a URL-based MCP host:
+
+```json
+{
+  "mcpServers": {
+    "chowkidar": {
+      "url": "https://<random>.trycloudflare.com/mcp",
+      "headers": { "Authorization": "Bearer <CHOWKIDAR_MCP_HTTP_TOKEN>" }
+    }
+  }
+}
+```
+
+The tunnel is ephemeral and exposes only the read-only tools. `make mcp-http`
+refuses to start without `CHOWKIDAR_MCP_HTTP_TOKEN`, and the server rejects
+requests without the matching bearer token. The optional tunnel target is not
+used for the hosted submission and has not been executed for it. `--host`,
+`--port`, `CHOWKIDAR_MCP_HOST`, and `CHOWKIDAR_MCP_PORT` change the bind address;
+`--allow-unauthenticated` is loopback-only. A local smoke returned `401` without
+`Authorization` and `200` with the configured bearer token.
+
+---
+
 ## Tools
 
 | Tool | Arguments | Returns |
@@ -152,6 +195,7 @@ supplier action is recorded.
 ## Safety boundaries
 
 - Read-only tools only; no approval, mutation, pipeline, or report tools.
+- HTTP/SSE fails closed without `CHOWKIDAR_MCP_HTTP_TOKEN`; the unauthenticated mode is loopback-only.
 - Every evidence result keeps its citation label, URL, and signal deep link.
 - Tool descriptions and the methodology resource state the not-legal-advice boundary.
 - Errors from the API are surfaced as tool errors rather than fabricated data.

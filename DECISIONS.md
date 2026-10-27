@@ -136,13 +136,14 @@
 
 **Stack freeze:** 2026-10-23. No implementation choice changes without user approval.
 
-**Current implementation status (2026-10-26):** the frozen stack is the target,
+**Current implementation status (2026-10-27):** the frozen stack is the target,
 not a claim that every component is wired. Neo4j is optional and not in the
-product path; Ollama is an optional fallback and has not been run in the demo;
-n8n is optional and inactive; BGE-M3/reranker, RAGAS, Phoenix, Docling, Sentry,
-and PostHog are optional and not on the hosted pilot path. The product path is
-Postgres + pgvector/FTS, LangGraph, LiteLLM, FastMCP (stdio), and the in-process
-scheduler. See [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md).
+product path; Ollama is an optional local path that was smoke-tested with
+`qwen2.5:3b` but is not hosted; n8n is optional and inactive; BGE-M3/reranker,
+RAGAS, Phoenix, Docling, Sentry, and PostHog are optional and not on the hosted
+pilot path. The product path is Postgres + pgvector/FTS with structure-aware
+legal-heading chunking, LangGraph, LiteLLM, FastMCP (stdio/HTTP/SSE), and the
+in-process scheduler. See [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md).
 
 **Free-tier fallback:** Groq and Google AI Studio have rate limits. The pipeline
 degrades to a deterministic mock mode without breaking the demo; Gemini 3.8
@@ -318,7 +319,7 @@ To avoid losing details between sessions:
 - Tests: API 75 passed; Ruff and Pyright clean; web typecheck/lint clean; web tests 8/8 passed.
 - User supplied working Gemini and Groq keys. They were written only to the gitignored `.env` (mode `600`) and both providers were probed successfully with minimal LiteLLM calls; the keys were never printed or committed. They were later added to Render, and hosted live inference is now verified.
 - User decisions recorded: keep `JU_StackMind` only and leave other team fields blank; accept the weak Supabase password for the zero-real-user pilot; keep a video placeholder; fill the official form with placeholders but do not submit.
-- Prepared the official form fill packet in `docs/SUBMISSION.md` section 10, including long-form copy, structured-tab copy, and explicit "not used" disclosures for fine-tuning, local models, external MCP, and tunneling.
+- Prepared the official form fill packet in `docs/SUBMISSION.md` section 10, including long-form copy, structured-tab copy, and explicit "not used" disclosures for fine-tuning and external MCP integration; local models and tunneling were later updated to local-smoke/target-only status.
 - Tests after the hosted-state reconciliation: API 76 passed; web 8/8 passed; Ruff, Pyright, ESLint, and `tsc` clean.
 - Found a scheduler arming bug: with `SCHEDULER_RUN_ON_START=false`, explicit `next_run_time=None` left the APScheduler job paused even though `scheduler_running=true`. Fixed by omitting the argument, added `scheduler_next_run_at` to health/meta, and added `apps/api/tests/test_scheduler.py` for both branches. `make check` then passed with API 78 tests and web 8/8. Pushed as `94c2a19`; Render deployed `94c2a19f91c4` and both endpoints reported a non-null next-run time.
 - Observed the first hosted scheduled cycle at revision `d1f285f50e67`: GDELT `last_synced_at=2026-10-26T09:29:36.732196Z` (`fixture_fallback`, 0 new) and Federal Register `09:30:00.053271Z` (`live`, 0 new due to dedupe); `scheduler_next_run_at` advanced from `09:29:36Z` to `10:29:36Z`.
@@ -330,6 +331,15 @@ To avoid losing details between sessions:
 - Ran one hosted `mode=live` pipeline over a temporary duplicate Federal Register signal: 1 obligation, 1 risk, 2 actions, 0 errors, 1 verified risk, `repair_attempts=0`; the rationale was model-generated with confidence `0.96`.
 - Removed the temporary signal, risk, obligation, actions, evidence chunks, and agent run; counts returned to 20 signals, 21 obligations, and 18 risks. Audit events were retained.
 - Reconciled the current-state docs with the verified hosted live-inference evidence. The official form remains unopened and unsubmitted.
+
+### 2026-10-27 — Session 8
+- Reviewed PR #1 read-only; did not merge it. The branch is `CONFLICTING`/`DIRTY`, and only selected parts were adapted onto current `main`.
+- Adapted local Ollama routing with `OLLAMA_ENABLED`, `LLM_PREFER_LOCAL`, and the new hard `LLM_LOCAL_ONLY` flag; configured-provider filtering prevents calls to unkeyed cloud providers.
+- Adapted MCP Streamable HTTP/SSE with fail-closed bearer auth: `CHOWKIDAR_MCP_HTTP_TOKEN` is required, `--allow-unauthenticated` is loopback-only, and `make mcp-http` refuses to start without a token.
+- Adapted structure-aware legal-heading chunking with section paths and `chunking=structure-aware` metadata; seed evidence chunks changed from 13 to 14. Wording is "splits at recognized legal headings," not "never straddles two articles."
+- Rejected the PR's keep-warm GitHub Action (roughly 744/750 Render Free hours, scheduler behavior change, GitHub cron/timeout risk) and did not take its conflicting README hunk.
+- Verification: `make check` 97 API + 8 web tests; `make evals` 7/7; local Ollama `qwen2.5:3b` pipeline smoke 0 errors / `repair_attempts=1` / `needs_review`; MCP HTTP 401 without a bearer token and 200 with the configured token.
+- No commit or push was made. The new code/docs remain in the local working tree; the hosted pilot still runs the prior revision.
 
 ### Template for future sessions
 ```

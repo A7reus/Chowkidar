@@ -1,7 +1,7 @@
 # Chowkidar — P0/P1 Gap Analysis and Remediation Tracker
 
-**Last updated:** 2026-10-26  
-**Owner:** JU_StackMind  
+**Last updated:** 2026-10-27 · **Owner:** JU_StackMind
+
 **Purpose:** Durable record of every material shortcoming found in the 2026-10-26 evaluation, the evidence for it, and the work required to close or honestly disclose it. This file is the recovery point if the conversation context is lost.
 
 **Authority order for current-state claims:**
@@ -37,9 +37,9 @@
 
 | ID | Shortcoming | Evidence (2026-10-27) | Scoring / risk impact | Required outcome | Status |
 |---|---|---|---|---|---|
-| **P0-1** | No autonomous live monitoring; source sync replays fixtures | Originally `DATA_MODE=fixture`; `sources.py` loaded only `data/fixtures/demo.json`; no scheduler. **Now:** live GDELT + US Federal Register connectors, `fixture|live|hybrid` data modes, dedupe by `(source_id, external_id)`, APScheduler job, and honest `last_sync_mode` labels | Fails the challenge's first specific ask; weakens Story, AI-Native Build, Data Lifecycle, Innovation, and Impact | Implement at least two real live connectors (GDELT + Federal Register), persist signals with dedupe, expose live/fallback mode, and schedule ingestion. Fixture mode must remain available and clearly labeled. | `verified` — hosted Federal Register `mode=live` (8 signals, second run 0), GDELT `fixture_fallback`; the first scheduled cycle fired at revision `d1f285f50e67` (GDELT `09:29:36Z`, Federal Register `09:30:00Z`, next run `10:29:36Z`). Render Free spin-down pauses the in-process scheduler; production needs an always-on instance or external scheduler |
-| **P0-2** | Hosted AI is deterministic mock mode; no real model inference | Originally `/healthz` reported `llm_mode=mock`; no hosted Gemini/Groq call. **Now:** `LLM_MODE=mock|live|hybrid`, LiteLLM calls with deterministic fallback, provider cooldown, sanitized errors, and `llm_live_ready` in health/meta. On 2026-10-27 Render reported `llm_live_ready=true`, and a hosted `mode=live` pipeline run over a temporary Federal Register signal produced a model-generated rationale (confidence `0.96`), 0 errors, and 1 verified risk; the temporary records were removed after verification | Judges may see a rules engine, not AI; weakens AI-Native and agent scores | Add a truthful `hybrid` LLM mode: try Gemini/Groq through LiteLLM, fall back to deterministic mock, and expose `llm_live_ready` in health/meta. Enable on the hosted service only when keys are present. | `verified` — hosted live inference confirmed on 2026-10-27 at revision `698773f1800d`; fallback remains available when providers fail |
-| **P0-3** | "Agentic" is a fixed linear DAG | Originally `_build_graph()` had fixed edges only. **Now:** conditional `verify → repair|persist`, one bounded repair cycle, verbatim-quote re-retrieval, routing metadata, and `repair_attempts` persisted on the run and risk | Undercuts the central agentic claim and the agent/orchestration form field | Add conditional routing and a bounded repair loop: verifier failure triggers evidence re-retrieval and one re-verification; unresolved risks are marked `needs_review`. Persist routing/attempt metadata. | `implemented` — local repair smoke + tests; hosted pipeline run completed (8 verified risks, no repair triggered) |
+| **P0-1** | No autonomous live monitoring; source sync replays fixtures | Originally `DATA_MODE=fixture`; `sources.py` loaded only `data/fixtures/demo.json`; no scheduler. **Now:** live GDELT + US Federal Register connectors, `fixture\|live\|hybrid` data modes, dedupe by `(source_id, external_id)`, APScheduler job, and honest `last_sync_mode` labels | Fails the challenge's first specific ask; weakens Story, AI-Native Build, Data Lifecycle, Innovation, and Impact | Implement at least two real live connectors (GDELT + Federal Register), persist signals with dedupe, expose live/fallback mode, and schedule ingestion. Fixture mode must remain available and clearly labeled. | `verified` — hosted Federal Register `mode=live` (8 signals, second run 0), GDELT `fixture_fallback`; the first scheduled cycle fired at revision `d1f285f50e67` (GDELT `09:29:36Z`, Federal Register `09:30:00Z`, next run `10:29:36Z`). Render Free spin-down pauses the in-process scheduler; production needs an always-on instance or external scheduler |
+| **P0-2** | Hosted AI is deterministic mock mode; no real model inference | Originally `/healthz` reported `llm_mode=mock`; no hosted Gemini/Groq call. **Now:** `LLM_MODE=mock\|live\|hybrid`, LiteLLM calls with deterministic fallback, provider cooldown, sanitized errors, and `llm_live_ready` in health/meta. On 2026-10-27 Render reported `llm_live_ready=true`, and a hosted `mode=live` pipeline run over a temporary Federal Register signal produced a model-generated rationale (confidence `0.96`), 0 errors, and 1 verified risk; the temporary records were removed after verification | Judges may see a rules engine, not AI; weakens AI-Native and agent scores | Add a truthful `hybrid` LLM mode: try Gemini/Groq through LiteLLM, fall back to deterministic mock, and expose `llm_live_ready` in health/meta. Enable on the hosted service only when keys are present. | `verified` — hosted live inference confirmed on 2026-10-27 at revision `698773f1800d`; fallback remains available when providers fail |
+| **P0-3** | "Agentic" is a fixed linear DAG | Originally `_build_graph()` had fixed edges only. **Now:** conditional `verify → repair\|persist`, one bounded repair cycle, verbatim-quote re-retrieval, routing metadata, and `repair_attempts` persisted on the run and risk | Undercuts the central agentic claim and the agent/orchestration form field | Add conditional routing and a bounded repair loop: verifier failure triggers evidence re-retrieval and one re-verification; unresolved risks are marked `needs_review`. Persist routing/attempt metadata. | `implemented` — local repair smoke + tests; hosted pipeline run completed (8 verified risks, no repair triggered) |
 | **P0-4** | No commercial validation | `STRATEGY.md` validation plan was future tense; no interviews, LOIs, design partners, revenue, or pricing tests in the repo | Business Value 20%; Story/Proof credibility | Create a validation kit and evidence log. Execute interviews/LOIs only if real evidence can be collected; never invent traction. If not executed, disclose `0 interviews` in the form. | `implemented` — kit created; evidence log is honestly `0 interviews` |
 | **P0-5** | Submission data gaps | No Figma/design link; team size, NRB status, and female-member status unknown; video not produced (out of scope per instruction) | Up to 19 form points at risk; presentation criterion | Create a public design artifact (architecture + wireframes) usable as the design link; add a team-data checklist with blanks; assign video owner. Do not invent team data. | `implemented` — `docs/DESIGN.md` public link verified `200`; team fields intentionally blank and video placeholder per user decision; form packet prepared |
 
@@ -58,7 +58,7 @@
   - `apps/api/app/services/sources.py` supports `fixture`, `live`, and `hybrid`; it dedupes on `(source_id, external_id)`, stores evidence chunks, matches suppliers only on exact name mentions, and writes `last_sync_mode`, `last_signal_count`, and `last_error`.
   - `apps/api/app/services/scheduler.py` runs the same service path through APScheduler when `ENABLE_SCHEDULER=true`; `main.py` starts and stops it in the lifespan.
   - `POST /api/v1/sources/{id}/sync` persists failed-run state and audit evidence before returning `502` for a hard live failure.
-  - Migration `9c1e4f2a7b10_live_connectors.py` applied; `make migrate` and `make seed` passed with 5 sources, 13 signals, 11 obligations, 8 risks, 21 actions, 5 approvals, 12 audit events, and 13 evidence chunks.
+  - Migration `9c1e4f2a7b10_live_connectors.py` applied; `make migrate` and `make seed` passed with 5 sources, 13 signals, 11 obligations, 8 risks, 21 actions, 5 approvals, 12 audit events, and 14 evidence chunks after structure-aware chunking.
   - **Federal Register live evidence:** `mode=live`, 8 signals created, source `healthy`; a second run returned `mode=live` and `0` new signals because of dedupe.
   - **GDELT fallback evidence:** the public API returned `429` and rate-limit HTML despite the connector's five-second retry. Hybrid sync returned `mode=fixture_fallback`, source `degraded`, `0` new signals, and a sanitized `last_error`. It never reported a fake healthy live sync.
   - **Hosted status (verified):** Render reports `data_mode=hybrid`, `live_connectors_enabled=true`, `scheduler_enabled=true`, and `scheduler_running=true`. The live connector evidence was captured at revision `8caca3eef555`. The scheduler arming fix was first verified at revision `94c2a19f91c4`; the first scheduled cycle then fired at revision `d1f285f50e67`. In that cycle GDELT recorded `last_synced_at=2026-10-26T09:29:36.732196Z` with `mode=fixture_fallback` and 0 new signals, and Federal Register recorded `last_synced_at=2026-10-26T09:30:00.053271Z` with `mode=live` and 0 new signals because of dedupe. `scheduler_next_run_at` advanced from `2026-10-26T09:29:36.398084Z` to `2026-10-26T10:29:36.398084Z`, proving the interval job fires rather than merely being armed. A hosted Federal Register manual sync had returned `mode=live` with 8 signals and source `healthy`; a second manual sync returned `mode=live` with 0 signals because of dedupe. A hosted GDELT manual sync returned `mode=fixture_fallback`, source `degraded`, and the sanitized rate-limit error. The scheduler initially reported `scheduler_running=true`, but inspection showed no source had synced since the manual run. Root cause: `next_run_time=None` was passed explicitly when `SCHEDULER_RUN_ON_START=false`, which left the APScheduler job paused. The code now omits that option so the interval trigger arms normally; `scheduler_next_run_at` is exposed in `/healthz` and `/api/v1/meta`; `apps/api/tests/test_scheduler.py` covers both `run_on_start` branches. The fix is deployed, and the observed cycle confirms scheduled ingestion works at the current revision.
@@ -91,18 +91,35 @@
 
 ## 2. P1 — high-impact capability and documentation gaps
 
-| ID | Gap | Evidence (2026-10-26) | Impact | Required outcome | Status |
+| ID | Gap | Evidence (2026-10-27) | Impact | Required outcome | Status |
 |---|---|---|---|---|---|
-| **P1-1** | RAG depth is overstated | `apps/api/app/rag/chunking.py` prefixes document/jurisdiction/section metadata; `SentenceSplitter` is not semantic chunking; `apps/api/app/rag/embeddings.py` uses hash embeddings in mock mode; no late interaction; no graph RAG; BGE-M3/reranker optional; Neo4j not wired | RAG rows/bonus; technical credibility | Run BGE-M3 + cross-encoder if feasible; add semantic chunking; otherwise claim only context-enriched chunking + pgvector/FTS hybrid with RRF and lexical reranking. | `open` |
-| **P1-2** | MCP is built but not used in the product path | `apps/api/app/mcp/server.py` exposes one read-only FastMCP stdio server with six tools, one prompt, one resource; no external MCP server; no SSE; pipeline does not call MCP | MCP category 20+ | Integrate one external MCP server (fetch/Postgres) into an agent step, or disclose only "built" and "stdio architecture." | `open` |
+| **P1-1** | RAG depth is overstated | **Now:** `apps/api/app/rag/chunking.py` splits at recognized legal headings (`Article`, `Section`, `Chapter`, `Part`, `Annex`, `Schedule`, `Rule`, `Title`, `§`), stores a per-section path, and marks metadata `chunking=structure-aware`. `apps/api/app/rag/embeddings.py` still uses hash embeddings in mock mode; no late interaction; no graph RAG; BGE-M3/reranker optional; Neo4j not wired | RAG rows/bonus; technical credibility | Run BGE-M3 + cross-encoder if feasible; otherwise claim structure-aware legal-heading chunking + pgvector/FTS hybrid with RRF and lexical reranking. Do not call it semantic chunking. | `implemented` — heading-aware chunking and section paths tested; semantic/graph RAG remain unclaimed |
+| **P1-2** | MCP is built but not used in the product path | **Now:** `apps/api/app/mcp/server.py` exposes the same six read-only tools, one prompt, and one resource over stdio (default) or Streamable HTTP/SSE (`--transport http` or `sse`). HTTP/SSE fail closed: `CHOWKIDAR_MCP_HTTP_TOKEN` is required, and `--allow-unauthenticated` is loopback-only. No external MCP server is integrated; the pipeline does not call MCP | MCP category 20+ | Integrate one external MCP server (fetch/Postgres) into an agent step, or disclose only "built" and "not in the product path." | `in_progress` — transport and fail-closed auth implemented/tested; external integration and product-path use remain open |
 | **P1-3** | n8n workflow is inactive and inconsistent | `infra/n8n/workflows/stream-sync.json` is `active: false`; calls `/sources/bd_bank/sync` but route expects UUID; sends `X-Internal-Key` but route requires analyst JWT; fixture replay anyway. **Now:** the in-process APScheduler is the supported ingestion path; n8n remains an optional scaffold | Automation bonus; Data Lifecycle | Fix route/auth or replace with the in-process scheduler; activate and run once, or remove active claims. | `accepted` — replaced by the scheduler; n8n is not claimed as active |
-| **P1-4** | Ollama/local models not run | Compose service exists; no model pulled or executed; no local inference evidence | Up to 13 checklist points | Run a small model locally, execute one extraction, capture logs; or leave as honest zero. | `open` |
+| **P1-4** | Ollama/local models were not previously run | **Now:** `OLLAMA_ENABLED`, `LLM_PREFER_LOCAL`, and `LLM_LOCAL_ONLY` are implemented. A local smoke run with cached `qwen2.5:3b` completed the pipeline with 0 errors, `repair_attempts=1`, and verification `needs_review`. The default `qwen2.5:7b` was not pulled, and no local model is deployed on Render | Up to 13 checklist points | Run a small model locally, execute one extraction, capture logs; or leave as honest zero. | `implemented` — local smoke only with `qwen2.5:3b`; no default-7B, hosted, quality, or latency claim |
 | **P1-5** | Evals are weak and internally inconsistent | 7 synthetic cases, all metrics `1.0`, same deterministic path; no adversarial/held-out set; `docs/EVALS.md` and `docs/ARCHITECTURE.md` list different five-gate sets; duplicate remediation call in `services/evals.py` | Evals field; technical trust | Add 10–20 edge/adversarial cases, report failures, remove duplicate call, reconcile gate names to code. | `open` |
 | **P1-6** | No real observability or lineage | `agent_runs.trace_id`, audit log, `last_synced_at` only; no OpenLineage/Phoenix/Sentry/PostHog; no cost/latency dashboard; no end-to-end lineage view | Lineage field; Data Lifecycle | Add a lineage view/table (source → signal → obligation → risk → action → report) and structured logs with trace IDs. | `open` |
 | **P1-7** | PII/responsible-AI doc/code mismatch | `core/security.py` redacts email, phone, NID, passport; docs claimed IBAN; no Presidio/Llama Guard; browser tokens in local storage; no MFA/RLS/DPA/retention policy. **Now:** IBAN claim removed; docs state the boundary | Privacy/guardrails; Responsible AI 20% | Add IBAN pattern or remove claim; add retention/data-flow/DPA notes; document local-storage risk; do not claim Presidio/Llama Guard. | `implemented` — claim removed; broader privacy gaps disclosed |
 | **P1-8** | Admin and multi-tenancy gaps | Script-based provisioning; no invite/role-change UI; single workspace; no billing | Business/scalability; product completeness | Disclose as single-workspace pilot; add admin UI only if time; never claim SaaS readiness. | `accepted` for preliminary |
 | **P1-9** | Data quality and licensing | Fixture data for three streams; dedupe by `external_id` now implemented; no freshness SLO or source license/ToS review. **Now:** source licensing disclosure and freshness expectations added to `docs/DATA_SOURCES.md` | Data Lifecycle 25 | Add validation/dedupe/freshness metrics and a source license table; document fixture provenance. | `implemented` — dedupe, license disclosure, and freshness expectations documented; no enforced SLO or formal terms review |
-| **P1-10** | Checklist gaps | No listed frontend AI tool, no listed AI-DLC framework, no fine-tuning, no tunneling | AI stack points | Honest zeros. Optional truthful quick wins: Cloudflare Tunnel for local demo, OpenCode in an "other" field if available. Do not check unimplemented boxes. | `accepted` for preliminary |
+| **P1-10** | Checklist gaps | **Now:** `make mcp-http` and `make mcp-tunnel` (Cloudflare quick tunnel) exist for the read-only MCP endpoint. The tunnel has not been executed or verified for the submission. No listed frontend AI tool, no AI-DLC framework, and no fine-tuning | AI stack points | Honest zeros. Optional truthful quick wins: Cloudflare Tunnel for the local MCP demo, OpenCode in an "other" field if available. Do not check unimplemented boxes. | `in_progress` — tunnel target added but unverified; no tunneling points claimed |
+
+---
+
+## 2a. PR #1 intake and adaptation (2026-10-27)
+
+PR [#1](https://github.com/A7reus/Chowkidar/pull/1) (`review/hackathon-readiness`, author `shihab3point14`) was reviewed read-only and was **not merged**: the branch is `CONFLICTING`/`DIRTY`, and only selected changes were adapted onto current `main`.
+
+| PR item | Decision | Adaptation and boundary |
+|---|---|---|
+| LLM routing + local Ollama | **Adapted** | Added `OLLAMA_ENABLED`, `LLM_PREFER_LOCAL`, and the new `LLM_LOCAL_ONLY` flag, plus configured-provider filtering and Ollama-first routing. `LLM_PREFER_LOCAL` can still fall back to configured cloud providers; `LLM_LOCAL_ONLY=true` excludes them and requires `OLLAMA_ENABLED=true`. Local smoke used cached `qwen2.5:3b`, not the default `qwen2.5:7b`; no hosted local model or quality claim. |
+| MCP Streamable HTTP | **Adapted with hardening** | stdio remains the default; `--transport http` or `sse` and host/port options were added. HTTP/SSE now **fail closed**: `CHOWKIDAR_MCP_HTTP_TOKEN` is required, and `--allow-unauthenticated` is rejected for non-loopback hosts or when a token is set. `make mcp-http` refuses to start without a token. |
+| Structure-aware chunking | **Adapted** | New chunks start at recognized legal headings (`Article`, `Section`, `Chapter`, `Part`, `Annex`, `Schedule`, `Rule`, `Title`, `§`), store a per-section path, and mark metadata `chunking=structure-aware`. Wording is “splits at recognized legal headings,” not “never straddles two articles”; long sections still sentence-split. Seed evidence chunks: 13 → 14. |
+| Keep-warm GitHub Action | **Rejected** | The PR's schedule would keep Render Free awake for roughly 744 of 750 monthly hours, changes scheduler behavior, and depends on GitHub cron/timeout behavior. Not added. Render Free spin-down remains disclosed. |
+| README hunk | **Not taken** | The PR's `README.md` change conflicts with current `main`; capability rows were reconciled manually instead. |
+| Tests and docs | **Adapted** | Routing, config, chunking, and MCP CLI tests added; docs updated to the implemented boundaries. |
+
+**Verification:** targeted API tests pass; `make check` passes **97 API tests + 8 web tests**; `make evals` remains **7/7**; local Ollama `qwen2.5:3b` pipeline smoke completed with 0 errors, `repair_attempts=1`, verification `needs_review`; MCP HTTP rejects requests without a bearer token and accepts the configured token. The PR remains open, unmerged, and uncommented.
 
 ---
 
@@ -126,8 +143,9 @@ Use these until the corresponding capability is verified:
 
 - **Monitoring:** "Five labelled streams: Bangladesh Bank, EUR-Lex, and UFLPA are fixture-backed; GDELT and the US Federal Register have real live connectors with dedupe and an in-process scheduler. Hybrid mode falls back to fixtures and labels the run `fixture_fallback`; a failed live run is never reported as healthy."
 - **Agentic:** "LangGraph-orchestrated seven-stage risk pipeline with conditional evidence repair, human-in-the-loop approval, and deterministic fallback."
-- **RAG:** "Context-enriched chunking + pgvector/Postgres FTS hybrid retrieval with reciprocal rank fusion and lexical reranking."
-- **MCP:** "Built a read-only FastMCP stdio server exposing six tools; external MCP integration is not in the product path."
+- **RAG:** "Structure-aware chunking that starts new chunks at recognized legal headings, with document/jurisdiction/section prefixes, plus pgvector/Postgres FTS hybrid retrieval with reciprocal rank fusion and lexical reranking. It is not semantic chunking, late interaction, or graph RAG."
+- **MCP:** "Built a read-only FastMCP server exposing six tools, one prompt, and one resource over stdio or Streamable HTTP/SSE; HTTP requires a bearer token by default and `--allow-unauthenticated` is loopback-only. External MCP integration is not in the product path."
+- **Local models:** "The Ollama path is implemented and was smoke-tested locally with cached `qwen2.5:3b`; the default `qwen2.5:7b` was not pulled, and no local model runs on the hosted pilot. `LLM_LOCAL_ONLY=true` is the hard no-cloud path."
 - **Deployment:** "Single-workspace production pilot with Supabase auth, RBAC, audit trail, and durable reports; not multi-tenant SaaS. GDELT and US Federal Register live ingestion, hybrid modes, and scheduled ingestion are deployed; Federal Register live sync is hosted-verified. Hosted LLM inference is enabled and verified (`llm_live_ready=true`), with deterministic fallback when a provider fails."
 - **Evals:** "Seven synthetic golden cases, all five gates pass; demo-scale, not a legal benchmark."
 
@@ -143,8 +161,9 @@ Do not claim any of the following unless the status changes to `verified` with e
 - Semantic chunking, late interaction, Anthropic-style contextual RAG, or graph RAG.
 - Neo4j or a graph database in the product path.
 - External MCP servers used in the product path.
+- A publicly exposed MCP HTTP endpoint or a verified Cloudflare tunnel; the server is local/opt-in, and the tunnel target has not been executed for the submission.
 - Active n8n automation.
-- Local Ollama models run in the demo.
+- Hosted local-model inference, default `qwen2.5:7b` results, or Ollama quality/latency claims. The local smoke used `qwen2.5:3b` only.
 - Fine-tuning, LoRA, or a training-data pipeline.
 - Customer discovery, LOIs, pilots, revenue, or pricing validation.
 - Multi-tenancy, SSO, billing, SOC 2, MFA, RLS, DPA, or retention policy.
@@ -164,6 +183,7 @@ Do not claim any of the following unless the status changes to `verified` with e
 | 6 | Reconcile current-state docs and update `LIMITATIONS.md` | Prevents judge-visible contradictions | `implemented` |
 | 7 | Run tests, local live-connector smoke, and hosted QA | Verify before form | `completed` — local checks pass; hosted hybrid env, Federal Register live sync, GDELT fallback, pipeline runs, scheduler arming, the first scheduled cycle, and hosted live LLM inference are verified |
 | 8 | Fill the official form with placeholders and stop before submission | User approved filling with placeholders on 2026-10-26; submission still needs separate explicit approval | `in_progress` — form packet prepared in `docs/SUBMISSION.md` section 10; portal session unavailable |
+| 9 | Adapt selected PR #1 improvements (local Ollama routing, MCP HTTP/SSE, structure-aware chunking) without merging the PR | Close P1-1/P1-4 portions and improve MCP deployability while preserving fail-closed auth | `implemented` — code/tests/docs updated; `make check` 97 API + 8 web; `make evals` 7/7; keep-warm workflow rejected |
 
 ---
 
@@ -177,6 +197,20 @@ make migrate               # after adding the source columns
 make seed                  # local fixture demo
 make api                   # local API
 make web                   # local web
+```
+
+Optional local-model and MCP transport smoke:
+
+```bash
+# Local Ollama (no cloud keys required for LLM_LOCAL_ONLY)
+make ollama-pull OLLAMA_PULL_MODEL=qwen2.5:3b
+# Start the API with OLLAMA_ENABLED=true LLM_LOCAL_ONLY=true LLM_MODE=hybrid,
+# then run one pipeline/extraction and confirm the run used ollama/...
+
+# MCP over HTTP: fail closed without a token
+make mcp-http                          # exits unless CHOWKIDAR_MCP_HTTP_TOKEN is set
+CHOWKIDAR_MCP_HTTP_TOKEN=test-token make mcp-http
+curl -i http://127.0.0.1:8765/mcp      # 401 without Authorization
 ```
 
 Live connector smoke (local, with Postgres running):
@@ -239,6 +273,8 @@ Current hosted state (2026-10-27): `llm_mode=hybrid`, `llm_live_ready=true`, `da
 | Observe one scheduled ingestion cycle | Confirms the APScheduler path fires on Render, not just that it is running | Operator | `resolved` — first cycle observed on 2026-10-26 at revision `d1f285f50e67`: GDELT `09:29:36Z` (`fixture_fallback`, 0 new), Federal Register `09:30:00Z` (`live`, 0 new due to dedupe), next run `10:29:36Z`. Render Free spin-down still pauses the scheduler; production needs an always-on instance or external scheduler |
 | Video owner and recording | Official form requires a YouTube URL; explicitly out of scope for this work | User | `accepted` — placeholder only; no recording claimed |
 | Supabase database password rotation | Security hygiene; requires updating Render `DATABASE_URL` | User/operator | `accepted` — zero-real-user pilot; rotate before real users; not a submission blocker |
+| PR #1 remains open and conflicting | The selected parts were adapted manually; the branch is `CONFLICTING`/`DIRTY` and was not merged or commented | User/maintainer | `accepted` — no merge needed for the submission; do not claim the PR was merged |
+| Local model/tunnel verification | Default `qwen2.5:7b` was not pulled; `make mcp-tunnel` was not executed | Operator | `accepted` — do not claim 7B quality or tunneling points |
 
 ---
 
@@ -262,6 +298,7 @@ Current hosted state (2026-10-27): `llm_mode=hybrid`, `llm_live_ready=true`, `da
 | 2026-10-26 | Pushed the cycle-evidence and docs commits; verified the post-push Render deploy | `main` at `56df414`; hosted revision `56df4142eda8` | `/healthz` returned `status=ok`, `database=ok`, `scheduler_running=true`, and `scheduler_next_run_at=2026-10-26T10:44:54Z`; the docs-only deploy re-armed the interval |
 | 2026-10-27 | User set `GEMINI_API_KEY` and `GROQ_API_KEY` on Render, saved, and redeployed; verified hosted live LLM readiness and one live pipeline run | Render environment (no repo secrets); `docs/GAP_ANALYSIS.md` | Health at revision `698773f1800d`: `llm_live_ready=true`, `scheduler_running=true`, next run `2026-10-27T13:08:49Z`; hosted `mode=live` run `e6fdcb6b-27a4-4fec-b261-45d357acb018`: 1 obligation, 1 risk, 2 actions, 0 errors, 1 verified, model rationale confidence `0.96`, `repair_attempts=0`; temporary records removed, counts restored to 20 signals / 21 obligations / 18 risks |
 | 2026-10-27 | Reconciled current-state docs with verified hosted live inference | `README.md`, `DECISIONS.md`, `docs/*` | Documentation review; stale `llm_live_ready=false` claims removed; `make check` clean |
+| 2026-10-27 | Reviewed PR #1 read-only and adapted only the selected parts: local Ollama routing with `LLM_LOCAL_ONLY`, fail-closed MCP Streamable HTTP/SSE, and structure-aware legal-heading chunking. Rejected the keep-warm workflow and the conflicting README hunk. | `apps/api/app/{agents/llm.py,api/v1/meta.py,core/config.py,mcp/server.py,rag/chunking.py}`, tests, `.env.example`, `Makefile`, docs | `make check` 97 API + 8 web; `make evals` 7/7; seed 14 evidence chunks; local `qwen2.5:3b` pipeline smoke 0 errors, `repair_attempts=1`, `needs_review`; MCP HTTP auth smoke |
 
 ---
 

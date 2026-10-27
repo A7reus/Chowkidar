@@ -1,4 +1,4 @@
-.PHONY: setup services-up services-down migrate seed api web dev demo test e2e lint typecheck fmt evals api-types mcp docker check reset
+.PHONY: setup services-up services-down migrate seed api web dev demo test e2e lint typecheck fmt evals api-types mcp mcp-http mcp-tunnel ollama-pull docker check reset
 
 setup:
 	pnpm install
@@ -63,6 +63,20 @@ api-types:
 
 mcp:
 	cd apps/api && uv run python -m app.mcp.server
+
+# Streamable HTTP transport on http://127.0.0.1:8765/mcp (requires CHOWKIDAR_MCP_HTTP_TOKEN)
+mcp-http:
+	@test -n "$$CHOWKIDAR_MCP_HTTP_TOKEN" || (echo "Set CHOWKIDAR_MCP_HTTP_TOKEN before starting the HTTP transport" >&2; exit 1)
+	cd apps/api && uv run python -m app.mcp.server --transport http
+
+# Publish the local MCP endpoint through a Cloudflare quick tunnel (run `make mcp-http` first)
+mcp-tunnel:
+	cloudflared tunnel --url http://127.0.0.1:8765
+
+# Pull the local model used when OLLAMA_ENABLED=true (see docs/ENVIRONMENT.md)
+OLLAMA_PULL_MODEL ?= qwen2.5:7b
+ollama-pull:
+	ollama pull $(OLLAMA_PULL_MODEL)
 
 docker:
 	docker build -f apps/api/Dockerfile -t chowkidar-api .

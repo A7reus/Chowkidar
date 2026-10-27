@@ -134,7 +134,7 @@ cold-start behavior.
 
 - CI is green for the Netlify migration and QA-evidence docs commits, including
   `021c8b6` (API and web jobs).
-- `make check` passes: 57 API tests and 8 web tests.
+- `make check` passes: 97 API tests and 8 web tests (current; the initial hosted QA baseline was 57 API tests).
 - Local Playwright demo smoke passes 4/4.
 
 Baseline confirmed on the hosted API: 8 risks, 3 critical, 4 pending approvals.

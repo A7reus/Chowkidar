@@ -7,7 +7,13 @@ web application and its human-in-the-loop workflow.
 Run it with the API available:
 
     cd apps/api
-    uv run python -m app.mcp.server
+    uv run python -m app.mcp.server                      # stdio (local MCP hosts)
+    uv run python -m app.mcp.server --transport http     # Streamable HTTP on :8765/mcp
+
+The HTTP transport lets remote MCP hosts connect by URL, for example through a
+Cloudflare quick tunnel (``make mcp-tunnel``). ``CHOWKIDAR_MCP_HTTP_TOKEN`` is
+required and enforces ``Authorization: Bearer <token>`` on every HTTP request;
+``--allow-unauthenticated`` is loopback-only and cannot be combined with a token.
 
 Example client configuration:
 
@@ -24,6 +30,7 @@ Example client configuration:
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import os
 from typing import Any
@@ -274,5 +281,44 @@ def methodology() -> str:
     )
 
 
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description="Chowkidar read-only MCP server")
+    parser.add_argument("--transport", choices=["stdio", "http", "sse"], default="stdio")
+    parser.add_argument("--host", default=os.getenv("CHOWKIDAR_MCP_HOST", "127.0.0.1"))
+    parser.add_argument("--port", type=int, default=int(os.getenv("CHOWKIDAR_MCP_PORT", "8765")))
+    parser.add_argument(
+        "--allow-unauthenticated",
+        action="store_true",
+        help="Allow HTTP/SSE without a bearer token; only for a loopback host",
+    )
+    args = parser.parse_args(argv)
+
+    if args.transport == "stdio":
+        mcp.run()
+        return
+
+    http_token = os.getenv("CHOWKIDAR_MCP_HTTP_TOKEN", "")
+    if http_token and args.allow_unauthenticated:
+        parser.error(
+            "--allow-unauthenticated cannot be combined with CHOWKIDAR_MCP_HTTP_TOKEN"
+        )
+    if not http_token and not args.allow_unauthenticated:
+        parser.error(
+            "CHOWKIDAR_MCP_HTTP_TOKEN is required for HTTP/SSE transports; "
+            "use --allow-unauthenticated only for loopback-only access"
+        )
+    if args.allow_unauthenticated and args.host not in {"127.0.0.1", "localhost", "::1"}:
+        parser.error("--allow-unauthenticated is only allowed with a loopback --host")
+
+    mcp.auth = None
+    if http_token:
+        from fastmcp.server.auth.providers.jwt import StaticTokenVerifier
+
+        mcp.auth = StaticTokenVerifier(
+            tokens={http_token: {"client_id": "chowkidar-mcp-http", "scopes": []}}
+        )
+    mcp.run(transport=args.transport, host=args.host, port=args.port)
+
+
 if __name__ == "__main__":
-    mcp.run()
+    main()

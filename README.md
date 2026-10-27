@@ -49,7 +49,7 @@ More views: [signals](docs/assets/02-signals.png) · [search](docs/assets/05-sea
 | Risk register and risk detail with score breakdown and evidence | Built |
 | LangGraph pipeline: ingest → extract → map → score → remediate → verify → conditional repair → persist | Built |
 | Deterministic weighted risk score + LLM rationale | Built |
-| Hybrid retrieval over cited evidence (pgvector + Postgres FTS) | Built |
+| Structure-aware legal-heading chunking + hybrid retrieval over cited evidence (pgvector + Postgres FTS) | Built locally; not yet hosted; not semantic or graph RAG |
 | Evidence verifier and legal-advice guard | Built |
 | Bounded evidence-repair loop with routing metadata | Built |
 | Human approval queue with rationale and audit trail | Built |
@@ -57,7 +57,7 @@ More views: [signals](docs/assets/02-signals.png) · [search](docs/assets/05-sea
 | Reports in PDF, JSON, and Markdown | Built |
 | Supply-chain graph and node inspector | Built |
 | Evaluation dashboard with five metric gates | Built, 7/7 golden cases |
-| Read-only MCP server | Built |
+| Read-only MCP server | Built: stdio + Streamable HTTP/SSE; HTTP requires a bearer token by default; not in the product path |
 | FastAPI REST API + OpenAPI schema | Built |
 | English + Bengali UI chrome | Built |
 | Demo auth with four roles | Built; local only in `AUTH_MODE=dev` + `DEMO_MODE=true` |
@@ -65,6 +65,7 @@ More views: [signals](docs/assets/02-signals.png) · [search](docs/assets/05-sea
 | Durable report storage | Built: local, Postgres, and private Supabase Storage backends; Postgres is live on the hosted API and survived a redeploy |
 | Live GDELT + US Federal Register connectors | Built, deployed, and hosted-verified for Federal Register; hybrid fallback labels the run honestly |
 | Hybrid LLM mode | Built, deployed, and hosted-verified: `llm_live_ready=true`; a hosted `mode=live` run produced a model-generated rationale with confidence `0.96`, and deterministic fallback remains available |
+| Local Ollama routing | Built and locally smoke-tested with `qwen2.5:3b`; `LLM_PREFER_LOCAL` is Ollama-first with cloud fallback, `LLM_LOCAL_ONLY` is the hard no-cloud path; not hosted and no quality/latency claim |
 | In-process scheduled ingestion | Built (APScheduler), deployed, and verified on Render: first cycle fired on 2026-10-26 (`d1f285f50e67`), GDELT `fixture_fallback` + Federal Register `live`, next run `10:29:36Z`; disabled in the local demo |
 | Cloud deployment | Live production pilot: Render API + Netlify web primary, Vercel secondary fallback; see [`docs/CLOUD_DEPLOYMENT_STATUS.md`](docs/CLOUD_DEPLOYMENT_STATUS.md) |
 
@@ -103,7 +104,7 @@ Next.js console · REST/OpenAPI · read-only MCP
 
 - **Web:** Next.js App Router, TypeScript, Tailwind, shadcn-style components, TanStack Query, Zustand, Recharts, React Flow.
 - **API:** FastAPI, SQLAlchemy 2, Alembic, Postgres + pgvector, REST/OpenAPI.
-- **Agents:** LangGraph orchestration with a conditional repair loop; LiteLLM fallback chain (Gemini 3.5 Flash → Groq → optional Ollama); hybrid mode with deterministic fallback.
+- **Agents:** LangGraph orchestration with a conditional repair loop; LiteLLM routing (Gemini 3.5 Flash → Groq → optional Ollama, or Ollama-first/local-only); hybrid mode with deterministic fallback.
 - **Trust:** verbatim evidence quotes, citation URLs, deterministic verifier, prohibited-phrase checks, hash-chained audit events, role-gated mutations.
 - **Ingestion:** live GDELT + US Federal Register connectors with dedupe and honest mode labels; in-process APScheduler job; Bangladesh Bank/EUR-Lex/UFLPA remain fixture-backed.
 - **Ops:** Docker Compose for local Postgres plus optional Neo4j/Ollama/n8n, Render Docker blueprint for the API, Netlify for the primary web app, Vercel as the secondary fallback.
@@ -162,6 +163,9 @@ make typecheck     # Pyright + tsc
 make check         # lint + typecheck + unit tests
 make evals         # golden-set evaluation
 make mcp           # read-only MCP server over stdio
+make mcp-http      # Streamable HTTP on :8765/mcp; requires CHOWKIDAR_MCP_HTTP_TOKEN
+make mcp-tunnel    # optional Cloudflare quick tunnel for the local MCP endpoint (not used for the hosted demo)
+make ollama-pull   # optional local model; OLLAMA_PULL_MODEL=qwen2.5:3b for the smoke-tested size
 make docker        # build the API container from the repo root
 make api-types     # regenerate OpenAPI types (API must be running)
 ```
@@ -206,6 +210,9 @@ cd apps/api && uv run python -m app.db.seed
 - Reports use the durable Postgres backend on the hosted API (`STORAGE_BACKEND=database`), with private Supabase Storage as an optional object-store adapter. Hosted reports survived an API redeploy with matching checksums; local `/tmp` reports remain only for offline demos.
 - Rate limits are process-local (suitable for the single Render instance); browser tokens are stored in local storage rather than HttpOnly cookies.
 - Hybrid LLM mode is implemented, deployed, and hosted-verified: Render reports `llm_live_ready=true`, and a hosted `mode=live` pipeline run on 2026-10-27 produced a model-generated, citation-grounded rationale with confidence `0.96` and 0 errors. Deterministic fallback remains available when providers fail. Provider keys live only in Render environment variables and the gitignored local `.env`; they are never committed. Provider reliability is not an SLA; Gemini 3.8 Flash timed out and Gemini Pro Latest had zero free-tier quota, so the defaults use Gemini 3.5 Flash.
+- **Local Ollama is a local smoke path, not a hosted capability.** `OLLAMA_ENABLED=true` adds Ollama to the fallback chain; `LLM_PREFER_LOCAL=true` tries it first but still falls back to configured cloud providers; `LLM_LOCAL_ONLY=true` hard-disables cloud providers and requires Ollama. A local run used cached `qwen2.5:3b` (0 errors, `repair_attempts=1`, verification `needs_review`). The default `qwen2.5:7b` was not pulled, no local model runs on Render, and no quality/latency claim is made.
+- **MCP is read-only and outside the product path.** The server exposes six tools, one prompt, and one resource over stdio or Streamable HTTP/SSE. HTTP requires `CHOWKIDAR_MCP_HTTP_TOKEN` by default; `--allow-unauthenticated` is loopback-only. No external MCP server is integrated, the pipeline does not call MCP, and the optional `make mcp-tunnel` target has not been executed for the submission.
+- **Chunking is structure-aware, not semantic.** New chunks start at recognized legal headings (`Article`, `Section`, `Chapter`, `Part`, `Annex`, `Schedule`, `Rule`, `Title`, `§`) and store a section path. Long sections are sentence-split and can still split mid-article; mock mode uses hash embeddings. No late interaction or graph RAG.
 - Optional BGE-M3 embeddings, Docling, RAGAS, and Phoenix are not required for the demo path.
 - No customer interviews, LOIs, design partners, or revenue. The validation kit is at [`docs/VALIDATION.md`](docs/VALIDATION.md) and the evidence log is honestly at zero.
 - No Figma file; [`docs/DESIGN.md`](docs/DESIGN.md) is the design artifact. No final demo video yet; the form packet uses a placeholder.
@@ -216,10 +223,12 @@ cd apps/api && uv run python -m app.db.seed
 
 ## MCP (optional)
 
-Chowkidar exposes a **read-only** FastMCP server so other agents can inspect risks, evidence, approvals, and the supply-chain graph without mutating state.
+Chowkidar exposes a **read-only** FastMCP server so other agents can inspect risks, evidence, approvals, and the supply-chain graph without mutating state. stdio is the default; Streamable HTTP/SSE is available for URL-based MCP hosts. HTTP fails closed unless `CHOWKIDAR_MCP_HTTP_TOKEN` is set; `--allow-unauthenticated` is restricted to loopback.
 
 ```bash
-make mcp
+make mcp                                      # stdio
+CHOWKIDAR_MCP_HTTP_TOKEN=... make mcp-http    # http://127.0.0.1:8765/mcp
+make mcp-tunnel                               # optional Cloudflare quick tunnel (not used for the hosted demo)
 ```
 
 Example client config:

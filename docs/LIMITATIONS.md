@@ -26,7 +26,9 @@ calibrate the claims.
 > `fixture_fallback` under its public rate limit. Hosted live LLM inference is
 > verified: a `mode=live` pipeline run produced a model-generated rationale with
 > confidence `0.96`, 0 errors, and 1 verified risk. Deterministic fallback
-> remains available when a provider fails.
+> remains available when a provider fails. The selected PR #1 adaptation (local
+> Ollama routing, MCP HTTP/SSE, structure-aware chunking) is in the local working
+> tree and has not been deployed to Render at the time of writing.
 
 ---
 
@@ -64,8 +66,8 @@ calibrate the claims.
 
 - **Two live connectors exist; three streams remain fixture-backed.**
   `GDELT` and the `US Federal Register` have real key-free connectors with
-  normalization, dedupe by `(source_id, external_id)`, evidence chunking, and
-  honest mode labels. Bangladesh Bank, EUR-Lex, and DHS/UFLPA still replay
+  normalization, dedupe by `(source_id, external_id)`, structure-aware evidence
+  chunking, and honest mode labels. Bangladesh Bank, EUR-Lex, and DHS/UFLPA still replay
   fixture data. The catalog in [`DATA_SOURCES.md`](DATA_SOURCES.md) distinguishes
   wired connectors from design targets.
 - **Hybrid mode is implemented, but GDELT is externally rate-limited.** The
@@ -113,6 +115,24 @@ calibrate the claims.
   Gemini Pro Latest had zero free-tier quota; the defaults now use Gemini 3.5
   Flash. A 90-second per-provider cooldown prevents repeated timeouts. This is
   not a production SLA.
+- **Local Ollama is implemented but only smoke-tested.** `OLLAMA_ENABLED=true`
+  adds Ollama to the fallback chain; `LLM_PREFER_LOCAL=true` tries it first but
+  still falls back to configured cloud providers; `LLM_LOCAL_ONLY=true`
+  hard-disables cloud providers and requires Ollama. A local run with cached
+  `qwen2.5:3b` completed the pipeline with 0 errors, `repair_attempts=1`, and
+  verification `needs_review`. The default `qwen2.5:7b` was not pulled, no local
+  model runs on Render, and no quality or latency claim is made.
+- **MCP is read-only and outside the product path.** Six tools, one prompt, and
+  one resource are available over stdio or Streamable HTTP/SSE. HTTP requires
+  `CHOWKIDAR_MCP_HTTP_TOKEN` by default; `--allow-unauthenticated` is
+  loopback-only. No external MCP server is integrated, the pipeline does not call
+  MCP, and the optional `make mcp-tunnel` target has not been executed or
+  verified for the submission.
+- **Chunking is structure-aware, not semantic.** New chunks start at recognized
+  legal headings (`Article`, `Section`, `Chapter`, `Part`, `Annex`, `Schedule`,
+  `Rule`, `Title`, `§`) and store a section path. Long sections are sentence-split
+  with overlap and can still split within one article. Mock mode uses hash
+  embeddings; there is no late interaction or graph RAG.
 - **The bounded repair loop is deterministic and narrow.** It re-retrieves a
   verbatim quote and a citation once; it does not rewrite the risk, change the
   score, or call another model. One local smoke run still left a risk in
@@ -228,5 +248,6 @@ It means the master-prompt production path is **live and verified**: Supabase
 email/password auth, local role authorization, demo lockout, durable report
 storage, rate limits, settings, hosted browser QA, and operational
 documentation. It does **not** mean commercial SaaS readiness, validated legal
-accuracy, live coverage for all five streams, hosted live LLM inference, or a
-security certification. The remaining gaps are listed above rather than hidden.
+accuracy, live coverage for all five streams, hosted local-model inference, or a
+security certification. Hosted cloud LLM inference is verified separately; the
+remaining gaps are listed above rather than hidden.

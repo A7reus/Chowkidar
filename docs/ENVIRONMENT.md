@@ -128,7 +128,10 @@ deployment needs a shared store. Clients receive `429` with `Retry-After`.
 | `live` | Require the live path; a provider failure raises `LLMUnavailable` and the pipeline records the error. |
 
 `/healthz` exposes `llm_mode` and `llm_live_ready`; `llm_live_ready` is true only
-when the mode is `live` or `hybrid` and at least one provider key is present.
+when the mode is `live` or `hybrid` and at least one provider is usable: a Gemini
+or Groq key, or `OLLAMA_ENABLED=true`. With `LLM_LOCAL_ONLY=true`, only Ollama
+counts. Providers without a key (or Ollama while disabled) are skipped instead of
+being tried and failing.
 
 | Variable                          | Required             | Purpose                                       |
 | --------------------------------- | -------------------- | --------------------------------------------- |
@@ -137,12 +140,16 @@ when the mode is `live` or `hybrid` and at least one provider key is present.
 | `GEMINI_FLASH_MODEL`              | no                   | Default `gemini/gemini-3.5-flash`             |
 | `GEMINI_PRO_MODEL`                | no                   | Default `gemini/gemini-3.5-flash`             |
 | `GROQ_MODEL`                      | no                   | Default `groq/openai/gpt-oss-120b`            |
-| `OLLAMA_BASE_URL`, `OLLAMA_MODEL` | no                   | Local fallback when Ollama is running         |
+| `OLLAMA_BASE_URL`, `OLLAMA_MODEL` | no                   | Local runtime endpoint and model              |
+| `OLLAMA_ENABLED`                  | no                   | `true` adds Ollama to the chain; default `false` |
+| `LLM_PREFER_LOCAL`                | no                   | `true` tries Ollama first; configured cloud providers remain fallback |
+| `LLM_LOCAL_ONLY`                  | no                   | `true` allows only Ollama and requires `OLLAMA_ENABLED=true` |
 | `LLM_TIMEOUT_SECONDS`             | no                   | Per-provider timeout; default `25`            |
 | `LLM_PROVIDER_COOLDOWN_SECONDS`   | no                   | Cooldown after a provider failure; default `90` |
 
-The default chain tries Gemini 3.5 Flash, then Groq, then Ollama. Verification and
-report calls use the Gemini Pro slot first (also 3.5 Flash by default). If a
+The default chain tries Gemini 3.5 Flash, then Groq, then Ollama when
+`OLLAMA_ENABLED=true`. Verification and report calls use the Gemini Pro slot
+first (also 3.5 Flash by default). If a
 provider is slow or quota-limited, lower `LLM_TIMEOUT_SECONDS` or make Groq the
 primary model for every purpose:
 
@@ -154,6 +161,35 @@ GEMINI_PRO_MODEL=groq/openai/gpt-oss-120b
 GROQ_MODEL=groq/openai/gpt-oss-120b
 LLM_TIMEOUT_SECONDS=20
 ```
+
+Local inference has two levels. Start Ollama and pull a model first:
+
+```bash
+ollama serve &                 # in another terminal
+make ollama-pull               # qwen2.5:7b by default; OLLAMA_PULL_MODEL=qwen2.5:3b for the smoke-tested size
+```
+
+Ollama-first with configured cloud providers as fallback:
+
+```dotenv
+LLM_MODE=hybrid
+OLLAMA_ENABLED=true
+LLM_PREFER_LOCAL=true
+OLLAMA_MODEL=ollama/qwen2.5:7b
+```
+
+Hard local-only mode (no cloud provider is used, even when keys are present):
+
+```dotenv
+LLM_MODE=hybrid
+OLLAMA_ENABLED=true
+LLM_LOCAL_ONLY=true
+OLLAMA_MODEL=ollama/qwen2.5:7b
+```
+
+`/api/v1/meta` reports `llm_local_enabled`, `llm_prefer_local`, and
+`llm_local_only`. The local smoke used cached `qwen2.5:3b`, not the default
+`qwen2.5:7b`; only claim a model/size that a pipeline run actually used.
 
 Model routing is prefix-based, so a `groq/...` value uses `GROQ_API_KEY` even
 when it is assigned to a `GEMINI_*` variable. The model's output still passes
@@ -217,6 +253,7 @@ None of these are needed for the demo:
 | `EMBEDDING_MODE`, `EMBEDDING_DIM`, `EMBEDDING_MODEL`, `RERANKER_MODEL` | Mock embeddings by default; live embedding dependencies are not installed |
 | `LOCAL_STORAGE_DIR`, `REPORT_STORAGE_DIR`, `UPLOAD_STORAGE_DIR` | Optional paths; `REPORT_STORAGE_DIR` is used only by `STORAGE_BACKEND=local` |
 | `CHOWKIDAR_API_URL`, `CHOWKIDAR_DEMO_ROLE`, `CHOWKIDAR_MCP_TOKEN` | Read-only MCP server only |
+| `CHOWKIDAR_MCP_HTTP_TOKEN`, `CHOWKIDAR_MCP_HOST`, `CHOWKIDAR_MCP_PORT` | HTTP/SSE MCP transport; the token is required by default |
 
 ## Quick check
 

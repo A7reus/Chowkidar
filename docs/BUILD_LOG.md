@@ -48,7 +48,7 @@ risks: 8             (3 critical, 3 high, 1 medium, 1 low)
 actions: 21
 approvals: 5         (4 pending)
 audit_events: 12
-evidence_chunks: 13
+evidence_chunks: 14
 ```
 
 ---
@@ -161,9 +161,9 @@ The deterministic mock path (`app/agents/mock.py`) is the default for the demo a
 | 2026-10-24 | `infra/render.yaml`, `.env.example`, `README.md`, `docs/*` | Record production auth as the hosted default and refresh deployment, production, status, limitation, and submission docs | Keep repository docs consistent with the live pilot | AI agent + QA |
 | 2026-10-25 | `netlify.toml`, `apps/web/next.config.ts`, `.gitignore`, `README.md`, `.env.example`, `docs/*` | Add Netlify primary build config, retain Vercel as the secondary fallback, and document the dual-origin CORS values and Netlify credit limits | Netlify-primary hosting without discarding the working Vercel deploy | AI agent + QA |
 | 2026-10-25 | Render environment + `docs/*` | Set `CORS_ORIGINS` to both web origins and `WEB_URL` to Netlify; run Netlify production Playwright QA (2/2), auth refresh, role restrictions, PDF checksum/download headers, and both-origin preflight | Complete the Netlify-primary cutover and record evidence | AI agent + QA |
-| 2026-10-26 | `apps/api/app/connectors/*`, `services/sources.py`, `services/scheduler.py`, `api/v1/sources.py`, migration `9c1e4f2a7b10`, fixtures, tests | Add GDELT + US Federal Register live connectors, `fixture|live|hybrid` modes, dedupe, source mode/error fields, honest fallback labels, and the APScheduler job | Close the challenge-critical live-monitoring gap without breaking fixture demos | AI agent + QA |
-| 2026-10-26 | `apps/api/app/agents/llm.py`, `core/config.py`, health/meta routes, tests | Add `mock|live|hybrid` LLM mode, provider cooldown, sanitized errors, live-readiness fields, and 3.5 Flash defaults | Make real inference possible while keeping deterministic fallback | AI agent + QA |
-| 2026-10-26 | `apps/api/app/agents/pipeline.py`, `services/pipeline.py`, tests | Add conditional `verify → repair|persist`, one bounded repair cycle, verbatim evidence re-retrieval, routing metadata, and `repair_attempts` | Make the agentic claim truthful and inspectable | AI agent + QA |
+| 2026-10-26 | `apps/api/app/connectors/*`, `services/sources.py`, `services/scheduler.py`, `api/v1/sources.py`, migration `9c1e4f2a7b10`, fixtures, tests | Add GDELT + US Federal Register live connectors, `fixture\|live\|hybrid` modes, dedupe, source mode/error fields, honest fallback labels, and the APScheduler job | Close the challenge-critical live-monitoring gap without breaking fixture demos | AI agent + QA |
+| 2026-10-26 | `apps/api/app/agents/llm.py`, `core/config.py`, health/meta routes, tests | Add `mock\|live\|hybrid` LLM mode, provider cooldown, sanitized errors, live-readiness fields, and 3.5 Flash defaults | Make real inference possible while keeping deterministic fallback | AI agent + QA |
+| 2026-10-26 | `apps/api/app/agents/pipeline.py`, `services/pipeline.py`, tests | Add conditional `verify → repair\|persist`, one bounded repair cycle, verbatim evidence re-retrieval, routing metadata, and `repair_attempts` | Make the agentic claim truthful and inspectable | AI agent + QA |
 | 2026-10-26 | `apps/web` sources/dashboard, OpenAPI types, messages, `infra/render.yaml`, `.env.example`, `docs/*` | Five-stream source UI with mode badges, repair stage, hybrid/scheduler Render config, and reconciled current-state docs | Keep the UI and claims aligned with the implementation | AI agent + QA |
 | 2026-10-26 | `apps/api/app/services/scheduler.py`, `api/v1/health.py`, `api/v1/meta.py`, `schemas.py`, `tests/test_scheduler.py`, `tests/test_api_contract.py` | Fix paused APScheduler job: omit `next_run_time` unless `SCHEDULER_RUN_ON_START=true`; expose `scheduler_next_run_at`; add regression coverage for both branches | `/healthz` reported `scheduler_running=true` while the interval job had `next_run_time=None`, so no cycle would fire | AI agent + QA |
 | 2026-10-26 | Hosted Render runtime, no code change | Observe the first scheduled ingestion cycle at revision `d1f285f50e67` | Confirm the interval job fires, not merely that `scheduler_running=true` | Operator + QA |
@@ -177,7 +177,7 @@ The deterministic mock path (`app/agents/mock.py`) is the default for the demo a
 |---|---|---|
 | API lint | `uv run ruff check app tests` | Pass |
 | API types | `uv run pyright` | 0 errors |
-| API tests | `uv run pytest` | 75 passed |
+| API tests | `uv run pytest` | 97 passed (current; 75 at initial build) |
 | Web lint | `pnpm lint` | Pass |
 | Web types | `pnpm typecheck` | Pass |
 | Web unit | `pnpm test` | 8 passed |

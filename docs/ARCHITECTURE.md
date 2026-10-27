@@ -1,7 +1,7 @@
 # Chowkidar — Architecture
 
 **Status:** local-first implementation validated; hosted API and web builds are live. Netlify is the primary web origin with production browser QA passed 2/2; Vercel remains a secondary fallback. See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md).
-**Last updated:** 2026-10-25
+**Last updated:** 2026-10-27
 
 ---
 
@@ -17,7 +17,7 @@
 ┌───────────────────────────────▼────────────────────────────────────┐
 │ FastAPI (Render Docker)                                            │
 │ auth · dashboard · signals · risks · actions · approvals · audit   │
-│ reports · graph · search · evals · pipeline · MCP (stdio)          │
+│ reports · graph · search · evals · pipeline · MCP (stdio/HTTP)     │
 └───────────────┬──────────────────────────────┬─────────────────────┘
                 │                              │
 ┌───────────────▼──────────────┐   ┌───────────▼─────────────────────┐
@@ -120,10 +120,11 @@ Pipeline runs are also exposed as `POST /api/v1/pipeline/run` and recorded in `a
 | Extraction | Gemini 3.5 Flash | Groq `gpt-oss-120b`, then optional Ollama |
 | Classification/rationale | Groq `gpt-oss-120b` | Gemini 3.5 Flash, then optional Ollama |
 | Verification (live) | Gemini 3.5 Flash (Pro slot) | Gemini 3.5 Flash, Groq, optional Ollama |
+| Local-first | Ollama (`OLLAMA_MODEL`, default `qwen2.5:7b`) | Configured cloud providers, unless `LLM_LOCAL_ONLY=true` |
 | Offline/demo | Deterministic mock | — |
 | Embeddings | BGE-M3 (optional) | Hash-based mock |
 
-`LLM_MODE=mock` is the default for a reproducible local demo. `LLM_MODE=hybrid` tries a live provider and falls back deterministically; local hybrid runs succeeded with Gemini 3.5 Flash and Groq. A 90-second per-provider cooldown limits repeated timeouts. The hosted service reports `llm_mode=hybrid` and `llm_live_ready=true`; a hosted `mode=live` pipeline run on 2026-10-27 produced a model-generated rationale with confidence `0.96`, 0 errors, and 1 verified risk. Deterministic fallback remains available when a provider fails, and provider keys are never committed.
+`LLM_MODE=mock` is the default for a reproducible local demo. `LLM_MODE=hybrid` tries a live provider and falls back deterministically; local hybrid runs succeeded with Gemini 3.5 Flash and Groq. `LLM_PREFER_LOCAL=true` routes every purpose to Ollama first but keeps configured cloud providers as fallback; `LLM_LOCAL_ONLY=true` excludes cloud providers and requires `OLLAMA_ENABLED=true`. A local smoke run with cached `qwen2.5:3b` completed with 0 errors, `repair_attempts=1`, and verification `needs_review`; the default 7B model was not pulled, so no quality claim is made. A 90-second per-provider cooldown limits repeated timeouts. The hosted service reports `llm_mode=hybrid` and `llm_live_ready=true`; a hosted `mode=live` pipeline run on 2026-10-27 produced a model-generated rationale with confidence `0.96`, 0 errors, and 1 verified risk. Deterministic fallback remains available when a provider fails, and provider keys are never committed.
 
 ---
 
@@ -153,6 +154,7 @@ The score breakdown is stored on the risk and shown in the UI, so the LLM cannot
 ## 7. Retrieval and evidence
 
 - `evidence_chunks` stores source text with section paths, citation labels, and URLs.
+- The chunker starts new chunks at recognized legal headings (`Article`, `Section`, `Chapter`, `Part`, `Annex`, `Schedule`, `Rule`, `Title`, `§`), prefixes document/jurisdiction/section, and marks metadata `chunking=structure-aware`. Long sections are sentence-split with overlap, so a chunk can still split within one article; this is not semantic chunking.
 - Retrieval combines pgvector cosine similarity with Postgres full-text search, then fuses results.
 - `/api/v1/search` returns cited chunks, not generated answers.
 - Risk detail links each evidence quote back to its signal and source.
@@ -245,6 +247,10 @@ Base: `/api/v1`
 
 OpenAPI JSON: `/openapi.json`. The web app’s schema types are generated from it.
 
+### MCP server
+
+`apps/api/app/mcp/server.py` exposes six read-only tools, one prompt, and one resource over stdio (default) or Streamable HTTP/SSE (`--transport http` or `sse`). HTTP/SSE fail closed: `CHOWKIDAR_MCP_HTTP_TOKEN` is required, and `--allow-unauthenticated` is restricted to a loopback host. `make mcp-http` refuses to start without a token; `make mcp-tunnel` documents an optional Cloudflare quick tunnel that is not used for the hosted demo. The MCP server is not in the pipeline path and cannot approve or mutate anything.
+
 ---
 
 ## 13. Security and privacy
@@ -305,6 +311,9 @@ See [`DEPLOYMENT.md`](DEPLOYMENT.md).
 - Rate limiting is process-local, suitable for one Render instance.
 - Mock mode prioritizes deterministic storytelling over live model variability. Hybrid mode is available but remains non-deterministic; the deterministic verifier and human approval still gate output.
 - Live connectors are limited to GDELT and the US Federal Register; the other three streams are fixture-backed. GDELT's public rate limit can force a labelled fallback.
+- Local Ollama routing is implemented and was smoke-tested with `qwen2.5:3b` only; the default 7B model, hosted local inference, and model-quality/latency claims remain out of scope.
+- MCP HTTP/SSE is opt-in and fail-closed; no external MCP server is integrated, and the Cloudflare tunnel target has not been executed for the submission.
+- Chunking starts at recognized legal headings but is not semantic; long sections can still split mid-article.
 - The repair loop is bounded and deterministic; it does not guarantee that every risk becomes `verified`.
 - The graph has a compact fixed layout for 30 nodes; very large supply chains need clustering.
 - Reports default to Postgres on hosted deployments; Supabase Storage is an optional adapter.

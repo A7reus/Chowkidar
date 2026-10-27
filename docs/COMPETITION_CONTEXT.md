@@ -1,6 +1,7 @@
 # Competition Context — International AI Builders Congress 2026
 
-**Last captured:** 2026-10-23  
+**Last captured:** 2026-10-23 (capability ledger refreshed 2026-10-27)
+
 **Purpose:** durable record of the official competition context, submission form, scoring signals, and the authoritative domain/challenge list. This file exists so a context-window reset does not lose the event requirements.
 
 **Authority order**
@@ -438,18 +439,19 @@ This is the short version. The detailed limitations are in `docs/ARCHITECTURE.md
 | FastAPI REST API + OpenAPI | Built | Yes |
 | Postgres + pgvector storage | Built | Yes |
 | LangGraph ingest → extract → map → score → remediate → verify → persist | Built | Yes |
-| Four source categories (Bangladesh Bank, EUR-Lex, UFLPA/DHS, GDELT) | Fixture-replayed, with source UI and sync endpoint | Yes, as **fixture-replayed source streams**, not live ingestion |
+| Five source streams (Bangladesh Bank, EUR-Lex, UFLPA/DHS, GDELT, US Federal Register) | GDELT and US Federal Register have live connectors with dedupe and mode labels; the other three are fixture-replayed | Yes, with the live/fixture distinction disclosed |
 | Prioritized risk scoring + evidence citations | Built | Yes |
 | Human-in-the-loop approval with role checks | Built | Yes |
 | Hash-chained audit log | Built | Yes |
 | PDF/JSON/Markdown reports | Built | Yes |
 | Hybrid retrieval: pgvector + Postgres FTS + reranking | Implemented; mock embeddings by default, live BGE-M3 optional and not installed | Yes, with the mock/live distinction disclosed |
-| Read-only FastMCP server (stdio) | Built and manually exercised | Yes |
+| Read-only FastMCP server (stdio/HTTP/SSE) | Built and tested; HTTP requires a bearer token by default; not in the product path | Yes, as a read-only integration surface |
 | External MCP server integrated into the product | Not yet; the event MCP was used for research only | **No** until integrated |
-| Live LLM mode | Groq-only live pipeline tested; Gemini quota unreliable; mock is default | Yes, with the provider limitation disclosed |
-| Local Ollama model run | Route exists in LiteLLM fallback; not validated/run in the demo | **No** until actually run |
+| Live LLM mode | Hosted Gemini 3.5 Flash verified (`llm_live_ready=true`; hosted `mode=live` run, confidence `0.96`); Groq remains the fallback; mock remains the default local path | Yes, with the provider/fallback limitation disclosed |
+| Local Ollama model run | Implemented and locally smoke-tested with `qwen2.5:3b` (0 errors, `repair_attempts=1`, `needs_review`); default 7B not pulled and not hosted | Yes, as a **local smoke path only**; no quality/latency claim |
 | n8n workflow | Compose service and scaffolding exist; not part of the demo path | **No** until wired and demonstrated |
 | Fine-tuning / LoRA | Not implemented | **No** |
+| Structure-aware legal-heading chunking | Implemented with section paths; long sections can still split mid-article | Yes, as structure-aware chunking |
 | Contextual RAG, semantic chunking, Graph RAG, late interaction | Not implemented | **No** |
 | Supabase Auth hosted login | Enabled on the live API: password/refresh/logout proxy, JWKS verification, local role mapping, four provisioned accounts, demo login disabled; hosted auth and browser QA passed against Netlify (2/2) and Vercel | **Yes, for the single-workspace pilot** |
 | Supabase Storage + database reports | Database storage is active on the hosted API; private bucket adapter exists with Postgres fallback | **Yes for durable reports; Supabase Storage bucket not enabled** |
@@ -482,10 +484,10 @@ These are ranked by score and credibility per unit of work. They do **not** requ
 
 ### Worth doing if time permits
 
-7. **MCP disclosure and, if feasible, one real external MCP integration.** The built read-only server already earns “MCP built” and architecture credit. “MCP used” requires an actual external server in the product path.
-8. **Run and validate Ollama with a small local model.** The code path exists; actually running it lets us truthfully select the local-runtime and local-model options.
-9. **Wire one n8n workflow.** A scheduled source-sync or pipeline-run workflow would make the n8n bonus truthful.
-10. **Add semantic/contextual chunking only if actually implemented.** Do not claim it from a checklist.
+7. **MCP disclosure and, if feasible, one real external MCP integration.** The built read-only server earns “MCP built” and architecture credit, and now supports stdio plus fail-closed Streamable HTTP/SSE. “MCP used” still requires an actual external server in the product path.
+8. **Run and validate Ollama with a small local model.** Done as a local smoke with `qwen2.5:3b`; the default 7B model was not pulled and no local model is hosted.
+9. **Wire one n8n workflow.** Not done; the in-process scheduler is the supported path and n8n is not claimed.
+10. **Add semantic/contextual chunking only if actually implemented.** Structure-aware legal-heading chunking is implemented; semantic/contextual/graph RAG are not. Do not claim them from a checklist.
 
 ### Do not do just for checkboxes
 
@@ -505,7 +507,7 @@ These cannot be answered from the repository:
 - Cloud accounts: Supabase, Render, Netlify, and Vercel are configured. Neo4j Aura, Sentry, and PostHog remain optional and unconfigured.
 - ~~Whether a Figma/design file exists, or whether an architecture diagram can serve as the design link.~~ **Resolved:** no Figma; `docs/DESIGN.md` is the public design artifact.
 - ~~YouTube channel access for uploading the demo.~~ **Open:** video remains a placeholder; no recording exists.
-- ~~Permission to install/run Ollama and n8n for extra truthful checkboxes.~~ **Resolved:** not used; do not claim them.
+- ~~Permission to install/run Ollama and n8n for extra truthful checkboxes.~~ **Resolved:** Ollama was run locally with `qwen2.5:3b` as a smoke test; the default 7B model is not verified and no local model is hosted. n8n is not used. Do not claim 7B quality or n8n automation.
 - **Official form access:** user approved filling with placeholders, but the portal session is not available in this environment. The form packet is in [`SUBMISSION.md`](SUBMISSION.md) section 10; the form remains unsubmitted.
 
 ---
