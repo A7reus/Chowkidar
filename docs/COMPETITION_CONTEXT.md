@@ -445,13 +445,13 @@ This is the short version. The detailed limitations are in `docs/ARCHITECTURE.md
 | Hash-chained audit log | Built | Yes |
 | PDF/JSON/Markdown reports | Built | Yes |
 | Hybrid retrieval: pgvector + Postgres FTS + reranking | Implemented; mock embeddings by default, live BGE-M3 optional and not installed | Yes, with the mock/live distinction disclosed |
-| Read-only FastMCP server (stdio/HTTP/SSE) | Built and tested; HTTP requires a bearer token by default; not in the product path | Yes, as a read-only integration surface |
+| Read-only FastMCP server (stdio/HTTP/SSE) | Built, tested, and deployed in the API image; HTTP requires a bearer token by default; no hosted MCP endpoint and not in the product path | Yes, as a read-only integration surface |
 | External MCP server integrated into the product | Not yet; the event MCP was used for research only | **No** until integrated |
 | Live LLM mode | Hosted Gemini 3.5 Flash verified (`llm_live_ready=true`; hosted `mode=live` run, confidence `0.96`); Groq remains the fallback; mock remains the default local path | Yes, with the provider/fallback limitation disclosed |
-| Local Ollama model run | Implemented and locally smoke-tested with `qwen2.5:3b` (0 errors, `repair_attempts=1`, `needs_review`); default 7B not pulled and not hosted | Yes, as a **local smoke path only**; no quality/latency claim |
+| Local Ollama model run | Routing code deployed; locally smoke-tested with `qwen2.5:3b` (0 errors, `repair_attempts=1`, `needs_review`); no local model configured on Render; default 7B not pulled | Yes, as a **local smoke path only**; no quality/latency claim |
 | n8n workflow | Compose service and scaffolding exist; not part of the demo path | **No** until wired and demonstrated |
 | Fine-tuning / LoRA | Not implemented | **No** |
-| Structure-aware legal-heading chunking | Implemented with section paths; long sections can still split mid-article | Yes, as structure-aware chunking |
+| Structure-aware legal-heading chunking | Implemented with section paths and deployed in revision `322bc2456868`; existing hosted evidence was not reseeded; long sections can still split mid-article | Yes, as structure-aware chunking |
 | Contextual RAG, semantic chunking, Graph RAG, late interaction | Not implemented | **No** |
 | Supabase Auth hosted login | Enabled on the live API: password/refresh/logout proxy, JWKS verification, local role mapping, four provisioned accounts, demo login disabled; hosted auth and browser QA passed against Netlify (2/2) and Vercel | **Yes, for the single-workspace pilot** |
 | Supabase Storage + database reports | Database storage is active on the hosted API; private bucket adapter exists with Postgres fallback | **Yes for durable reports; Supabase Storage bucket not enabled** |

@@ -49,7 +49,7 @@ More views: [signals](docs/assets/02-signals.png) · [search](docs/assets/05-sea
 | Risk register and risk detail with score breakdown and evidence | Built |
 | LangGraph pipeline: ingest → extract → map → score → remediate → verify → conditional repair → persist | Built |
 | Deterministic weighted risk score + LLM rationale | Built |
-| Structure-aware legal-heading chunking + hybrid retrieval over cited evidence (pgvector + Postgres FTS) | Built locally; not yet hosted; not semantic or graph RAG |
+| Structure-aware legal-heading chunking + hybrid retrieval over cited evidence (pgvector + Postgres FTS) | Built and deployed; existing hosted evidence was not reseeded; not semantic or graph RAG |
 | Evidence verifier and legal-advice guard | Built |
 | Bounded evidence-repair loop with routing metadata | Built |
 | Human approval queue with rationale and audit trail | Built |

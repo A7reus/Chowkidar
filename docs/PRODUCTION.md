@@ -12,7 +12,11 @@ scheduled cycle was captured on 2026-10-26 at revision
 The cycle synced GDELT `09:29:36Z` (`fixture_fallback`, 0 new) and Federal
 Register `09:30:00Z` (`live`, 0 new due to dedupe). A hosted `mode=live`
 pipeline run on 2026-10-27 verified real model inference: `llm_live_ready=true`,
-0 errors, and a model-generated rationale with confidence `0.96`. Every deploy
+0 errors, and a model-generated rationale with confidence `0.96`. The PR #1
+adaptation was deployed at revision `322bc2456868`; later docs-only pushes may
+advance the reported revision without runtime change. `/api/v1/meta` exposes
+`llm_local_enabled=false`, `llm_prefer_local=false`, and
+`llm_local_only=false`. Existing hosted evidence was not reseeded. Every deploy
 resets the scheduler interval.
 This is a single-workspace production pilot, not a commercial customer
 deployment.
@@ -24,8 +28,9 @@ deployment.
 > verified: `/healthz` reports `llm_live_ready=true`, and a `mode=live` pipeline
 > run produced a model-generated rationale with confidence `0.96`, 0 errors, and
 > 1 verified risk. Deterministic fallback remains available when a provider
-> fails. Provider keys are set in Render and the gitignored local `.env`; they
-> are never committed.
+> fails. The PR #1 adaptation is deployed in revision `322bc2456868`; no local
+> model or MCP HTTP endpoint is hosted. Provider keys are set in Render and the
+> gitignored local `.env`; they are never committed.
 
 This document defines “production-ready” for Chowkidar's preliminary round as
 the production path required by `prompts/MASTER_PROMPT.md`: real authentication,
@@ -97,7 +102,7 @@ operations, legal review, or universal live source coverage).
 | Accounts | `admin@chowkidar.app`, `analyst@chowkidar.app`, `approver@chowkidar.app`, `viewer@chowkidar.app` |
 | Credentials | Gitignored `docs/private/supabase-credentials.local.md`, mode `600` |
 | Report storage | Postgres (`STORAGE_BACKEND=database`) |
-| Runtime QA | Netlify run passed 2/2; the first scheduled cycle was captured on 2026-10-26 at revision `d1f285f50e67` with `llm_mode=hybrid`, `data_mode=hybrid`, and `scheduler_running=true`. The cycle fired for GDELT `09:29:36Z` and Federal Register `09:30:00Z`. Hosted health on 2026-10-27 at revision `698773f1800d` reported `llm_live_ready=true` and `scheduler_next_run_at=2026-10-27T13:08:49Z`. A hosted `mode=live` pipeline run produced a model-generated rationale with confidence `0.96`, 0 errors, and 1 verified risk. Federal Register live sync, dedupe, GDELT fallback, and hosted pipeline runs are verified. API, role, report, browser, mobile, CORS, and rate-limit checks passed. |
+| Runtime QA | Netlify run passed 2/2; the first scheduled cycle was captured on 2026-10-26 at revision `d1f285f50e67` with `llm_mode=hybrid`, `data_mode=hybrid`, and `scheduler_running=true`. The cycle fired for GDELT `09:29:36Z` and Federal Register `09:30:00Z`. Hosted health on 2026-10-27 at the PR #1 feature deploy `322bc2456868` reported `llm_live_ready=true` and `scheduler_next_run_at=2026-10-27T14:24:07Z`; later docs-only pushes may advance the reported revision without runtime change. `/api/v1/meta` exposes `llm_local_enabled=false`, `llm_prefer_local=false`, and `llm_local_only=false`. Existing hosted evidence was not reseeded. A hosted `mode=live` pipeline run produced a model-generated rationale with confidence `0.96`, 0 errors, and 1 verified risk. Federal Register live sync, dedupe, GDELT fallback, and hosted pipeline runs are verified. API, role, report, browser, mobile, CORS, and rate-limit checks passed. |
 | Remaining external constraint | Vercel default DNS is variable on some networks; it is only the secondary fallback. See [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md). |
 
 ---
@@ -333,19 +338,23 @@ or set `LLM_MODE=mock`; never claim hosted live inference while
 
 ## 3. Hosted QA matrix
 
-Completed against Netlify and the hosted API on 2026-10-25; the most recent
-hosted health check on 2026-10-27 reported revision `698773f1800d`, with the
-prior Vercel run retained at `fcd7fd8`:
+Completed against Netlify and the hosted API on 2026-10-25; the PR #1 feature
+deploy on 2026-10-27 was revision `322bc2456868`, and later docs-only pushes may
+advance the reported revision without runtime change. The prior Vercel run is
+retained at `fcd7fd8`:
 
 - [x] `/healthz` returns `status: ok`, `database: ok`, `auth_mode: supabase`,
       `demo_mode: false`.
 - [x] Hosted hybrid env exposes five streams and new health fields; Federal
       Register live sync, GDELT fallback, and pipeline runs are verified.
-      `/healthz` at revision `698773f1800d` reported `llm_live_ready=true`; a
-      hosted `mode=live` pipeline run produced a model-generated rationale with
-      confidence `0.96`, 0 errors, and 1 verified risk. The first scheduled
-      cycle fired at revision `d1f285f50e67` (GDELT `09:29:36Z`, Federal
-      Register `09:30:00Z`); `scheduler_next_run_at` advanced to `10:29:36Z`.
+      `/healthz` at the PR #1 feature deploy `322bc2456868` reported
+      `llm_live_ready=true` and `/api/v1/meta` exposed `llm_local_enabled=false`,
+      `llm_prefer_local=false`, and `llm_local_only=false`; a hosted `mode=live`
+      pipeline run at revision
+      `698773f1800d` produced a model-generated rationale with confidence
+      `0.96`, 0 errors, and 1 verified risk. The first scheduled cycle fired at
+      revision `d1f285f50e67` (GDELT `09:29:36Z`, Federal Register `09:30:00Z`);
+      `scheduler_next_run_at` advanced to `10:29:36Z`.
 - [x] `/api/v1/auth/config` returns `password_auth: true` and no demo users.
 - [x] Login with the admin account; the demo role cards are absent and the
       sidebar says **Pilot**, not **Demo**.

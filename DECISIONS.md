@@ -339,7 +339,7 @@ To avoid losing details between sessions:
 - Adapted structure-aware legal-heading chunking with section paths and `chunking=structure-aware` metadata; seed evidence chunks changed from 13 to 14. Wording is "splits at recognized legal headings," not "never straddles two articles."
 - Rejected the PR's keep-warm GitHub Action (roughly 744/750 Render Free hours, scheduler behavior change, GitHub cron/timeout risk) and did not take its conflicting README hunk.
 - Verification: `make check` 97 API + 8 web tests; `make evals` 7/7; local Ollama `qwen2.5:3b` pipeline smoke 0 errors / `repair_attempts=1` / `needs_review`; MCP HTTP 401 without a bearer token and 200 with the configured token.
-- No commit or push was made. The new code/docs remain in the local working tree; the hosted pilot still runs the prior revision.
+- Committed and pushed as `322bc24`; Render auto-deployed revision `322bc2456868`. Hosted `/healthz` returned `status=ok`, and `/api/v1/meta` exposed `llm_local_enabled=false`, `llm_prefer_local=false`, and `llm_local_only=false`. Local Ollama is not configured on Render, MCP HTTP is not exposed as a hosted service, and existing hosted evidence was not reseeded.
 
 ### Template for future sessions
 ```

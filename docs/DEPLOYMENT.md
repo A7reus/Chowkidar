@@ -14,8 +14,11 @@ Register live sync, GDELT fallback, and hosted pipeline runs are verified.
 Hosted live LLM inference is verified: `/healthz` at revision `698773f1800d`
 reported `llm_live_ready=true`, and a hosted `mode=live` pipeline run produced a
 model-generated rationale with confidence `0.96`, 0 errors, and 1 verified risk.
-Provider keys are set in Render and the gitignored local `.env`; they are never
-committed. See [`PRODUCTION.md`](PRODUCTION.md) and
+The PR #1 adaptation is deployed at revision `322bc2456868`; `/api/v1/meta`
+exposes `llm_local_enabled=false`, `llm_prefer_local=false`, and
+`llm_local_only=false`. Existing hosted evidence was not reseeded, and no local
+model or MCP HTTP endpoint is hosted. Provider keys are set in Render and the
+gitignored local `.env`; they are never committed. See [`PRODUCTION.md`](PRODUCTION.md) and
 [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md). This is a
 single-workspace pilot, not a commercial multi-tenant deployment.
 

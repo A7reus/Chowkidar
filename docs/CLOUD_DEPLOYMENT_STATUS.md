@@ -15,10 +15,15 @@
 > hybrid modes, the bounded repair loop, and the scheduler are deployed and
 > enabled. `/healthz` reports `data_mode=hybrid`, `llm_mode=hybrid`,
 > `scheduler_enabled=true`, `scheduler_running=true`, and
-> `llm_live_ready=true` at revision `698773f1800d`, with
-> `scheduler_next_run_at=2026-10-27T13:08:49Z`. The scheduler job was found
-> paused with `SCHEDULER_RUN_ON_START=false`; the arming fix was verified at
-> revision `94c2a19f91c4`, and the first scheduled cycle fired at revision
+> `llm_live_ready=true` at revision `322bc2456868` (the PR #1 feature deploy),
+> with `scheduler_next_run_at=2026-10-27T14:24:07Z`. Later docs-only pushes may
+> advance the reported revision without runtime change. The PR #1 adaptation is
+> deployed in that revision; `/api/v1/meta` reports `llm_local_enabled=false`,
+> `llm_prefer_local=false`, and `llm_local_only=false`. Existing hosted evidence
+> was not reseeded, and no local model or MCP HTTP endpoint is hosted. The
+> scheduler job was found paused with `SCHEDULER_RUN_ON_START=false`; the
+> arming fix was verified at revision `94c2a19f91c4`, and the first scheduled
+> cycle fired at revision
 > `d1f285f50e67`: GDELT `09:29:36Z` (`fixture_fallback`, 0 new), Federal
 > Register `09:30:00Z` (`live`, 0 new due to dedupe), next run `10:29:36Z`.
 > Render Free spin-down still pauses the in-process scheduler. Federal Register
@@ -37,7 +42,7 @@
 | Web — primary | <https://ch0wkidar.netlify.app/> | Live; production browser QA passed 2/2 |
 | Web — secondary | <https://chowkidar-wheat.vercel.app/> | Live; DNS reachability varies by resolver |
 | API | <https://chowkidar-api.onrender.com/> | Live |
-| API health | <https://chowkidar-api.onrender.com/healthz> | Live: database `ok`, Supabase auth, `hybrid` modes, `llm_live_ready=true`, scheduler armed, revision `698773f1800d` |
+| API health | <https://chowkidar-api.onrender.com/healthz> | Live: database `ok`, Supabase auth, `hybrid` modes, `llm_live_ready=true`, scheduler armed, revision `322bc2456868` (feature deploy; docs-only pushes may advance it) |
 | API docs | <https://chowkidar-api.onrender.com/docs> | Live |
 | Web fallback 2 | `https://chowkidar-web.onrender.com` | Service exists; currently `502` — optional |
 | Repository | <https://github.com/A7reus/Chowkidar> | CI green on `main` |
@@ -58,7 +63,7 @@ cold-start behavior.
   `data_mode: hybrid`, `live_connectors` containing `gdelt` and
   `federal_register`, `scheduler_enabled: true`, `scheduler_running: true`, and a
   revision. The hosted health snapshot on 2026-10-27 at revision
-  `698773f1800d` reported `scheduler_next_run_at=2026-10-27T13:08:49Z`. The first
+  `322bc2456868` reported `scheduler_next_run_at=2026-10-27T14:24:07Z`. The first
   scheduled cycle was captured on 2026-10-26 at revision `d1f285f50e67`;
   `scheduler_next_run_at` moved from `09:29:36Z` to `10:29:36Z`. A `null` value
   still means the job is paused or absent, and arming alone does not prove a

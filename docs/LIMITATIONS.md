@@ -15,7 +15,13 @@ calibrate the claims.
 > bounded repair loop, and the scheduler are deployed and enabled on Render.
 > `/healthz` reports `data_mode=hybrid`, `llm_mode=hybrid`,
 > `llm_live_ready=true`, and `scheduler_running=true`, with
-> `scheduler_next_run_at=2026-10-27T13:08:49Z` at revision `698773f1800d`.
+> `scheduler_next_run_at=2026-10-27T14:24:07Z` at the PR #1 feature deploy
+> `322bc2456868`. Later docs-only pushes may advance the reported revision
+> without runtime change. The PR #1 adaptation is deployed in that revision;
+> `/api/v1/meta` reports `llm_local_enabled=false`, `llm_prefer_local=false`, and
+> `llm_local_only=false`. Existing hosted evidence was not reseeded, and no
+> local model or MCP HTTP endpoint is hosted.
+>
 > The scheduler job was found paused when `SCHEDULER_RUN_ON_START=false`; the
 > arming fix was verified at revision `94c2a19f91c4`, and the first scheduled
 > cycle fired at revision `d1f285f50e67`: GDELT `2026-10-26T09:29:36Z`
@@ -27,8 +33,9 @@ calibrate the claims.
 > verified: a `mode=live` pipeline run produced a model-generated rationale with
 > confidence `0.96`, 0 errors, and 1 verified risk. Deterministic fallback
 > remains available when a provider fails. The selected PR #1 adaptation (local
-> Ollama routing, MCP HTTP/SSE, structure-aware chunking) is in the local working
-> tree and has not been deployed to Render at the time of writing.
+> Ollama routing, MCP HTTP/SSE, structure-aware chunking) is deployed in revision
+> `322bc2456868`; existing hosted evidence was not reseeded. Local Ollama is not
+> configured on Render, and MCP HTTP is not exposed as a hosted service.
 
 ---
 
@@ -128,11 +135,13 @@ calibrate the claims.
   loopback-only. No external MCP server is integrated, the pipeline does not call
   MCP, and the optional `make mcp-tunnel` target has not been executed or
   verified for the submission.
-- **Chunking is structure-aware, not semantic.** New chunks start at recognized
-  legal headings (`Article`, `Section`, `Chapter`, `Part`, `Annex`, `Schedule`,
-  `Rule`, `Title`, `§`) and store a section path. Long sections are sentence-split
-  with overlap and can still split within one article. Mock mode uses hash
-  embeddings; there is no late interaction or graph RAG.
+- **Chunking is structure-aware, not semantic.** The chunker is deployed in
+  revision `322bc2456868`; existing hosted evidence was not reseeded. New chunks
+  start at recognized legal headings (`Article`, `Section`, `Chapter`, `Part`,
+  `Annex`, `Schedule`, `Rule`, `Title`, `§`) and store a section path. Long
+  sections are sentence-split with overlap and can still split within one
+  article. Mock mode uses hash embeddings; there is no late interaction or graph
+  RAG.
 - **The bounded repair loop is deterministic and narrow.** It re-retrieves a
   verbatim quote and a citation once; it does not rewrite the risk, change the
   score, or call another model. One local smoke run still left a risk in
