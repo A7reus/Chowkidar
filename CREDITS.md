@@ -8,7 +8,8 @@ Parts of this repository were adapted from
 
 The PR was reviewed in full but **not merged as a whole** because its branch
 conflicted with `main`. The useful parts were re-applied, reviewed, hardened,
-and tested on current `main`.
+and tested on current `main`. The PR was closed unmerged on 2026-10-27 after
+the public credit comment.
 
 ### Adapted
 

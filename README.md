@@ -290,7 +290,7 @@ The base implementation was produced by an AI coding agent from a single master 
 
 ## Credits
 
-Selected parts of the local LLM routing, MCP Streamable HTTP/SSE transport, and structure-aware legal-heading chunking were adapted from [PR #1](https://github.com/A7reus/Chowkidar/pull/1) by [@shihab3point14](https://github.com/shihab3point14) (Shihab). The PR was not merged as a whole; the keep-warm workflow and its README hunk were not taken. Full scope and original commit references are in [`CREDITS.md`](CREDITS.md).
+Selected parts of the local LLM routing, MCP Streamable HTTP/SSE transport, and structure-aware legal-heading chunking were adapted from [PR #1](https://github.com/A7reus/Chowkidar/pull/1) by [@shihab3point14](https://github.com/shihab3point14) (Shihab). The PR was closed unmerged; the keep-warm workflow and its README hunk were not taken. Full scope and original commit references are in [`CREDITS.md`](CREDITS.md).
 
 ---
 
