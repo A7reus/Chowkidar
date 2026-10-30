@@ -1,6 +1,6 @@
 # Chowkidar — P0/P1 Gap Analysis and Remediation Tracker
 
-**Last updated:** 2026-10-27 · **Owner:** JU_StackMind
+**Last updated:** 2026-10-30 · **Owner:** JU_StackMind
 
 **Purpose:** Durable record of every material shortcoming found in the 2026-10-26 evaluation, the evidence for it, and the work required to close or honestly disclose it. This file is the recovery point if the conversation context is lost.
 
@@ -302,6 +302,7 @@ Current hosted state (2026-10-27): `llm_mode=hybrid`, `llm_live_ready=true`, `da
 | 2026-10-27 | Committed and pushed the PR #1 adaptation as `322bc24`; Render auto-deployed `322bc2456868` | `main` at `322bc24`; hosted runtime | `/healthz` returned `status=ok`, `revision=322bc2456868`, `llm_live_ready=true`, `scheduler_running=true`, next run `2026-10-27T14:24:07Z`; `/api/v1/meta` exposed `llm_local_enabled=false`, `llm_prefer_local=false`, `llm_local_only=false`; CI run `40511498824` passed |
 | 2026-10-27 | Added repo-level attribution for PR #1: `CREDITS.md`, README credits link, and a co-authored credit commit; PR closed unmerged later that day | `CREDITS.md`, `README.md`, `docs/GAP_ANALYSIS.md`, `docs/BUILD_LOG.md` | Documentation review; attribution scope and omitted keep-warm/README hunk recorded |
 | 2026-10-30 | Recorded the PR #1 closure and re-checked the public submission URLs before form work | `docs/GAP_ANALYSIS.md`, `CREDITS.md` | PR state `CLOSED`, not merged; Netlify `200`, Vercel `200`, GitHub `200`, hosted `/healthz` `status=ok` at revision `0f6e14e7e573` |
+| 2026-10-30 | Recorded the preliminary deadline extension to 2026-11-20 and reset the internal target to 2026-11-19 | `README.md`, `DECISIONS.md`, `docs/SUBMISSION.md`, `docs/COMPETITION_CONTEXT.md`, `docs/GAP_ANALYSIS.md`, historical planning docs | User-confirmed extension; exact cutoff time to be confirmed in the portal |
 
 ---
 

@@ -10,9 +10,13 @@
 > [`docs/GAP_ANALYSIS.md`](docs/GAP_ANALYSIS.md).
 
 **Date:** 2026-10-23  
-**Status:** Historical — superseded by the working pilot and `docs/LIMITATIONS.md`
+**Status:** Historical — superseded by the working pilot and `docs/LIMITATIONS.md`\
 **Track:** Idea to Unicorn — Preliminary Submission  
-**Deadline:** 2026-10-31, 11:59 PM GMT+6 (Bangladesh Standard Time)
+**Deadline:** 2026-11-20, 11:59 PM GMT+6 (extended from 2026-10-31; confirm the exact cutoff in the portal)
+
+> **Deadline note (2026-10-30):** The preliminary deadline was extended to
+> **2026-11-20**. The 8-day plan and dates below are historical and were not
+> re-planned.
 
 **Update 2026-10-23:** Team confirmed strengths in AI/full-stack and data engineering, **no legal/compliance advisor**, and **no per-domain submission counts**. Decision: proceed with Chowkidar, positioned as compliance risk intelligence (not legal advice). See `DECISIONS.md`, `PRODUCT_SPEC.md`, `BUILD_PLAN.md`, and `prompts/MASTER_PROMPT.md`.
 
@@ -53,7 +57,7 @@
 ### 1.2 Key facts
 
 - **Event:** International AI Builders Congress 2026, 26 December 2026, Daffodil International University, Dhaka.
-- **Preliminary phase:** Idea to Unicorn — closes **31 October 2026, 11:59 PM GMT+6**.
+- **Preliminary phase:** Idea to Unicorn — closes **20 November 2026, 11:59 PM GMT+6** (extended from 31 October 2026; confirm the exact cutoff in the portal).
 - **Scale:** 572 teams, 3,108 participants across 10 domains and 50 challenges. Average ≈ 11 teams per challenge, but distribution is uneven.
 - **Per-domain counts:** Not public. The leaderboard is disabled (`public_leaderboard: false`), and submission/team tables are RLS-protected. We cannot quantify saturation from outside; the analysis below is directional.
 - **Final rubric (default):**

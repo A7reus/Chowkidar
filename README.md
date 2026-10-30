@@ -7,7 +7,7 @@
 **Domain:** JusticeSphere AI  
 **Challenge:** Risk Sentinel  
 **Team:** JU_StackMind  
-**Deadline:** 2026-10-31, 11:59 PM GMT+6
+**Deadline:** 2026-11-20, 11:59 PM GMT+6 (extended from 2026-10-31; confirm the exact cutoff in the portal)
 
 Chowkidar monitors regulatory, sanctions, and global risk streams; maps each signal to a company's obligations, suppliers, and controls; and produces a ranked, evidence-backed risk register with proposed remediation and a human approval gate.
 

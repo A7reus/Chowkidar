@@ -6,11 +6,13 @@
 > active n8n automation. The working pilot is described in [`README.md`](README.md);
 > the honest capability boundary is [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md);
 > the remediation tracker is [`docs/GAP_ANALYSIS.md`](docs/GAP_ANALYSIS.md).
+>
+> **Deadline note (2026-10-30):** The preliminary deadline was extended to
+> **2026-11-20**. The 8-day schedule below is historical and was not re-planned.
 
 **Last updated:** 2026-10-23  
 **Status:** Historical plan — superseded by the delivered pilot
-**Deadline:** 2026-10-31, 11:59 PM GMT+6  
-**Target submission:** 2026-10-31, 6:00 PM GMT+6
+**Original deadline:** 2026-10-31, 11:59 PM GMT+6 · **Current deadline:** 2026-11-20 (extended; confirm the exact cutoff in the portal)
 
 ---
 

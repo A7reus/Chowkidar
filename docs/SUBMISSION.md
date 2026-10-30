@@ -5,8 +5,8 @@
 **Track:** Idea to Unicorn  
 **Domain:** JusticeSphere AI  
 **Challenge:** Risk Sentinel  
-**Deadline:** 2026-10-31, 11:59 PM GMT+6  
-**Target submission:** 6:00 PM GMT+6
+**Deadline:** 2026-11-20, 11:59 PM GMT+6 (extended from 2026-10-31; confirm the exact cutoff in the portal)\
+**Target submission:** 2026-11-19 (internal target; 2026-11-20 is the buffer)
 
 ---
 

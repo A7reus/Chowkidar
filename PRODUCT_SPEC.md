@@ -11,7 +11,7 @@
 **Last updated:** 2026-10-23  
 **Status:** Historical specification — implemented subset documented in `README.md`
 **Challenge:** JusticeSphere AI → Risk Sentinel  
-**Deadline:** 2026-10-31, 11:59 PM GMT+6
+**Deadline:** 2026-11-20, 11:59 PM GMT+6 (extended from 2026-10-31; confirm the exact cutoff in the portal)
 
 ---
 

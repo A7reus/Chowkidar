@@ -20,6 +20,11 @@
 
 ## Master prompt
 
+> **Deadline note (2026-10-30):** The official preliminary deadline was extended
+> to **2026-11-20**. This prompt is preserved as executed and retains the
+> original 2026-10-31 date for provenance; the extension is recorded in
+> `DECISIONS.md` and `docs/COMPETITION_CONTEXT.md`.
+
 ```text
 You are the lead architect, full-stack engineer, AI engineer, and technical writer for Chowkidar, a production-grade hackathon project.
 

@@ -1,8 +1,8 @@
 # Chowkidar — Decision Log & Persistent Context
 
-**Last updated:** 2026-10-27
+**Last updated:** 2026-10-30
 
-**Status:** Active — base build complete; hosted production pilot live; hybrid data/LLM modes and scheduler deployed; first scheduled cycle verified at revision `d1f285f50e67`; Federal Register live sync verified; hosted live LLM inference verified on 2026-10-27
+**Status:** Active — base build complete; hosted production pilot live; hybrid data/LLM modes and scheduler deployed; first scheduled cycle verified at revision `d1f285f50e67`; Federal Register live sync verified; hosted live LLM inference verified on 2026-10-27; preliminary deadline extended to 2026-11-20
 
 **Owner:** JU_StackMind  
 **Purpose:** Single source of truth for decisions, constraints, assumptions, and session history. Read this before starting any new work session.
@@ -15,7 +15,7 @@
 |---|---|
 | Event | International AI Builders Congress 2026 |
 | Track | Idea to Unicorn — Preliminary Submission |
-| Deadline | 2026-10-31, 11:59 PM GMT+6 |
+| Deadline | 2026-11-20, 11:59 PM GMT+6 (extended from 2026-10-31; confirm the exact cutoff in the portal) |
 | Domain | JusticeSphere AI |
 | Challenge | Risk Sentinel |
 | Product | **Chowkidar** (final name) |
@@ -56,6 +56,7 @@
 | 2026-10-26 | Accept the weak Supabase database password for the **zero-real-user pilot** | No real users or customer data; not a submission blocker. Rotate before any real-user or multi-tenant deployment | Accepted (pilot only) |
 | 2026-10-26 | Use a **placeholder** for the demo video | Video production is out of scope for this work and no recording exists; never claim a video that is not real | Accepted |
 | 2026-10-26 | Prepare and fill the official form with **placeholders** for unknown or unfinished data, but do not submit | User approved filling; submission still requires separate explicit approval. Portal access was not available in this session | Accepted |
+| 2026-10-30 | **Preliminary deadline extended to 2026-11-20** | Organizer extension confirmed by the user; use the additional time for P1 remediation and submission completion. Exact cutoff time to be confirmed in the portal | Accepted |
 
 ### 2.1 Approved stack decisions (batches 1–3)
 
@@ -196,7 +197,7 @@ zero-real-user pilot and is not a submission blocker.
 - If the domain turns out to be crowded, the product still stands on its own merit.
 - Do not over-invest in "saturation research"; invest in the demo and evidence.
 
-### 3.3 Eight-day deadline
+### 3.3 Original eight-day deadline (superseded by the 2026-11-20 extension)
 
 **Implication:** Scope must be brutally narrow.
 
@@ -204,7 +205,7 @@ zero-real-user pilot and is not a submission blocker.
 - One persona, one risk domain, two external data streams, one approval workflow.
 - Must-have vs nice-to-have vs non-goals are explicit in `PRODUCT_SPEC.md`.
 - Cut list is pre-approved in `BUILD_PLAN.md`.
-- Submit by 6 PM on Oct 31, not 11:59 PM.
+- The original plan was to submit by 6 PM on Oct 31, not 11:59 PM. The deadline is now 2026-11-20; keep a buffer and do not rely on the final hour.
 
 ### 3.4 One-prompt rule — confirmed, applies to the whole build
 

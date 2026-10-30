@@ -1,6 +1,6 @@
 # Competition Context — International AI Builders Congress 2026
 
-**Last captured:** 2026-10-23 (capability ledger refreshed 2026-10-27)
+**Last captured:** 2026-10-23 (capability ledger refreshed 2026-10-27; deadline extension recorded 2026-10-30)
 
 **Purpose:** durable record of the official competition context, submission form, scoring signals, and the authoritative domain/challenge list. This file exists so a context-window reset does not lose the event requirements.
 
@@ -19,8 +19,8 @@
 - **Track:** Idea to Unicorn
 - **Domain:** JusticeSphere AI
 - **Challenge:** Risk Sentinel
-- **Preliminary deadline:** 2026-10-31, 11:59 PM GMT+6 (Bangladesh Standard Time)
-- **Target submission:** 2026-10-30, leaving 2026-10-31 as buffer
+- **Preliminary deadline:** 2026-11-20, 11:59 PM GMT+6 (extended from 2026-10-31; confirm the exact cutoff in the portal)
+- **Target submission:** 2026-11-19 (internal target; 2026-11-20 is the buffer)
 - **Official portal:** <https://cloudcampbd.com>
 
 The official guide **does not say “demo only.”** It explicitly asks for:
@@ -124,7 +124,7 @@ The guide describes the event as a global hackathon for AI developers, prompt en
 
 ### Preliminary deadline
 
-**October 31, 2026, 11:59 PM GMT+6.** Submissions go through the official portal.
+**November 20, 2026, 11:59 PM GMT+6 (extended from October 31, 2026).** The extension was recorded on 2026-10-30; confirm the exact cutoff in the official portal. Submissions go through the official portal.
 
 ### Single master prompt rule
 
