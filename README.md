@@ -27,7 +27,7 @@ The demo follows **Padma Apparel Ltd.**, a fictional ready-made-garment exporter
 |---|---|
 | ![Supply-chain graph](docs/assets/04-graph.png) | ![Evaluations](docs/assets/06-evals.png) |
 
-More views: [signals](docs/assets/02-signals.png) · [search](docs/assets/05-search.png) · [approvals](docs/assets/07-approvals.png) · [audit](docs/assets/08-audit.png) · [login](docs/assets/00-login.png)
+More views: [signals](docs/assets/02-signals.png) · [search](docs/assets/05-search.png) · [approvals](docs/assets/07-approvals.png) · [audit](docs/assets/08-audit.png) · [lineage](docs/assets/09-lineage.png) · [login](docs/assets/00-login.png)
 
 **Demo video:** [2:45 captioned walkthrough](docs/assets/demo-walkthrough.mp4) (local deterministic demo; [thumbnail](docs/assets/demo-walkthrough-thumbnail.png)). YouTube upload is pending; see [`docs/DEMO_VIDEO.md`](docs/DEMO_VIDEO.md) for the upload package. The official form still uses a placeholder until a YouTube URL exists.
 

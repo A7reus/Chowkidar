@@ -350,7 +350,7 @@ To avoid losing details between sessions:
 - Verification: `make check` passes with 106 API tests and 8 web tests; Ruff, Pyright, ESLint, `tsc`, and `pnpm build` are clean.
 - Committed and pushed as `2e95cd2`; GitHub Actions CI is green. Render auto-deployed revision `2e95cd283d46`; hosted `/healthz` returned `status=ok`, `database=ok`, `auth_mode=supabase`, `data_mode=hybrid`, `llm_live_ready=true`, and `scheduler_running=true`.
 - Re-ran the local seeded lineage route end to end after restoring Postgres: analyst login `200`, lineage `200` with trace `demo-trace-2026-10-23` and source/signal/obligation/risk/evidence/action/approval nodes, missing risk `404`.
-- Recorded a 2:45 captioned local walkthrough (`docs/assets/demo-walkthrough.mp4`) and wrote the YouTube upload package in `docs/DEMO_VIDEO.md`; no YouTube URL exists yet, so the form keeps a placeholder.
+- Recorded a 2:45 captioned local walkthrough (`docs/assets/demo-walkthrough.mp4`) and wrote the YouTube upload package in `docs/DEMO_VIDEO.md`; no YouTube URL exists yet, so the form keeps a placeholder. The docs/video package was committed as `f7f9dde`; CI is green, and Render advanced the reported revision to `f7f9dde0de2c` with no runtime change.
 - No OpenTelemetry/OpenLineage export, distributed tracing, or cost/latency dashboard is claimed. The official form has not been filled or submitted; the portal session is not available in this environment.
 
 ### Template for future sessions

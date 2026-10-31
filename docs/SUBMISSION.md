@@ -42,6 +42,7 @@ the form.
 | Automated remediation | Risk detail shows proposed actions, owners, due dates, priorities |
 | Human-in-the-loop approval | `/approvals`; approver/admin decision with rationale |
 | Evidence and citations | Risk detail evidence quote + source URL; `/search` cited chunks |
+| Data lineage | Risk detail "Data lineage" panel: source → signal → obligation → risk → evidence/actions/approvals, with trace ID and audit links |
 | Auditability | `/audit` hash-chain verification (admin) |
 | Quality evaluation | `/evals`, 13/13 golden cases, five metrics |
 | Supabase email/password auth | `/login`; `/api/v1/auth/config`; role-gated routes |
