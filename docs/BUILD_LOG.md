@@ -28,10 +28,10 @@
 | Backend | Complete: FastAPI, SQLAlchemy, Alembic, LangGraph, RAG, reports, audit, MCP |
 | Frontend | Complete: 12 routes, role-aware UI, EN/BN chrome, graph, search, evals |
 | Database | Local Postgres + pgvector seeded; hosted Supabase migrated and seeded; 8 risks, 13 signals, 21 actions, 12 audit events |
-| Tests | API 75 passing; web unit 8 passing; local Playwright 4 passing; hosted production Playwright 2/2 Netlify (prior 2/2 Vercel) |
+| Tests | API 106 passing; web unit 8 passing; local Playwright 4 passing; hosted production Playwright 2/2 Netlify (prior 2/2 Vercel) |
 | Type checks | Pyright 0 errors; `tsc` clean |
 | Lint | Ruff clean; ESLint clean |
-| Evals | 7/7 golden cases; five metrics at 1.0 on the deterministic path |
+| Evals | 13/13 golden cases (`golden-set-v2`); five metrics at 1.0 on the deterministic path |
 | MCP | Read-only FastMCP server implemented and manually exercised |
 | Deployment | Live production pilot: Render API + Netlify primary web + Vercel secondary web + Supabase Auth/Postgres; hosted hybrid env running; Federal Register live sync verified; GDELT fallback verified; hosted live LLM inference verified |
 
@@ -120,12 +120,12 @@ The runtime prompts live in `apps/api/app/agents/prompts.py`, not in separate ma
 
 | Agent | Prompt constant | Version | Model (live mode) | Last eval |
 |---|---|---|---|---|
-| Extractor | `EXTRACTION_SYSTEM` | 2026-10-23.1 | Gemini 3.5 Flash, fallback Groq | 7/7 golden cases |
-| Remediation planner | `REMEDIATION_SYSTEM` | 2026-10-23.1 | Groq `gpt-oss-120b`, fallback Gemini 3.5 Flash | 7/7 |
-| Evidence verifier | `VERIFIER_SYSTEM` | 2026-10-23.1 | Gemini Pro slot (3.5 Flash default), fallback Gemini 3.5 Flash | 7/7 deterministic gates |
-| Rationale writer | `RATIONALE_SYSTEM` | 2026-10-23.1 | Groq `gpt-oss-120b`, fallback Gemini 3.5 Flash | 7/7 |
+| Extractor | `EXTRACTION_SYSTEM` | 2026-10-23.1 | Gemini 3.5 Flash, fallback Groq | 13/13 golden cases |
+| Remediation planner | `REMEDIATION_SYSTEM` | 2026-10-23.1 | Groq `gpt-oss-120b`, fallback Gemini 3.5 Flash | 13/13 |
+| Evidence verifier | `VERIFIER_SYSTEM` | 2026-10-23.1 | Gemini Pro slot (3.5 Flash default), fallback Gemini 3.5 Flash | 13/13 deterministic gates |
+| Rationale writer | `RATIONALE_SYSTEM` | 2026-10-23.1 | Groq `gpt-oss-120b`, fallback Gemini 3.5 Flash | 13/13 |
 
-The deterministic mock path (`app/agents/mock.py`) is the default for the demo and is what produced the verified 7/7 result. Hybrid mode was smoke-tested locally with Gemini 3.5 Flash and Groq; live models are not benchmarked by the golden set. The verifier now routes unresolved risks through one bounded repair cycle before persistence.
+The deterministic mock path (`app/agents/mock.py`) is the default for the demo and is what produced the verified 13/13 result. Hybrid mode was smoke-tested locally with Gemini 3.5 Flash and Groq; live models are not benchmarked by the golden set. The verifier now routes unresolved risks through one bounded repair cycle before persistence.
 
 ---
 
@@ -195,7 +195,7 @@ The deterministic mock path (`app/agents/mock.py`) is the default for the demo a
 | Hosted API auth QA | Login/refresh/role checks | Four accounts passed; wrong password `401`; demo login `403`; unprovisioned user `403` |
 | Hosted report persistence | Generate, redeploy, download | PDF/JSON/Markdown checksums matched after Render redeploy |
 | Hosted rate limit | Burst login requests | `429` with `Retry-After` |
-| Golden set | `make evals` | 7/7; five metrics at 1.0 |
+| Golden set | `make evals` | 13/13 (`golden-set-v2`); five metrics at 1.0 |
 | Container build | `docker build -f apps/api/Dockerfile .` | Pass |
 | Container health | `/healthz` + `/docs` on mapped port | Pass |
 | API smoke | `/healthz`, `/dashboard/summary`, `/graph`, `/audit/verify` | Pass locally and hosted |
@@ -234,6 +234,6 @@ Manual visual QA covered every route at 1440×1000. Known cosmetic trade-off: th
 - Vercel default DNS is variable on some networks; the prior hosted QA used a reachable Vercel edge IP. Netlify is now primary, so this affects only the fallback.
 - Live GDELT and US Federal Register connectors are implemented and deployed; Bangladesh Bank, EUR-Lex, and UFLPA remain fixture-backed. GDELT is externally rate-limited and falls back with a visible label. Hosted live LLM inference is verified: `/healthz` reports `llm_live_ready=true`, and a hosted `mode=live` pipeline run produced a model-generated rationale with confidence `0.96`, 0 errors, and 1 verified risk. Deterministic fallback remains available when providers fail, and provider keys are never committed.
 - BGE-M3, Docling, RAGAS, and Phoenix are optional and not required for the demo path.
-- Golden set is small (7 cases) and synthetic; live models and the repair loop are not benchmarked.
+- Golden set is small (13 cases) and synthetic; live models and the repair loop are not benchmarked.
 - No legal/compliance advisor reviewed the content.
-- No demo video; the design artifact is [`DESIGN.md`](DESIGN.md), not a Figma file. Team-diversity facts are intentionally blank per the 2026-10-26 user decision, and no bonus is claimed.
+- A 2:45 captioned local walkthrough exists at [`assets/demo-walkthrough.mp4`](assets/demo-walkthrough.mp4), but it is not uploaded to YouTube; the form keeps a placeholder. The design artifact is [`DESIGN.md`](DESIGN.md), not a Figma file. Team-diversity facts are intentionally blank per the 2026-10-26 user decision, and no bonus is claimed.

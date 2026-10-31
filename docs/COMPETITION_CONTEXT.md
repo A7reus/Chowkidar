@@ -506,7 +506,7 @@ These cannot be answered from the repository:
 - ~~Female-member status for the team-diversity bonus.~~ **Resolved 2026-10-26:** leave blank / prefer not to say.
 - Cloud accounts: Supabase, Render, Netlify, and Vercel are configured. Neo4j Aura, Sentry, and PostHog remain optional and unconfigured.
 - ~~Whether a Figma/design file exists, or whether an architecture diagram can serve as the design link.~~ **Resolved:** no Figma; `docs/DESIGN.md` is the public design artifact.
-- ~~YouTube channel access for uploading the demo.~~ **Open:** video remains a placeholder; no recording exists.
+- ~~YouTube channel access for uploading the demo.~~ **Open:** a 2:45 captioned local recording exists at `docs/assets/demo-walkthrough.mp4`; the YouTube upload and URL are still pending, so the form keeps a placeholder.
 - ~~Permission to install/run Ollama and n8n for extra truthful checkboxes.~~ **Resolved:** Ollama was run locally with `qwen2.5:3b` as a smoke test; the default 7B model is not verified and no local model is hosted. n8n is not used. Do not claim 7B quality or n8n automation.
 - **Official form access:** user approved filling with placeholders, but the portal session is not available in this environment. The form packet is in [`SUBMISSION.md`](SUBMISSION.md) section 10; the form remains unsubmitted.
 

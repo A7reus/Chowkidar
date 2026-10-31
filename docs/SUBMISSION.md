@@ -55,8 +55,8 @@ the form.
 - **Live pilot URL:** <https://ch0wkidar.netlify.app/> — Netlify primary, verified with production browser QA: Supabase email/password auth, four managed accounts, demo login disabled, PDF generation/download, and viewer read-only access. Secondary fallback: <https://chowkidar-wheat.vercel.app/> (Vercel DNS may vary on some networks; see [`CLOUD_DEPLOYMENT_STATUS.md`](CLOUD_DEPLOYMENT_STATUS.md)).
 - **API URL:** <https://chowkidar-api.onrender.com/>
 - **Hosted access:** Supabase accounts use the emails `admin@chowkidar.app`, `analyst@chowkidar.app`, `approver@chowkidar.app`, and `viewer@chowkidar.app`. Passwords are held in the private, gitignored access note and must be supplied to judges only through the form's private access field or another controlled channel.
-- **Production status:** live and verified as a production pilot. Netlify browser QA passed 2/2 at the previously verified revision `2bfaed71372c`: `/healthz` reports `auth_mode=supabase`, `demo_mode=false`, `database=ok`; admin and viewer flows passed; PDF generation/download matched SHA-256; reports use Postgres; viewer role restrictions returned `403`; and both web origins pass CORS preflight. This is a single-workspace pilot, not commercial SaaS readiness. **Render runs the hybrid environment; the hosted health check on 2026-10-27 reported the PR #1 feature deploy revision `322bc2456868` (`status=ok`, `database=ok`, `auth_mode=supabase`, `demo_mode=false`, `data_mode=hybrid`, `llm_mode=hybrid`, `llm_live_ready=true`, `scheduler_running=true`, `scheduler_next_run_at=2026-10-27T14:24:07Z`); later docs-only pushes may advance the reported revision without runtime change. This revision deploys the PR #1 adaptation; `/api/v1/meta` exposes `llm_local_enabled=false`, `llm_prefer_local=false`, and `llm_local_only=false`. Existing hosted evidence was not reseeded; no local model or MCP HTTP endpoint is hosted. The first scheduled cycle fired: GDELT `09:29:36Z` (`fixture_fallback`, 0 new) and Federal Register `09:30:00Z` (`live`, 0 new due to dedupe). Federal Register live sync, dedupe, GDELT fallback, and hosted pipeline runs are verified. Hosted live LLM inference is verified: a `mode=live` run produced a model-generated rationale with confidence `0.96`, 0 errors, and 1 verified risk; deterministic fallback remains available.**
-- **Video URL:** `[PLACEHOLDER — not recorded]` — required for the official form; no recording is claimed.
+- **Production status:** live and verified as a production pilot. Netlify browser QA passed 2/2 at the previously verified revision `2bfaed71372c`: `/healthz` reports `auth_mode=supabase`, `demo_mode=false`, `database=ok`; admin and viewer flows passed; PDF generation/download matched SHA-256; reports use Postgres; viewer role restrictions returned `403`; and both web origins pass CORS preflight. This is a single-workspace pilot, not commercial SaaS readiness. **Render runs the hybrid environment; the hosted health check on 2026-10-27 reported the PR #1 feature deploy revision `322bc2456868` (`status=ok`, `database=ok`, `auth_mode=supabase`, `demo_mode=false`, `data_mode=hybrid`, `llm_mode=hybrid`, `llm_live_ready=true`, `scheduler_running=true`, `scheduler_next_run_at=2026-10-27T14:24:07Z`); later docs-only pushes may advance the reported revision without runtime change. This revision deploys the PR #1 adaptation; `/api/v1/meta` exposes `llm_local_enabled=false`, `llm_prefer_local=false`, and `llm_local_only=false`. Existing hosted evidence was not reseeded; no local model or MCP HTTP endpoint is hosted. The first scheduled cycle fired: GDELT `09:29:36Z` (`fixture_fallback`, 0 new) and Federal Register `09:30:00Z` (`live`, 0 new due to dedupe). Federal Register live sync, dedupe, GDELT fallback, and hosted pipeline runs are verified. Hosted live LLM inference is verified: a `mode=live` run produced a model-generated rationale with confidence `0.96`, 0 errors, and 1 verified risk; deterministic fallback remains available. On 2026-10-31, CI passed for `2e95cd2`, and Render auto-deployed revision `2e95cd283d46`; `/healthz` still reports `status=ok`, `database=ok`, `auth_mode=supabase`, `data_mode=hybrid`, `llm_live_ready=true`, and `scheduler_running=true`. This revision adds the authenticated risk-lineage endpoint and risk-detail panel; existing hosted evidence was not reseeded.**
+- **Video URL:** `[PLACEHOLDER — recording ready locally; YouTube upload pending]` — a 2:45 captioned recording exists at [`docs/assets/demo-walkthrough.mp4`](assets/demo-walkthrough.mp4). The official form still needs a YouTube URL; no YouTube upload is claimed. See [`DEMO_VIDEO.md`](DEMO_VIDEO.md).
 
 > The official form and MCP knowledge base both reward a public live demo and a 2–3 minute video. A local-only demo is not enough for maximum preliminary score. See [`COMPETITION_CONTEXT.md`](COMPETITION_CONTEXT.md) for the captured form, scoring signals, and the authoritative domain list.
 
@@ -184,11 +184,11 @@ Pilot with an RMG exporter and a compliance reviewer; monitor hosted provider re
 - Rate limits are process-local; browser tokens are in local storage rather than HttpOnly cookies. The Supabase database password is weak but is accepted for this zero-real-user pilot; it is not a submission blocker and must be rotated before any real-user deployment.
 - Netlify is primary; the Vercel secondary fallback has DNS variability on some networks. Use the documented edge-IP workaround or a custom domain if the fallback is needed.
 - BGE-M3, Docling, RAGAS, Phoenix, Neo4j, and n8n are optional and not on the hosted pilot path.
-- Golden set is small and synthetic (7 cases). No real exporter data or accuracy benchmark. No customer interviews, LOIs, design partners, or revenue; the validation evidence log is at zero.
+- Golden set is small and synthetic (13 cases, `golden-set-v2`). No real exporter data or accuracy benchmark. No customer interviews, LOIs, design partners, or revenue; the validation evidence log is at zero.
 - No legal/compliance advisor reviewed the content. No legal advice is provided; every finding is a reviewable signal.
-- No final demo video. The form uses a clearly marked placeholder; no recording is claimed. The design artifact is [`DESIGN.md`](DESIGN.md), not a Figma file.
+- A 2:45 captioned screen recording exists at [`docs/assets/demo-walkthrough.mp4`](assets/demo-walkthrough.mp4), but it has not been uploaded to YouTube. The form uses a clearly marked placeholder until a YouTube URL exists. The recording is a local deterministic demo, not the hosted Supabase deployment. The design artifact is [`DESIGN.md`](DESIGN.md), not a Figma file.
 - Team-diversity facts are intentionally left blank by the user's decision. The team name `JU_StackMind` is the only confirmed team value; no diversity bonus is claimed.
-- The official form has not been opened or filled. The user approved filling it with placeholders for unknown or unfinished data on 2026-10-26; submission still requires separate explicit approval.
+- The official form has not been filled or submitted in this environment, and the portal session is not available here. The user approved filling it with placeholders for unknown or unfinished data on 2026-10-26; submission still requires separate explicit approval.
 
 ---
 
@@ -217,7 +217,8 @@ Pilot with an RMG exporter and a compliance reviewer; monitor hosted provider re
 - [x] Hosted live LLM inference verified (`llm_live_ready=true`; hosted `mode=live` run produced a model-generated rationale with confidence `0.96`, 0 errors, and 1 verified risk).
 - [x] Validation kit with interview guide, LOI template, pricing hypotheses, and an honest zero-evidence log.
 - [x] Design artifact [`DESIGN.md`](DESIGN.md) with wireframes, flows, tokens, and accessibility notes.
-- [ ] Two-to-three-minute demo video recorded and linked; the form packet uses a placeholder.
+- [x] Two-to-three-minute captioned walkthrough recorded locally at [`docs/assets/demo-walkthrough.mp4`](assets/demo-walkthrough.mp4); upload package in [`DEMO_VIDEO.md`](DEMO_VIDEO.md).
+- [ ] YouTube upload completed and URL linked in the form; the form packet still uses a placeholder.
 - [ ] Team-diversity facts supplied; intentionally left blank by user decision, and no diversity bonus is claimed.
 - [x] Public design link live (GitHub URL resolves; verified 2026-10-26).
 - [x] Form-ready packet prepared with placeholders for unknown team/video data (section 10).
@@ -240,7 +241,7 @@ use `JU_StackMind` only and leave every other team field blank. These values are
 | NRB status (non-resident Bangladeshi) | _blank / prefer not to say_ | **intentionally blank; no bonus claimed** |
 | Female team member(s) | _blank / prefer not to say_ | **intentionally blank; no bonus claimed** |
 | Design link | `https://github.com/A7reus/Chowkidar/blob/main/docs/DESIGN.md` | live (verified 2026-10-26) |
-| Video URL | `[PLACEHOLDER — not recorded]` | **placeholder; no recording claimed** |
+| Video URL | `[PLACEHOLDER — recording ready locally; YouTube upload pending]` | **local recording exists; no YouTube URL claimed** |
 
 If the form requires a value that is not known, leave it blank or use the
 form's "prefer not to say" option. Do not fill a guess.
@@ -262,7 +263,7 @@ session is not available in this environment.
 | Elevator Pitch | Chowkidar is an agentic compliance risk sentinel for export supply chains: it monitors regulatory and supplier-risk streams, maps them to obligations, and turns them into evidence-backed remediation that a human approves. |
 | Domain | `JusticeSphere AI` |
 | Challenge | `Risk Sentinel` |
-| YouTube Video | `[PLACEHOLDER — 2–3 minute demo video not recorded]` |
+| YouTube Video | `[PLACEHOLDER — 2:45 recording ready locally; YouTube upload pending]` |
 | GitHub Repository | `https://github.com/A7reus/Chowkidar` |
 | Live Demo URL | `https://ch0wkidar.netlify.app/` |
 | Secondary Live URL | `https://chowkidar-wheat.vercel.app/` (Vercel DNS varies on some networks) |
@@ -336,8 +337,10 @@ OpenCode (AI coding agent), Python 3.14 with `uv`, FastAPI, SQLAlchemy 2, Alembi
 
 - **Team size, member names/roles, team lead, NRB status, female-member status:**
   leave blank or use "prefer not to say." The user chose this on 2026-10-26.
-- **YouTube URL:** leave the placeholder until a real 2–3 minute recording
-  exists. Do not link an unrelated video.
+- **YouTube URL:** the 2:45 recording is ready locally, but leave the
+  placeholder until it is uploaded to YouTube and the URL resolves. Do not link
+  the local MP4 as if it were a YouTube upload, and do not link an unrelated
+  video. Upload metadata is in [`DEMO_VIDEO.md`](DEMO_VIDEO.md).
 - **Hosted live inference:** verified on 2026-10-27. `/healthz` reported
   `llm_live_ready=true`, and a hosted `mode=live` pipeline run produced a
   model-generated rationale with confidence `0.96`, 0 errors, and 1 verified
@@ -363,7 +366,7 @@ Library tabs unlock.
 | 5 | Solution Description | Section 10.2 |
 | 6 | Data & AI Provenance | Section 10.2 |
 | 7 | Tooling & IDE | Section 10.2 |
-| 8 | YouTube Video | Placeholder only; do not invent a URL |
+| 8 | YouTube Video | Use the uploaded YouTube URL once it exists; until then leave the placeholder. Upload package: [`DEMO_VIDEO.md`](DEMO_VIDEO.md) |
 | 9 | Demo / Live Links | Netlify primary, GitHub, API docs, design link; Vercel secondary |
 | 10 | Domain | `JusticeSphere AI` |
 | 11 | Challenge | `Risk Sentinel` |
@@ -372,6 +375,17 @@ Library tabs unlock.
 | 14 | Proof and Prompt Library tabs | Section 10.3 structured-tab copy |
 | 15 | AI-Native Build and Data Lifecycle tabs | Section 10.3 structured-tab copy |
 | 16 | Review completeness | Stop here; **do not click Submit** without separate explicit approval |
+
+### 10.6 Video upload package
+
+The 2:45 captioned walkthrough is ready at
+[`docs/assets/demo-walkthrough.mp4`](assets/demo-walkthrough.mp4), with a
+1280×720 thumbnail at
+[`docs/assets/demo-walkthrough-thumbnail.png`](assets/demo-walkthrough-thumbnail.png).
+Title, description, tags, settings, and post-upload steps are in
+[`DEMO_VIDEO.md`](DEMO_VIDEO.md). It was recorded locally against the
+deterministic demo, not the hosted Supabase deployment. The official form's
+YouTube field stays on the placeholder until the upload exists.
 
 **Stop condition:** filling the form is approved, but submission is not. Do not
 click the final Submit button, and do not treat a saved draft as a submitted

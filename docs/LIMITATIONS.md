@@ -65,9 +65,13 @@ calibrate the claims.
 - **The Supabase database password is still weak.** This is accepted for the
   zero-real-user pilot and is not treated as a submission blocker; rotate it
   before any real-user or multi-tenant deployment.
-- **No demo video or completed submission form** exists yet. The design artifact
-  is [`DESIGN.md`](DESIGN.md), not a Figma file. The form packet is prepared with
-  placeholders, but the portal has not been opened or filled.
+- **No YouTube video or completed submission form** exists yet. A 2:45 captioned
+  local walkthrough exists at
+  [`assets/demo-walkthrough.mp4`](assets/demo-walkthrough.mp4); it is a local
+  deterministic demo, not a hosted recording, and the YouTube upload is pending.
+  The design artifact is [`DESIGN.md`](DESIGN.md), not a Figma file. The form
+  packet is prepared with placeholders; the portal has not been filled or
+  submitted in this environment.
 
 ## 2. Data and connectors
 
@@ -253,8 +257,9 @@ calibrate the claims.
 - **Team-size, NRB, and female-member facts** are intentionally left blank by
   the user's 2026-10-26 decision. No diversity bonus is claimed.
 - **No legal review of the submission copy.**
-- **The official form has not been opened or filled.** The user approved filling
-  it with placeholders for unknown or unfinished data, but submission requires a
+- **The official form has not been filled or submitted in this environment.**
+  The portal session is unavailable. The user approved filling it with
+  placeholders for unknown or unfinished data, but submission requires a
   separate explicit approval. See [`SUBMISSION.md`](SUBMISSION.md) section 10.
 
 ## 9. What “production-ready” means here

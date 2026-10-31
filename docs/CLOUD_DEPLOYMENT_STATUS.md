@@ -1,6 +1,6 @@
 # Chowkidar — Cloud Deployment Status
 
-- **Updated:** 2026-10-27
+- **Updated:** 2026-10-31
 - **Scope:** Supabase Free + Render Free API + Netlify Free primary web + Vercel Hobby secondary web
 - **Status:** The API and both web builds are live as a **production pilot**.
   Netlify is the primary web origin at <https://ch0wkidar.netlify.app/>. Vercel
@@ -10,6 +10,14 @@
   cutover is complete and Netlify production browser QA passed 2/2 with the real
   admin and viewer accounts. This is not a claim of commercial SaaS readiness;
   see [`LIMITATIONS.md`](LIMITATIONS.md).
+
+> **Latest deploy (2026-10-31):** revision `2e95cd283d46` adds the risk-lineage
+> endpoint and the risk-detail lineage panel. GitHub Actions CI is green for
+> `2e95cd2`. `/healthz` returns `status=ok`, `database=ok`,
+> `auth_mode=supabase`, `data_mode=hybrid`, `llm_mode=hybrid`,
+> `llm_live_ready=true`, and `scheduler_running=true`. Existing hosted evidence
+> was not reseeded. The endpoint is authenticated; an unauthenticated request
+> returns `401`, and the local seeded route was re-verified end to end.
 
 > **Hosted hybrid state (2026-10-27):** live GDELT/Federal Register connectors,
 > hybrid modes, the bounded repair loop, and the scheduler are deployed and
@@ -42,7 +50,7 @@
 | Web — primary | <https://ch0wkidar.netlify.app/> | Live; production browser QA passed 2/2 |
 | Web — secondary | <https://chowkidar-wheat.vercel.app/> | Live; DNS reachability varies by resolver |
 | API | <https://chowkidar-api.onrender.com/> | Live |
-| API health | <https://chowkidar-api.onrender.com/healthz> | Live: database `ok`, Supabase auth, `hybrid` modes, `llm_live_ready=true`, scheduler armed, revision `322bc2456868` (feature deploy; docs-only pushes may advance it) |
+| API health | <https://chowkidar-api.onrender.com/healthz> | Live: database `ok`, Supabase auth, `hybrid` modes, `llm_live_ready=true`, scheduler armed, revision `2e95cd283d46` (risk-lineage deploy; docs-only pushes may advance it) |
 | API docs | <https://chowkidar-api.onrender.com/docs> | Live |
 | Web fallback 2 | `https://chowkidar-web.onrender.com` | Service exists; currently `502` — optional |
 | Repository | <https://github.com/A7reus/Chowkidar> | CI green on `main` |

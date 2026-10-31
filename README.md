@@ -29,6 +29,8 @@ The demo follows **Padma Apparel Ltd.**, a fictional ready-made-garment exporter
 
 More views: [signals](docs/assets/02-signals.png) · [search](docs/assets/05-search.png) · [approvals](docs/assets/07-approvals.png) · [audit](docs/assets/08-audit.png) · [login](docs/assets/00-login.png)
 
+**Demo video:** [2:45 captioned walkthrough](docs/assets/demo-walkthrough.mp4) (local deterministic demo; [thumbnail](docs/assets/demo-walkthrough-thumbnail.png)). YouTube upload is pending; see [`docs/DEMO_VIDEO.md`](docs/DEMO_VIDEO.md) for the upload package. The official form still uses a placeholder until a YouTube URL exists.
+
 ---
 
 ## Why this wedge
@@ -216,8 +218,8 @@ cd apps/api && uv run python -m app.db.seed
 - **Chunking is structure-aware, not semantic.** New chunks start at recognized legal headings (`Article`, `Section`, `Chapter`, `Part`, `Annex`, `Schedule`, `Rule`, `Title`, `§`) and store a section path. Long sections are sentence-split and can still split mid-article; mock mode uses hash embeddings. No late interaction or graph RAG.
 - Optional BGE-M3 embeddings, Docling, RAGAS, and Phoenix are not required for the demo path.
 - No customer interviews, LOIs, design partners, or revenue. The validation kit is at [`docs/VALIDATION.md`](docs/VALIDATION.md) and the evidence log is honestly at zero.
-- No Figma file; [`docs/DESIGN.md`](docs/DESIGN.md) is the design artifact. No final demo video yet; the form packet uses a placeholder.
-- Team-diversity facts are intentionally blank except the team name `JU_StackMind`; no bonus is claimed. The official form has not been opened or submitted; the fill packet is prepared with placeholders and needs separate approval.
+- No Figma file; [`docs/DESIGN.md`](docs/DESIGN.md) is the design artifact. A 2:45 captioned local walkthrough exists at [`docs/assets/demo-walkthrough.mp4`](docs/assets/demo-walkthrough.mp4); YouTube upload is pending, so the form packet keeps a placeholder.
+- Team-diversity facts are intentionally blank except the team name `JU_StackMind`; no bonus is claimed. The official form has not been filled or submitted in this environment; the fill packet is prepared with placeholders and needs separate approval.
 - Cloud deployment is live for the API and web build. Netlify is the primary web origin with production browser QA passed 2/2; Vercel remains a secondary fallback and still has DNS variability on some networks. See [`docs/CLOUD_DEPLOYMENT_STATUS.md`](docs/CLOUD_DEPLOYMENT_STATUS.md).
 
 ---
