@@ -311,6 +311,23 @@ export interface paths {
         patch: operations["patch_risk_api_v1_risks__risk_id__patch"];
         trace?: never;
     };
+    "/api/v1/risks/{risk_id}/lineage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Risk Lineage */
+        get: operations["risk_lineage_api_v1_risks__risk_id__lineage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/risks/{risk_id}/actions": {
         parameters: {
             query?: never;
@@ -1044,6 +1061,8 @@ export interface components {
              * @default false
              */
             scheduler_running: boolean;
+            /** Scheduler Next Run At */
+            scheduler_next_run_at?: string | null;
             /** Revision */
             revision?: string | null;
             /**
@@ -1051,6 +1070,30 @@ export interface components {
              * Format: date-time
              */
             timestamp: string;
+        };
+        /** LineageNode */
+        LineageNode: {
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "source" | "signal" | "obligation" | "risk" | "evidence" | "action" | "approval" | "report";
+            /** Label */
+            label: string;
+            /** Status */
+            status?: string | null;
+            /** Href */
+            href?: string | null;
+            /** Detail */
+            detail?: string | null;
+            /** Occurred At */
+            occurred_at?: string | null;
+            /** Metadata */
+            metadata?: {
+                [key: string]: unknown;
+            };
         };
         /** ObligationOut */
         ObligationOut: {
@@ -1240,6 +1283,23 @@ export interface components {
             actions?: components["schemas"]["ActionOut"][];
             /** Approvals */
             approvals?: components["schemas"]["ApprovalOut"][];
+        };
+        /** RiskLineageOut */
+        RiskLineageOut: {
+            /**
+             * Risk Id
+             * Format: uuid
+             */
+            risk_id: string;
+            /** Trace Id */
+            trace_id?: string | null;
+            /** Nodes */
+            nodes?: components["schemas"]["LineageNode"][];
+            /** Reports */
+            reports?: components["schemas"]["ReportOut"][];
+            /** Audit Events */
+            audit_events?: components["schemas"]["AuditEventOut"][];
+            agent_run?: components["schemas"]["AgentRunOut"] | null;
         };
         /** RiskListItem */
         RiskListItem: {
@@ -2186,6 +2246,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RiskDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    risk_lineage_api_v1_risks__risk_id__lineage_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Demo-Role"?: string | null;
+            };
+            path: {
+                risk_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RiskLineageOut"];
                 };
             };
             /** @description Validation Error */

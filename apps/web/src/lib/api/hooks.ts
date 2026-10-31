@@ -22,6 +22,7 @@ import type {
   ReportListResponse,
   RiskDetail,
   RiskFilters,
+  RiskLineage,
   RiskListResponse,
   RiskStatus,
   SearchResponse,
@@ -58,6 +59,7 @@ export const queryKeys = {
   suppliers: ["suppliers"] as const,
   risks: (filters: RiskFilters) => ["risks", filters] as const,
   risk: (id: string) => ["risk", id] as const,
+  riskLineage: (id: string) => ["risk", id, "lineage"] as const,
   approvals: (status: string) => ["approvals", status] as const,
   audit: (filters: AuditFilters) => ["audit", filters] as const,
   auditVerify: ["audit", "verify"] as const,
@@ -196,10 +198,22 @@ export function useRisk(id: string) {
   });
 }
 
+export function useRiskLineage(id: string) {
+  return useQuery({
+    queryKey: queryKeys.riskLineage(id),
+    queryFn: () => apiFetch<RiskLineage>(`/api/v1/risks/${id}/lineage`),
+    enabled: Boolean(id),
+    ...queryOptions,
+  });
+}
+
 function invalidateRiskViews(client: ReturnType<typeof useQueryClient>, riskId?: string) {
   void client.invalidateQueries({ queryKey: ["risks"] });
   void client.invalidateQueries({ queryKey: queryKeys.dashboard });
-  if (riskId) void client.invalidateQueries({ queryKey: queryKeys.risk(riskId) });
+  if (riskId) {
+    void client.invalidateQueries({ queryKey: queryKeys.risk(riskId) });
+    void client.invalidateQueries({ queryKey: queryKeys.riskLineage(riskId) });
+  }
   void client.invalidateQueries({ queryKey: queryKeys.approvals("pending") });
   void client.invalidateQueries({ queryKey: ["approvals"] });
   void client.invalidateQueries({ queryKey: ["audit"] });

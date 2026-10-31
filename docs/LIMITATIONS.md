@@ -102,6 +102,12 @@ calibrate the claims.
   stores `last_sync_mode`, `last_signal_count`, `last_synced_at`, and a sanitized
   `last_error`; there is no per-connector latency/cost dashboard or replay
   protection beyond external-ID dedupe.
+- **Lineage is a database read-model, not full APM.** The risk detail page shows
+  source → signal → obligation → risk → evidence/actions/approvals → reports and
+  audit events, with the pipeline `trace_id` persisted in risk metadata. There is
+  no OpenTelemetry/OpenLineage export, distributed tracing, or cost/latency
+  dashboard; Sentry and PostHog remain optional and not configured on the hosted
+  pilot.
 - **No internal document ingestion pipeline in the demo.** The evidence corpus
   is seeded; Docling/PDF parsing is optional and not on the demo path.
 - **The company, suppliers, seeded signals, and quotes are synthetic.** They are
@@ -147,9 +153,9 @@ calibrate the claims.
   score, or call another model. One local smoke run still left a risk in
   `needs_review` after repair, which is the intended honest outcome when the
   evidence cannot be grounded.
-- **The golden set is seven hand-built synthetic cases.** The 7/7 result measures
-  pipeline contract compliance and citation grounding on that set, not
-  generalization to unseen regulations.
+- **The golden set is thirteen hand-built synthetic cases.** The 13/13 result
+  measures pipeline contract compliance and citation grounding across the seed
+  set, not generalization to unseen regulations.
 - **Expected priorities and keywords were authored with the mock outputs.** This
   is not an independent legal or model-quality benchmark.
 - **No human legal/compliance labels.** No advisor reviewed the content or the

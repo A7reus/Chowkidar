@@ -112,10 +112,10 @@ Visual: risk detail crop + audit verify card + report page.
 
 ## Slide 8 — Evaluation
 
-- 7/7 golden cases on the deterministic path.
+- 13/13 golden cases on the deterministic path.
 - Five gates: extraction accuracy, citation coverage, verifier pass rate,
   no-legal-advice rate, priority agreement.
-- 97 API tests, 8 web tests, local Playwright smoke, and hosted production
+- 106 API tests, 8 web tests, local Playwright smoke, and hosted production
   Playwright QA; Ruff/Pyright/ESLint/tsc clean.
 - Honest limitation: small synthetic set; not a legal benchmark; live models and
   the repair loop are not scored here.

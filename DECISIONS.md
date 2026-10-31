@@ -342,6 +342,14 @@ To avoid losing details between sessions:
 - Verification: `make check` 97 API + 8 web tests; `make evals` 7/7; local Ollama `qwen2.5:3b` pipeline smoke 0 errors / `repair_attempts=1` / `needs_review`; MCP HTTP 401 without a bearer token and 200 with the configured token.
 - Committed and pushed as `322bc24`; Render auto-deployed revision `322bc2456868`. Hosted `/healthz` returned `status=ok`, and `/api/v1/meta` exposed `llm_local_enabled=false`, `llm_prefer_local=false`, and `llm_local_only=false`. Local Ollama is not configured on Render, MCP HTTP is not exposed as a hosted service, and existing hosted evidence was not reseeded.
 
+### 2026-10-30 — Session 9
+- Recorded the preliminary deadline extension to 2026-11-20 and reset the internal target to 2026-11-19; pushed as `012afeb`.
+- Implemented P1-5: expanded the deterministic golden set from 7 to 13 cases (`golden-set-v2`), covering every seeded signal. Added adversarial verifier tests for prompt injection, invalid citation URLs, empty quotes, prohibited action language, and whitespace-normalized quote matching, plus a fixture-coverage regression test. `make evals` reports 13/13 with all five metrics at `1.0`; this remains synthetic and deterministic-only.
+- Implemented P1-6: added `GET /api/v1/risks/{id}/lineage` and a risk-detail lineage panel covering source → signal → obligation → risk → evidence/actions/approvals → reports/audit. Pipeline-created risks now persist `trace_id` in risk metadata; seeded risks use the fixture agent-run trace. Reports are matched through `report_runs.summary.risk_ids`.
+- Regenerated the web OpenAPI types and added English/Bengali lineage strings.
+- Verification: `make check` passes with 106 API tests and 8 web tests; Ruff, Pyright, ESLint, and `tsc` are clean. No hosted deploy was triggered by these local changes until the commit is pushed.
+- No OpenTelemetry/OpenLineage export, distributed tracing, or cost/latency dashboard is claimed. The official form remains unopened and unsubmitted.
+
 ### Template for future sessions
 ```
 ### YYYY-MM-DD — Session N

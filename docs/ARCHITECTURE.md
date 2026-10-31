@@ -186,6 +186,20 @@ Optional production embeddings use BGE-M3; the seed path uses deterministic mock
 
 The chain detects edits or deletions within the application path; production would additionally restrict database roles and ship the head hash to external storage.
 
+### Risk lineage
+
+`GET /api/v1/risks/{id}/lineage` reconstructs the record’s provenance from the
+source through the signal, obligation, risk, evidence, actions, and approvals to
+generated reports and audit events. The pipeline persists its `trace_id` in
+`risks.metadata`; seeded demo risks use the fixture agent-run trace. The risk
+detail page renders the chain, trace ID, linked reports, and recent audit events.
+Reports are matched by the `risk_ids` list stored in `report_runs.summary`.
+Audit events are matched by entity ID and by `risk_id` in the event payload; the
+pipeline-run event is matched by trace ID.
+
+The view is a read-model over existing tables. It does not add OpenTelemetry,
+OpenLineage, Phoenix, or a cost/latency dashboard, and those are not claimed.
+
 ---
 
 ## 10. Reports
@@ -232,7 +246,7 @@ Base: `/api/v1`
 - `GET /auth/config`, `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `POST /auth/demo-login`, `GET /auth/demo-users`, `GET /auth/me`, `GET /auth/roles`
 - `GET /dashboard/summary`
 - `GET /signals`, `GET /signals/{id}`
-- `GET/POST /risks`, `GET /risks/{id}`, `GET/POST /risks/{id}/actions`, `GET /risks/{id}/approvals`
+- `GET/POST /risks`, `GET /risks/{id}`, `GET /risks/{id}/lineage`, `GET/POST /risks/{id}/actions`, `GET /risks/{id}/approvals`
 - `GET /actions/{id}`, `PATCH /actions/{id}`
 - `GET /approvals`, `GET /approvals/pending-count`, `POST /approvals/{id}/decision`
 - `GET /audit`, `GET /audit/verify`
@@ -271,7 +285,7 @@ OpenAPI JSON: `/openapi.json`. The web app’s schema types are generated from i
 
 ## 14. Evaluation
 
-The `/evals` page reports five gates over a 7-case golden set:
+The `/evals` page reports five gates over a 13-case golden set (`golden-set-v2`):
 
 1. Extraction accuracy
 2. Citation coverage
@@ -279,7 +293,7 @@ The `/evals` page reports five gates over a 7-case golden set:
 4. No-legal-advice rate
 5. Priority agreement
 
-Current mock-path result: **7/7 cases**, all metrics **1.0**. The golden set and expected keywords were authored together, so this demonstrates pipeline-contract compliance and citation grounding on the seed set, not generalization to unseen regulations. Live Gemini/Groq routes have been smoke-tested but are not benchmarked here.
+Current mock-path result: **13/13 cases**, all metrics **1.0**. The golden set and expected keywords were authored together, so this demonstrates pipeline-contract compliance and citation grounding across every seeded signal, not generalization to unseen regulations. Live Gemini/Groq routes have been smoke-tested but are not benchmarked here.
 
 ---
 

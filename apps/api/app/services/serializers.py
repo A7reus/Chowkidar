@@ -5,6 +5,7 @@ from typing import cast
 from app.db.models import (
     AgentRun,
     Approval,
+    AuditEvent,
     Obligation,
     RemediationAction,
     ReportRun,
@@ -19,10 +20,13 @@ from app.schemas import (
     AgentRunOut,
     ApprovalOut,
     ApprovalStatusLiteral,
+    AuditEventOut,
     EvidenceOut,
+    LineageNode,
     ObligationOut,
     ReportOut,
     RiskDetail,
+    RiskLineageOut,
     RiskListItem,
     SignalOut,
     SourceOut,
@@ -137,6 +141,154 @@ def risk_detail(risk: Risk) -> RiskDetail:
             )
             for approval in risk.approvals
         ],
+    )
+
+
+def _clip(text: str, limit: int = 180) -> str:
+    compact = " ".join(text.split())
+    if len(compact) <= limit:
+        return compact
+    return f"{compact[: limit - 1].rstrip()}…"
+
+
+def risk_lineage_out(
+    risk: Risk,
+    *,
+    reports: list[ReportRun],
+    audit_events: list[AuditEvent],
+    agent_run: AgentRun | None,
+) -> RiskLineageOut:
+    trace_id = str((risk.extra or {}).get("trace_id") or "") or None
+    obligation = risk.obligation
+    signal = obligation.signal if obligation else None
+    source = signal.source if signal else None
+    nodes: list[LineageNode] = []
+
+    if source is not None:
+        nodes.append(
+            LineageNode(
+                id=str(source.id),
+                kind="source",
+                label=source.name,
+                status=source.status,
+                href=source.url or None,
+                detail=f"{source.stream_key} · {source.jurisdiction}",
+                metadata={"connector": source.connector_key, "source_type": source.source_type},
+            )
+        )
+    if signal is not None:
+        nodes.append(
+            LineageNode(
+                id=str(signal.id),
+                kind="signal",
+                label=signal.title,
+                status=signal.status,
+                href=signal.url or None,
+                detail=f"{signal.external_id} · {signal.signal_type} · {signal.severity}",
+                occurred_at=signal.published_at,
+                metadata={"jurisdiction": signal.jurisdiction},
+            )
+        )
+    if obligation is not None:
+        nodes.append(
+            LineageNode(
+                id=str(obligation.id),
+                kind="obligation",
+                label=obligation.title,
+                status=obligation.status,
+                href=obligation.citation_url or None,
+                detail=f"{obligation.obligation_type} · {obligation.jurisdiction}",
+                metadata={
+                    "applies_to": obligation.applies_to,
+                    "effective_date": obligation.effective_date,
+                },
+            )
+        )
+
+    nodes.append(
+        LineageNode(
+            id=str(risk.id),
+            kind="risk",
+            label=risk.title,
+            status=risk.status,
+            detail=f"{risk.priority} · score {risk.score:.1f}",
+            occurred_at=risk.created_at,
+            metadata={
+                "category": risk.category,
+                "verification_status": risk.verification_status,
+                "trace_id": trace_id,
+            },
+        )
+    )
+
+    for evidence in risk.evidence:
+        nodes.append(
+            LineageNode(
+                id=str(evidence.id),
+                kind="evidence",
+                label=evidence.citation_label or "Evidence passage",
+                status=evidence.supports,
+                href=evidence.citation_url or None,
+                detail=_clip(evidence.quote),
+                metadata={"confidence": evidence.confidence},
+            )
+        )
+    for action in sorted(risk.actions, key=lambda item: item.created_at):
+        nodes.append(
+            LineageNode(
+                id=str(action.id),
+                kind="action",
+                label=action.title,
+                status=action.status,
+                detail=f"{action.owner_role} · {action.priority}",
+                occurred_at=action.created_at,
+                metadata={
+                    "automated": action.automated,
+                    "due_date": action.due_date,
+                },
+            )
+        )
+    for approval in sorted(risk.approvals, key=lambda item: item.created_at):
+        action_title = next(
+            (action.title for action in risk.actions if action.id == approval.action_id),
+            "Remediation action",
+        )
+        nodes.append(
+            LineageNode(
+                id=str(approval.id),
+                kind="approval",
+                label=f"Decision: {action_title}",
+                status=approval.status,
+                detail=f"{approval.requested_by} → {approval.assigned_to}",
+                occurred_at=approval.created_at,
+                metadata={
+                    "decision": approval.decision,
+                    "rationale": approval.rationale,
+                    "decided_at": approval.decided_at,
+                },
+            )
+        )
+    for report in reports:
+        nodes.append(
+            LineageNode(
+                id=str(report.id),
+                kind="report",
+                label=f"{report.format.upper()} report",
+                status=report.status,
+                href="/reports",
+                detail=f"{report.size_bytes} bytes · {report.storage_backend}",
+                occurred_at=report.generated_at,
+                metadata={"content_sha256": report.content_sha256},
+            )
+        )
+
+    return RiskLineageOut(
+        risk_id=risk.id,
+        trace_id=trace_id,
+        nodes=nodes,
+        reports=[report_out(report) for report in reports],
+        audit_events=[AuditEventOut.model_validate(event) for event in audit_events],
+        agent_run=agent_run_out(agent_run) if agent_run else None,
     )
 
 

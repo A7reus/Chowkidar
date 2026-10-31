@@ -57,7 +57,45 @@ GOLDEN_CASES = [
         "expected_keyword": "incentive",
         "expected_priority": "high",
     },
+    {
+        "case_id": "bis-entity-list-revision",
+        "external_id": "fr-2026-17231",
+        "expected_keyword": "entity list",
+        "expected_priority": "high",
+    },
+    {
+        "case_id": "eu-forced-labour-ban",
+        "external_id": "eu-flr-2024-3015",
+        "expected_keyword": "forced-labour",
+        "expected_priority": "critical",
+    },
+    {
+        "case_id": "uflpa-entity-name-match",
+        "external_id": "dhs-uflpa-2026-entity-match",
+        "expected_keyword": "uflpa",
+        "expected_priority": "critical",
+    },
+    {
+        "case_id": "cbp-chemical-traceability",
+        "external_id": "cbp-2026-09-28-chemical-trace",
+        "expected_keyword": "traceability",
+        "expected_priority": "high",
+    },
+    {
+        "case_id": "labour-inspection",
+        "external_id": "gdelt-2026-10-10-labour",
+        "expected_keyword": "labour",
+        "expected_priority": "high",
+    },
+    {
+        "case_id": "csddd-supervisory-penalties",
+        "external_id": "eu-csddd-penalties-2026",
+        "expected_keyword": "csddd",
+        "expected_priority": "medium",
+    },
 ]
+
+GOLDEN_SET_NAME = "golden-set-v2"
 
 
 def _signal_payload(signal: Signal) -> dict[str, Any]:
@@ -202,7 +240,7 @@ async def run_evals(session: AsyncSession) -> EvalSummary:
     total = len(results)
     passed_cases = sum(1 for result in results if result.passed)
     summary = EvalSummary(
-        name="golden-set-v1",
+        name=GOLDEN_SET_NAME,
         total_cases=total,
         passed_cases=passed_cases,
         extraction_accuracy=round(extraction_hits / total, 3) if total else 0.0,

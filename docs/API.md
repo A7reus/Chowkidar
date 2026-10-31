@@ -92,6 +92,7 @@ unless noted.
 | `GET` | `/api/v1/risks` | any | Filters: priority, status, search |
 | `POST` | `/api/v1/risks` | analyst/admin | Create a manual risk |
 | `GET` | `/api/v1/risks/{id}` | any | Score breakdown, evidence, actions |
+| `GET` | `/api/v1/risks/{id}/lineage` | any | Source → signal → obligation → risk chain, trace ID, reports, audit events |
 | `POST` | `/api/v1/risks/{id}/actions` | analyst/admin | Add a remediation action |
 | `GET` | `/api/v1/risks/{id}/approvals` | any | Approval history |
 | `GET` | `/api/v1/actions/{id}` | any | Action detail |

@@ -13,12 +13,14 @@ from app.schemas import (
     ApprovalCreateRequest,
     ApprovalOut,
     RiskDetail,
+    RiskLineageOut,
     RiskListResponse,
     RiskUpdateRequest,
 )
 from app.services.risks import (
     create_action,
     get_risk,
+    get_risk_lineage,
     list_risks,
     request_approval,
     update_action,
@@ -62,6 +64,16 @@ async def risk_detail(risk_id: uuid.UUID, session: SessionDep, _user: CurrentUse
     if risk is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Risk not found")
     return risk
+
+
+@router.get("/risks/{risk_id}/lineage", response_model=RiskLineageOut)
+async def risk_lineage(
+    risk_id: uuid.UUID, session: SessionDep, _user: CurrentUser
+) -> RiskLineageOut:
+    lineage = await get_risk_lineage(session, risk_id)
+    if lineage is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Risk not found")
+    return lineage
 
 
 @router.patch("/risks/{risk_id}", response_model=RiskDetail)

@@ -254,6 +254,7 @@ async def seed() -> dict[str, int]:
             obligation_ids[obligation_data["key"]] = obligation.id
         counts["obligations"] = len(obligation_ids)
 
+        demo_trace_id = fixture["agent_run"]["trace_id"]
         risk_ids: dict[str, uuid.UUID] = {}
         action_ids: dict[tuple[str, int], uuid.UUID] = {}
         approval_ids: dict[str, uuid.UUID] = {}
@@ -280,7 +281,11 @@ async def seed() -> dict[str, int]:
                 confidence=risk_data["confidence"],
                 verification_status=risk_data["verification_status"],
                 score_breakdown=score_data,
-                extra={"demo": True, "created_days_ago": risk_data.get("created_days_ago", 0)},
+                extra={
+                    "demo": True,
+                    "created_days_ago": risk_data.get("created_days_ago", 0),
+                    "trace_id": demo_trace_id,
+                },
                 created_at=created_at,
                 updated_at=created_at + timedelta(hours=2),
             )

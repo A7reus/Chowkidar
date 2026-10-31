@@ -326,7 +326,7 @@ hosted health check on 2026-10-26 reported revision `2bfaed71372c`:
 - [x] Analyst/admin can generate and download PDF, JSON, and Markdown reports.
 - [x] Reports survive an API restart with `STORAGE_BACKEND=database`.
 - [x] Search returns cited chunks.
-- [x] Evals page shows 7/7 and five gates for analyst/admin.
+- [x] Evals page shows 13/13 and five gates for analyst/admin.
 - [x] Graph renders all 30 nodes.
 - [x] CORS allows both the Netlify and Vercel origins.
 - [x] Browser QA found no console errors or `5xx` responses on Netlify.

@@ -3,13 +3,22 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.audit import record_audit
 from app.core.auth import UserContext
-from app.db.models import Approval, RemediationAction, Risk
+from app.db.models import (
+    AgentRun,
+    Approval,
+    AuditEvent,
+    Obligation,
+    RemediationAction,
+    ReportRun,
+    Risk,
+    Signal,
+)
 from app.schemas import (
     ActionCreateRequest,
     ActionOut,
@@ -17,16 +26,25 @@ from app.schemas import (
     ApprovalCreateRequest,
     ApprovalOut,
     RiskDetail,
+    RiskLineageOut,
     RiskListResponse,
     RiskUpdateRequest,
 )
-from app.services.serializers import action_out, approval_out, risk_detail, risk_list_item
+from app.services.serializers import (
+    action_out,
+    approval_out,
+    risk_detail,
+    risk_lineage_out,
+    risk_list_item,
+)
 
 
 def _risk_options():
     return (
         selectinload(Risk.supplier),
-        selectinload(Risk.obligation),
+        selectinload(Risk.obligation)
+        .selectinload(Obligation.signal)
+        .selectinload(Signal.source),
         selectinload(Risk.evidence),
         selectinload(Risk.actions),
         selectinload(Risk.approvals),
@@ -110,6 +128,81 @@ async def get_risk(session: AsyncSession, risk_id: uuid.UUID) -> RiskDetail | No
     if risk is None:
         return None
     return risk_detail(risk)
+
+
+async def get_risk_lineage(
+    session: AsyncSession, risk_id: uuid.UUID
+) -> RiskLineageOut | None:
+    risk = (
+        await session.execute(select(Risk).options(*_risk_options()).where(Risk.id == risk_id))
+    ).scalar_one_or_none()
+    if risk is None:
+        return None
+
+    trace_id = str((risk.extra or {}).get("trace_id") or "") or None
+    recent_reports = list(
+        (
+            await session.execute(
+                select(ReportRun).order_by(ReportRun.generated_at.desc()).limit(200)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    reports = [
+        report
+        for report in recent_reports
+        if str(risk.id)
+        in {str(item) for item in (report.summary or {}).get("risk_ids", [])}
+    ]
+
+    entity_ids = [
+        str(risk.id),
+        *(str(action.id) for action in risk.actions),
+        *(str(approval.id) for approval in risk.approvals),
+        *(str(report.id) for report in reports),
+    ]
+    audit_conditions = [
+        AuditEvent.entity_id.in_(entity_ids),
+        AuditEvent.payload["risk_id"].astext == str(risk.id),
+    ]
+    if trace_id:
+        audit_conditions.append(
+            and_(
+                AuditEvent.entity_type == "agent_run",
+                AuditEvent.entity_id == trace_id,
+            )
+        )
+    audit_events = list(
+        (
+            await session.execute(
+                select(AuditEvent)
+                .where(or_(*audit_conditions))
+                .order_by(AuditEvent.seq.asc())
+                .limit(200)
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    agent_run = None
+    if trace_id:
+        agent_run = (
+            await session.execute(
+                select(AgentRun)
+                .where(AgentRun.trace_id == trace_id)
+                .order_by(AgentRun.started_at.desc())
+                .limit(1)
+            )
+        ).scalar_one_or_none()
+
+    return risk_lineage_out(
+        risk,
+        reports=reports,
+        audit_events=audit_events,
+        agent_run=agent_run,
+    )
 
 
 async def create_action(

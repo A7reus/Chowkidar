@@ -432,6 +432,35 @@ class PipelineRunResponse(BaseModel):
     errors: list[str]
 
 
+class LineageNode(BaseModel):
+    id: str
+    kind: Literal[
+        "source",
+        "signal",
+        "obligation",
+        "risk",
+        "evidence",
+        "action",
+        "approval",
+        "report",
+    ]
+    label: str
+    status: str | None = None
+    href: str | None = None
+    detail: str | None = None
+    occurred_at: datetime | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class RiskLineageOut(BaseModel):
+    risk_id: uuid.UUID
+    trace_id: str | None = None
+    nodes: list[LineageNode] = Field(default_factory=list)
+    reports: list[ReportOut] = Field(default_factory=list)
+    audit_events: list[AuditEventOut] = Field(default_factory=list)
+    agent_run: AgentRunOut | None = None
+
+
 class EvalCaseResult(BaseModel):
     case_id: str
     passed: bool

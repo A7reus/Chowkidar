@@ -550,6 +550,7 @@ class PipelineRunner:
                             "generated_by": "langgraph-pipeline",
                             "prompt_version": PROMPT_VERSION,
                             "mode": self.mode,
+                            "trace_id": state.get("trace_id"),
                             "verification_notes": risk_data.get("verification_notes", []),
                             "repair_attempts": int(state.get("repair_attempts", 0)),
                             "routing": [

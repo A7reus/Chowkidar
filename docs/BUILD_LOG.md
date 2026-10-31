@@ -180,7 +180,7 @@ The deterministic mock path (`app/agents/mock.py`) is the default for the demo a
 |---|---|---|
 | API lint | `uv run ruff check app tests` | Pass |
 | API types | `uv run pyright` | 0 errors |
-| API tests | `uv run pytest` | 97 passed (current; 75 at initial build) |
+| API tests | `uv run pytest` | 106 passed (current; 75 at initial build) |
 | Web lint | `pnpm lint` | Pass |
 | Web types | `pnpm typecheck` | Pass |
 | Web unit | `pnpm test` | 8 passed |

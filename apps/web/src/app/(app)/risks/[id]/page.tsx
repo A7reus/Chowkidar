@@ -40,6 +40,7 @@ import { PageHeader } from "@/components/common/page-header";
 import { ScoreRing } from "@/components/common/score-ring";
 import { EmptyState, ErrorState, PageSkeleton } from "@/components/common/states";
 import { AddActionDialog } from "@/components/risks/add-action-dialog";
+import { LineagePanel } from "@/components/risks/lineage-panel";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -515,6 +516,8 @@ export default function RiskDetailPage() {
           </div>
 
           <ScoreBreakdown risk={data} />
+
+          <LineagePanel riskId={id} />
 
           <div className="panel p-5">
             <div className="flex items-start justify-between gap-3">

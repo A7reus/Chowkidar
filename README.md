@@ -54,9 +54,10 @@ More views: [signals](docs/assets/02-signals.png) · [search](docs/assets/05-sea
 | Bounded evidence-repair loop with routing metadata | Built |
 | Human approval queue with rationale and audit trail | Built |
 | Append-only SHA-256 hash-chained audit log | Built |
+| Risk lineage: source → signal → obligation → risk → evidence/actions/approvals → reports/audit, with persisted trace ID | Built; read-model only, no OpenTelemetry/OpenLineage export |
 | Reports in PDF, JSON, and Markdown | Built |
 | Supply-chain graph and node inspector | Built |
-| Evaluation dashboard with five metric gates | Built, 7/7 golden cases |
+| Evaluation dashboard with five metric gates | Built, 13/13 golden cases |
 | Read-only MCP server | Built: stdio + Streamable HTTP/SSE; HTTP requires a bearer token by default; not in the product path |
 | FastAPI REST API + OpenAPI schema | Built |
 | English + Bengali UI chrome | Built |
