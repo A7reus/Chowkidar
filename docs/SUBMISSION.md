@@ -216,6 +216,9 @@ Pilot with an RMG exporter and a compliance reviewer; monitor hosted provider re
 - [x] Scheduler arming bug fixed with a regression test; `scheduler_next_run_at` added to health/meta and verified on hosted revision `94c2a19f91c4`. The first scheduled cycle fired at revision `d1f285f50e67` (GDELT `09:29:36Z`, Federal Register `09:30:00Z`, next run `10:29:36Z`).
 - [x] Gemini and Groq keys set in Render and the gitignored `.env`; both providers probed successfully without exposing the keys.
 - [x] Hosted live LLM inference verified (`llm_live_ready=true`; hosted `mode=live` run produced a model-generated rationale with confidence `0.96`, 0 errors, and 1 verified risk).
+- [x] Golden set expanded to 13 cases (`golden-set-v2`) covering every seeded signal; adversarial verifier tests added; `make evals` reports 13/13 and all five gates pass on the deterministic path.
+- [x] Risk-lineage endpoint and risk-detail panel added (`source → signal → obligation → risk → evidence/actions/approvals → reports/audit`) with persisted trace IDs; deployed in revision `2e95cd283d46`.
+- [x] Cloudflare quick tunnel executed and verified once on 2026-10-31 for the local read-only MCP endpoint (`401` without a token, `200` with it, six tools listed); the URL was ephemeral and is closed.
 - [x] Validation kit with interview guide, LOI template, pricing hypotheses, and an honest zero-evidence log.
 - [x] Design artifact [`DESIGN.md`](DESIGN.md) with wireframes, flows, tokens, and accessibility notes.
 - [x] Two-to-three-minute captioned walkthrough recorded locally at [`docs/assets/demo-walkthrough.mp4`](assets/demo-walkthrough.mp4); upload package in [`DEMO_VIDEO.md`](DEMO_VIDEO.md).
