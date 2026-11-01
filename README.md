@@ -60,7 +60,7 @@ More views: [signals](docs/assets/02-signals.png) · [search](docs/assets/05-sea
 | Reports in PDF, JSON, and Markdown | Built |
 | Supply-chain graph and node inspector | Built |
 | Evaluation dashboard with five metric gates | Built, 13/13 golden cases |
-| Read-only MCP server | Built: stdio + Streamable HTTP/SSE; HTTP requires a bearer token by default; not in the product path |
+| Read-only MCP server | Built: stdio + Streamable HTTP/SSE; HTTP requires a bearer token by default; a temporary Cloudflare quick tunnel was verified on 2026-10-31; not in the product path |
 | FastAPI REST API + OpenAPI schema | Built |
 | English + Bengali UI chrome | Built |
 | Demo auth with four roles | Built; local only in `AUTH_MODE=dev` + `DEMO_MODE=true` |
@@ -167,7 +167,7 @@ make check         # lint + typecheck + unit tests
 make evals         # golden-set evaluation
 make mcp           # read-only MCP server over stdio
 make mcp-http      # Streamable HTTP on :8765/mcp; requires CHOWKIDAR_MCP_HTTP_TOKEN
-make mcp-tunnel    # optional Cloudflare quick tunnel for the local MCP endpoint (not used for the hosted demo)
+make mcp-tunnel    # optional Cloudflare quick tunnel for the local MCP endpoint (verified once; ephemeral)
 make ollama-pull   # optional local model; OLLAMA_PULL_MODEL=qwen2.5:3b for the smoke-tested size
 make docker        # build the API container from the repo root
 make api-types     # regenerate OpenAPI types (API must be running)
@@ -214,7 +214,7 @@ cd apps/api && uv run python -m app.db.seed
 - Rate limits are process-local (suitable for the single Render instance); browser tokens are stored in local storage rather than HttpOnly cookies.
 - Hybrid LLM mode is implemented, deployed, and hosted-verified: Render reports `llm_live_ready=true`, and a hosted `mode=live` pipeline run on 2026-10-27 produced a model-generated, citation-grounded rationale with confidence `0.96` and 0 errors. Deterministic fallback remains available when providers fail. Provider keys live only in Render environment variables and the gitignored local `.env`; they are never committed. Provider reliability is not an SLA; Gemini 3.8 Flash timed out and Gemini Pro Latest had zero free-tier quota, so the defaults use Gemini 3.5 Flash.
 - **Local Ollama is a local smoke path, not a hosted capability.** `OLLAMA_ENABLED=true` adds Ollama to the fallback chain; `LLM_PREFER_LOCAL=true` tries it first but still falls back to configured cloud providers; `LLM_LOCAL_ONLY=true` hard-disables cloud providers and requires Ollama. A local run used cached `qwen2.5:3b` (0 errors, `repair_attempts=1`, verification `needs_review`). The default `qwen2.5:7b` was not pulled, no local model runs on Render, and no quality/latency claim is made.
-- **MCP is read-only and outside the product path.** The server exposes six tools, one prompt, and one resource over stdio or Streamable HTTP/SSE. HTTP requires `CHOWKIDAR_MCP_HTTP_TOKEN` by default; `--allow-unauthenticated` is loopback-only. No external MCP server is integrated, the pipeline does not call MCP, and the optional `make mcp-tunnel` target has not been executed for the submission.
+- **MCP is read-only and outside the product path.** The server exposes six tools, one prompt, and one resource over stdio or Streamable HTTP/SSE. HTTP requires `CHOWKIDAR_MCP_HTTP_TOKEN` by default; `--allow-unauthenticated` is loopback-only. No external MCP server is integrated, and the pipeline does not call MCP. A temporary Cloudflare quick tunnel was verified on 2026-10-31 (`401` without a token, `200` with it, six tools listed); the URL was ephemeral and is closed. There is no persistent public MCP endpoint.
 - **Chunking is structure-aware, not semantic.** New chunks start at recognized legal headings (`Article`, `Section`, `Chapter`, `Part`, `Annex`, `Schedule`, `Rule`, `Title`, `§`) and store a section path. Long sections are sentence-split and can still split mid-article; mock mode uses hash embeddings. No late interaction or graph RAG.
 - Optional BGE-M3 embeddings, Docling, RAGAS, and Phoenix are not required for the demo path.
 - No customer interviews, LOIs, design partners, or revenue. The validation kit is at [`docs/VALIDATION.md`](docs/VALIDATION.md) and the evidence log is honestly at zero.
@@ -231,7 +231,7 @@ Chowkidar exposes a **read-only** FastMCP server so other agents can inspect ris
 ```bash
 make mcp                                      # stdio
 CHOWKIDAR_MCP_HTTP_TOKEN=... make mcp-http    # http://127.0.0.1:8765/mcp
-make mcp-tunnel                               # optional Cloudflare quick tunnel (not used for the hosted demo)
+make mcp-tunnel                               # optional Cloudflare quick tunnel (verified once; ephemeral)
 ```
 
 Example client config:

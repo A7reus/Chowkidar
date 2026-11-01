@@ -446,6 +446,7 @@ This is the short version. The detailed limitations are in `docs/ARCHITECTURE.md
 | PDF/JSON/Markdown reports | Built | Yes |
 | Hybrid retrieval: pgvector + Postgres FTS + reranking | Implemented; mock embeddings by default, live BGE-M3 optional and not installed | Yes, with the mock/live distinction disclosed |
 | Read-only FastMCP server (stdio/HTTP/SSE) | Built, tested, and deployed in the API image; HTTP requires a bearer token by default; no hosted MCP endpoint and not in the product path | Yes, as a read-only integration surface |
+| Cloudflare quick tunnel for the local MCP endpoint | Executed and verified once on 2026-10-31: `401` without a token, `200` with it, six tools listed over the public HTTPS URL; the quick tunnel was shut down and the URL is expired | Yes, as a one-time local verification; no persistent endpoint |
 | External MCP server integrated into the product | Not yet; the event MCP was used for research only | **No** until integrated |
 | Live LLM mode | Hosted Gemini 3.5 Flash verified (`llm_live_ready=true`; hosted `mode=live` run, confidence `0.96`); Groq remains the fallback; mock remains the default local path | Yes, with the provider/fallback limitation disclosed |
 | Local Ollama model run | Routing code deployed; locally smoke-tested with `qwen2.5:3b` (0 errors, `repair_attempts=1`, `needs_review`); no local model configured on Render; default 7B not pulled | Yes, as a **local smoke path only**; no quality/latency claim |
@@ -484,7 +485,7 @@ These are ranked by score and credibility per unit of work. They do **not** requ
 
 ### Worth doing if time permits
 
-7. **MCP disclosure and, if feasible, one real external MCP integration.** The built read-only server earns “MCP built” and architecture credit, and now supports stdio plus fail-closed Streamable HTTP/SSE. “MCP used” still requires an actual external server in the product path.
+7. **MCP disclosure and, if feasible, one real external MCP integration.** The built read-only server earns “MCP built” and architecture credit, and now supports stdio plus fail-closed Streamable HTTP/SSE. A Cloudflare quick tunnel was verified once for the local endpoint but is ephemeral. “MCP used” still requires an actual external server in the product path.
 8. **Run and validate Ollama with a small local model.** Done as a local smoke with `qwen2.5:3b`; the default 7B model was not pulled and no local model is hosted.
 9. **Wire one n8n workflow.** Not done; the in-process scheduler is the supported path and n8n is not claimed.
 10. **Add semantic/contextual chunking only if actually implemented.** Structure-aware legal-heading chunking is implemented; semantic/contextual/graph RAG are not. Do not claim them from a checklist.

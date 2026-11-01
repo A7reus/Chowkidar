@@ -134,11 +134,17 @@ Client configuration for a URL-based MCP host:
 
 The tunnel is ephemeral and exposes only the read-only tools. `make mcp-http`
 refuses to start without `CHOWKIDAR_MCP_HTTP_TOKEN`, and the server rejects
-requests without the matching bearer token. The optional tunnel target is not
-used for the hosted submission and has not been executed for it. `--host`,
-`--port`, `CHOWKIDAR_MCP_HOST`, and `CHOWKIDAR_MCP_PORT` change the bind address;
-`--allow-unauthenticated` is loopback-only. A local smoke returned `401` without
-`Authorization` and `200` with the configured bearer token.
+requests without the matching bearer token. `--host`, `--port`,
+`CHOWKIDAR_MCP_HOST`, and `CHOWKIDAR_MCP_PORT` change the bind address;
+`--allow-unauthenticated` is loopback-only.
+
+**Tunnel verification (2026-10-31):** a Cloudflare quick tunnel was started
+against the local HTTP endpoint. Over the public HTTPS URL, `initialize` returned
+`401` without `Authorization`, `200` with the bearer token, and `tools/list`
+returned the six read-only tools. The quick-tunnel URL was ephemeral and was
+shut down after verification. There is **no persistent public MCP endpoint**,
+and the hosted pilot does not expose MCP. Do not present the expired quick
+tunnel as a live demo URL.
 
 ---
 

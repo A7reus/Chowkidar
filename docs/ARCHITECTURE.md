@@ -263,7 +263,7 @@ OpenAPI JSON: `/openapi.json`. The web app’s schema types are generated from i
 
 ### MCP server
 
-`apps/api/app/mcp/server.py` exposes six read-only tools, one prompt, and one resource over stdio (default) or Streamable HTTP/SSE (`--transport http` or `sse`). HTTP/SSE fail closed: `CHOWKIDAR_MCP_HTTP_TOKEN` is required, and `--allow-unauthenticated` is restricted to a loopback host. `make mcp-http` refuses to start without a token; `make mcp-tunnel` documents an optional Cloudflare quick tunnel that is not used for the hosted demo. The MCP server is not in the pipeline path and cannot approve or mutate anything.
+`apps/api/app/mcp/server.py` exposes six read-only tools, one prompt, and one resource over stdio (default) or Streamable HTTP/SSE (`--transport http` or `sse`). HTTP/SSE fail closed: `CHOWKIDAR_MCP_HTTP_TOKEN` is required, and `--allow-unauthenticated` is restricted to a loopback host. `make mcp-http` refuses to start without a token; `make mcp-tunnel` was executed once on 2026-10-31 and verified over a temporary Cloudflare quick tunnel (`401` without a token, `200` with it, six tools listed). The quick-tunnel URL was ephemeral and is closed; the hosted demo does not expose MCP. The MCP server is not in the pipeline path and cannot approve or mutate anything.
 
 ---
 
@@ -326,7 +326,7 @@ See [`DEPLOYMENT.md`](DEPLOYMENT.md).
 - Mock mode prioritizes deterministic storytelling over live model variability. Hybrid mode is available but remains non-deterministic; the deterministic verifier and human approval still gate output.
 - Live connectors are limited to GDELT and the US Federal Register; the other three streams are fixture-backed. GDELT's public rate limit can force a labelled fallback.
 - Local Ollama routing is implemented and was smoke-tested with `qwen2.5:3b` only; the default 7B model, hosted local inference, and model-quality/latency claims remain out of scope.
-- MCP HTTP/SSE is opt-in and fail-closed; no external MCP server is integrated, and the Cloudflare tunnel target has not been executed for the submission.
+- MCP HTTP/SSE is opt-in and fail-closed; no external MCP server is integrated. A Cloudflare quick tunnel was verified once on 2026-10-31, but the URL was ephemeral and is closed; no persistent public MCP endpoint exists.
 - Chunking starts at recognized legal headings but is not semantic; long sections can still split mid-article.
 - The repair loop is bounded and deterministic; it does not guarantee that every risk becomes `verified`.
 - The graph has a compact fixed layout for 30 nodes; very large supply chains need clustering.

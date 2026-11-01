@@ -142,9 +142,11 @@ calibrate the claims.
 - **MCP is read-only and outside the product path.** Six tools, one prompt, and
   one resource are available over stdio or Streamable HTTP/SSE. HTTP requires
   `CHOWKIDAR_MCP_HTTP_TOKEN` by default; `--allow-unauthenticated` is
-  loopback-only. No external MCP server is integrated, the pipeline does not call
-  MCP, and the optional `make mcp-tunnel` target has not been executed or
-  verified for the submission.
+  loopback-only. No external MCP server is integrated, and the pipeline does not
+  call MCP. A Cloudflare quick tunnel was executed and verified once on
+  2026-10-31 (`401` without a token, `200` with it, six tools listed), but the
+  URL was ephemeral and is closed. There is no persistent public MCP endpoint,
+  and the hosted pilot does not expose MCP.
 - **Chunking is structure-aware, not semantic.** The chunker is deployed in
   revision `322bc2456868`; existing hosted evidence was not reseeded. New chunks
   start at recognized legal headings (`Article`, `Section`, `Chapter`, `Part`,

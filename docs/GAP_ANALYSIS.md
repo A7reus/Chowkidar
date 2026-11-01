@@ -102,7 +102,7 @@
 | **P1-7** | PII/responsible-AI doc/code mismatch | `core/security.py` redacts email, phone, NID, passport; docs claimed IBAN; no Presidio/Llama Guard; browser tokens in local storage; no MFA/RLS/DPA/retention policy. **Now:** IBAN claim removed; docs state the boundary | Privacy/guardrails; Responsible AI 20% | Add IBAN pattern or remove claim; add retention/data-flow/DPA notes; document local-storage risk; do not claim Presidio/Llama Guard. | `implemented` — claim removed; broader privacy gaps disclosed |
 | **P1-8** | Admin and multi-tenancy gaps | Script-based provisioning; no invite/role-change UI; single workspace; no billing | Business/scalability; product completeness | Disclose as single-workspace pilot; add admin UI only if time; never claim SaaS readiness. | `accepted` for preliminary |
 | **P1-9** | Data quality and licensing | Fixture data for three streams; dedupe by `external_id` now implemented; no freshness SLO or source license/ToS review. **Now:** source licensing disclosure and freshness expectations added to `docs/DATA_SOURCES.md` | Data Lifecycle 25 | Add validation/dedupe/freshness metrics and a source license table; document fixture provenance. | `implemented` — dedupe, license disclosure, and freshness expectations documented; no enforced SLO or formal terms review |
-| **P1-10** | Checklist gaps | **Now:** `make mcp-http` and `make mcp-tunnel` (Cloudflare quick tunnel) exist for the read-only MCP endpoint. The tunnel has not been executed or verified for the submission. No listed frontend AI tool, no AI-DLC framework, and no fine-tuning | AI stack points | Honest zeros. Optional truthful quick wins: Cloudflare Tunnel for the local MCP demo, OpenCode in an "other" field if available. Do not check unimplemented boxes. | `in_progress` — tunnel target added but unverified; no tunneling points claimed |
+| **P1-10** | Checklist gaps | **Now:** `make mcp-http` and `make mcp-tunnel` (Cloudflare quick tunnel) exist for the read-only MCP endpoint. A quick tunnel was executed and verified on 2026-10-31: `401` without a bearer token, `200` with it, and `tools/list` returned six tools over the public HTTPS URL. The quick-tunnel URL was ephemeral and was shut down; no persistent public MCP endpoint exists. No listed frontend AI tool, no AI-DLC framework, and no fine-tuning | AI stack points | Honest zeros. Optional truthful quick wins: Cloudflare Tunnel for the local MCP demo, OpenCode in an "other" field if available. Do not check unimplemented boxes. | `implemented` — Cloudflare quick tunnel verified once; ephemeral only, not a hosted demo URL; no frontend AI tool, AI-DLC framework, or fine-tuning claim |
 
 ---
 
@@ -161,7 +161,7 @@ Do not claim any of the following unless the status changes to `verified` with e
 - Semantic chunking, late interaction, Anthropic-style contextual RAG, or graph RAG.
 - Neo4j or a graph database in the product path.
 - External MCP servers used in the product path.
-- A publicly exposed MCP HTTP endpoint or a verified Cloudflare tunnel; the server is local/opt-in, and the tunnel target has not been executed for the submission.
+- A persistent publicly exposed MCP HTTP endpoint. A Cloudflare quick tunnel was verified once on 2026-10-31, but the URL was ephemeral and is closed; the server remains local/opt-in and no hosted MCP endpoint exists.
 - Active n8n automation.
 - Hosted local-model inference, default `qwen2.5:7b` results, or Ollama quality/latency claims. The local smoke used `qwen2.5:3b` only.
 - Fine-tuning, LoRA, or a training-data pipeline.
@@ -274,7 +274,7 @@ Current hosted state (2026-10-27): `llm_mode=hybrid`, `llm_live_ready=true`, `da
 | Video owner and recording | Official form requires a YouTube URL | User | `in_progress` — 2:45 captioned local recording ready; YouTube upload and URL still pending; form placeholder retained |
 | Supabase database password rotation | Security hygiene; requires updating Render `DATABASE_URL` | User/operator | `accepted` — zero-real-user pilot; rotate before real users; not a submission blocker |
 | PR #1 closed unmerged | The selected parts were adapted manually; the branch was `CONFLICTING`/`DIRTY` and was closed on 2026-10-27 after the credit comment; attribution is recorded in `CREDITS.md` | User/maintainer | `resolved` — credited and closed; do not claim the PR was merged |
-| Local model/tunnel verification | Default `qwen2.5:7b` was not pulled; `make mcp-tunnel` was not executed | Operator | `accepted` — do not claim 7B quality or tunneling points |
+| Local model/tunnel verification | Default `qwen2.5:7b` was not pulled; the Cloudflare quick tunnel was verified once on 2026-10-31 but is ephemeral and closed | Operator | `accepted` — do not claim 7B quality or a persistent public MCP endpoint; tunneling may be described as a one-time local verification |
 
 ---
 
@@ -307,6 +307,7 @@ Current hosted state (2026-10-27): `llm_mode=hybrid`, `llm_live_ready=true`, `da
 | 2026-10-30 | Implemented P1-6: risk-level lineage endpoint, risk-detail panel, trace-ID persistence, report/audit links, regenerated web types | `apps/api/app/{schemas.py,services/risks.py,services/serializers.py,api/v1/risks.py,agents/pipeline.py,db/seed.py}`, `apps/api/tests/{test_lineage.py,test_api_contract.py}`, `apps/web/src/{components/risks/lineage-panel.tsx,app/(app)/risks/[id]/page.tsx,lib/api/hooks.ts,lib/api/types.ts,lib/api/schema.d.ts,messages/*.json}`, `docs/{API,ARCHITECTURE,LIMITATIONS}.md` | Local seeded lineage returns trace `demo-trace-2026-10-23` with source/signal/obligation/risk/evidence/actions/approval nodes and audit events; `make check` clean |
 | 2026-10-31 | Committed and pushed P1-5/P1-6 as `2e95cd2`; verified CI and the Render auto-deploy | `main` at `2e95cd2`; hosted runtime | CI run `41173566580` passed; Render revision `2e95cd283d46`; `/healthz` `status=ok`, `database=ok`, `auth_mode=supabase`, `data_mode=hybrid`, `llm_live_ready=true`, `scheduler_running=true`; local seeded lineage route `200`/`404` re-verified |
 | 2026-10-31 | Recorded a 2:45 captioned local walkthrough and prepared the YouTube upload package | `docs/assets/demo-walkthrough.mp4`, `docs/assets/demo-walkthrough-thumbnail.png`, `docs/DEMO_VIDEO.md`, `README.md`, `docs/SUBMISSION.md` | Local deterministic demo; no YouTube URL exists yet, so the form keeps a placeholder |
+| 2026-10-31 | Executed and verified the Cloudflare quick tunnel for the local read-only MCP endpoint | `docs/MCP.md`, `Makefile`, local MCP HTTP server | Public HTTPS URL: `401` without `Authorization`, `200` with the bearer token, `tools/list` `200` with six tools; quick tunnel shut down after verification; no persistent public endpoint |
 
 ---
 

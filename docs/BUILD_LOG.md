@@ -32,7 +32,7 @@
 | Type checks | Pyright 0 errors; `tsc` clean |
 | Lint | Ruff clean; ESLint clean |
 | Evals | 13/13 golden cases (`golden-set-v2`); five metrics at 1.0 on the deterministic path |
-| MCP | Read-only FastMCP server implemented and manually exercised |
+| MCP | Read-only FastMCP server implemented and manually exercised; Cloudflare quick tunnel verified once on 2026-10-31 (ephemeral, closed) |
 | Deployment | Live production pilot: Render API + Netlify primary web + Vercel secondary web + Supabase Auth/Postgres; hosted hybrid env running; Federal Register live sync verified; GDELT fallback verified; hosted live LLM inference verified |
 
 ### Verified demo baseline
@@ -171,6 +171,11 @@ The deterministic mock path (`app/agents/mock.py`) is the default for the demo a
 | 2026-10-27 | `apps/api/app/{agents/llm.py,api/v1/meta.py,core/config.py,mcp/server.py,rag/chunking.py}`, tests, `.env.example`, `Makefile`, `docs/*` | Adapt selected PR #1 improvements: local Ollama routing with `LLM_LOCAL_ONLY`, fail-closed MCP Streamable HTTP/SSE, and structure-aware legal-heading chunking; reject the keep-warm workflow and conflicting README hunk | Improve local-model and MCP paths without merging the conflicting PR or overclaiming | AI agent + QA |
 | 2026-10-27 | `main` at `322bc24`; hosted revision `322bc2456868` | Commit and push the PR #1 adaptation; Render auto-deployed it | Verify the new code is live without changing the pilot's data | Operator + QA |
 | 2026-10-27 | `CREDITS.md`, `README.md`, `docs/GAP_ANALYSIS.md` | Add repo-level attribution for PR #1: adapted areas, omitted keep-warm workflow and README hunk, original commit references, and a co-authored credit commit | Credit the PR author without merging the conflicting branch or rewriting deployed history | AI agent + QA |
+| 2026-10-30 | `apps/api/app/services/evals.py`, `apps/api/tests/{test_evals.py,test_agents.py}`, `docs/EVALS.md` | Expand the deterministic golden set to 13 cases (`golden-set-v2`) covering every seeded signal; add adversarial verifier and fixture-coverage tests | Close P1-5 without claiming a live-model benchmark | AI agent + QA |
+| 2026-10-30 | `apps/api/app/{schemas.py,services/risks.py,services/serializers.py,api/v1/risks.py,agents/pipeline.py,db/seed.py}`, `apps/web` risk detail, `docs/{API,ARCHITECTURE,LIMITATIONS}.md` | Add the risk-lineage endpoint and panel, persist `trace_id`, and link reports/audit events | Close P1-6 as a read-model, not an OpenTelemetry/OpenLineage integration | AI agent + QA |
+| 2026-10-31 | `main` at `2e95cd2`; hosted runtime | Commit and push P1-5/P1-6; verify CI and the Render auto-deploy | Confirm the new endpoint and UI are live | Operator + QA |
+| 2026-10-31 | `docs/assets/demo-walkthrough.mp4`, `docs/assets/demo-walkthrough-thumbnail.png`, `docs/DEMO_VIDEO.md`, `README.md`, `docs/SUBMISSION.md` | Record a 2:45 captioned local walkthrough and prepare the YouTube upload package | Provide a real video artifact without inventing a YouTube URL | AI agent + QA |
+| 2026-10-31 | Local MCP HTTP server + Cloudflare quick tunnel | Execute and verify the optional tunnel: public HTTPS URL returned `401` without a token, `200` with it, and six tools on `tools/list`; shut the tunnel down | Verify P1-10 truthfully as a one-time local publishing test, not a persistent endpoint | AI agent + QA |
 
 ---
 
