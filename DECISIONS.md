@@ -353,6 +353,7 @@ To avoid losing details between sessions:
 - Recorded a 2:45 captioned local walkthrough (`docs/assets/demo-walkthrough.mp4`) and wrote the YouTube upload package in `docs/DEMO_VIDEO.md`; no YouTube URL exists yet, so the form keeps a placeholder. The docs/video package was committed as `f7f9dde`; CI is green, and Render advanced the reported revision to `f7f9dde0de2c` with no runtime change.
 - Added a lineage screenshot and committed the docs as `ec06d80`; CI run `41176054790` passed, and Render advanced the reported revision to `ec06d807a12d` with no runtime change.
 - Executed and verified the optional Cloudflare quick tunnel for the local read-only MCP HTTP endpoint: the public HTTPS URL returned `401` without `Authorization`, `200` with the bearer token, and `tools/list` returned the six tools. The quick tunnel was shut down immediately; the URL was ephemeral and no persistent public MCP endpoint exists. This is a one-time local tunneling verification, not a hosted demo URL.
+- Closed P1-2 as `accepted` rather than integrating an external MCP server: the form discloses the read-only MCP server as "built, not in the product path" and claims no external MCP integration. This avoids adding an unverified external dependency to the pipeline.
 - No OpenTelemetry/OpenLineage export, distributed tracing, or cost/latency dashboard is claimed. The official form has not been filled or submitted; the portal session is not available in this environment.
 
 ### Template for future sessions
