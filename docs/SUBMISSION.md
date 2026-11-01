@@ -285,7 +285,7 @@ session is not available in this environment.
 
 **Public Summary**
 
-Chowkidar is a working, deployed compliance risk sentinel for export supply chains. It watches regulatory and supplier-risk streams, extracts cited obligations, maps them to a company's suppliers and controls, scores the resulting risk deterministically, and drafts owned remediation actions. A human approver must sign off before material action, and every material mutation writes a hash-chained audit event. The pilot exposes five labelled streams, two real live connectors (US Federal Register and GDELT), a hybrid live/fixture fallback, Supabase email/password authentication, durable Postgres reports, and a read-only MCP server. It is a single-workspace production pilot, not a commercial multi-tenant platform, and it does not provide legal advice.
+Chowkidar is a working, deployed compliance risk sentinel for export supply chains. It watches regulatory and supplier-risk streams, extracts cited obligations, maps them to a company's suppliers and controls, scores the resulting risk deterministically, and drafts owned remediation actions. A human approver must sign off before material action, and every material mutation writes a hash-chained audit event. The pilot exposes five labelled streams, two real live connectors (US Federal Register and GDELT), a hybrid live/fixture fallback, Supabase email/password authentication, durable Postgres reports, a read-only MCP server, and a source-to-risk lineage view with persisted trace IDs. A deterministic thirteen-case golden set exercises every seeded signal. It is a single-workspace production pilot, not a commercial multi-tenant platform, and it does not provide legal advice.
 
 **Problem Statement**
 
