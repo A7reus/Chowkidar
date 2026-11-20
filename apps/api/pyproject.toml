@@ -30,6 +30,8 @@ dependencies = [
   "tenacity>=9.0",
   "uvicorn[standard]>=0.34",
   "duckdb>=1.1.0",
+  "playwright>=1.65.2",
+  "beautifulsoup4>=4.15.0",
 ]
 
 [project.optional-dependencies]

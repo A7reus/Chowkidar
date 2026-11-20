@@ -3,10 +3,12 @@ from __future__ import annotations
 from app.connectors.base import ConnectorError, ConnectorSignal, SourceConnector
 from app.connectors.federal_register import FederalRegisterConnector
 from app.connectors.gdelt import GDELTConnector
+from app.connectors.web_scraper import WebScraperConnector
 
 CONNECTOR_REGISTRY: dict[str, SourceConnector] = {
     "gdelt": GDELTConnector(),
     "federal_register": FederalRegisterConnector(),
+    "web_scraper": WebScraperConnector(),
 }
 
 
@@ -25,6 +27,7 @@ __all__ = [
     "ConnectorError",
     "ConnectorSignal",
     "SourceConnector",
+    "WebScraperConnector",
     "get_connector",
     "live_connector_keys",
 ]
