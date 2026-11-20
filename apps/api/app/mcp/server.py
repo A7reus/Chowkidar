@@ -39,7 +39,7 @@ import httpx
 from fastmcp import FastMCP
 
 mcp = FastMCP(
-    name="chowkidar",
+    name="chowkidar-risk",
     instructions=(
         "Chowkidar is compliance risk intelligence for export supply chains. "
         "Use these read-only tools to inspect prioritized risks, source evidence, "
