@@ -1,4 +1,4 @@
-.PHONY: setup services-up services-down migrate seed api web dev demo test e2e lint typecheck fmt evals api-types mcp mcp-http mcp-tunnel ollama-pull ollama-pull-all test-local-models docker check reset
+.PHONY: setup services-up services-down migrate seed api web dev demo test e2e lint typecheck fmt evals api-types mcp mcp-http mcp-risk mcp-risk-http mcp-evidence mcp-evidence-http mcp-tunnel ollama-pull ollama-pull-all test-local-models docker check reset
 
 setup:
 	pnpm install
@@ -68,6 +68,11 @@ mcp:
 mcp-http:
 	@test -n "$$CHOWKIDAR_MCP_HTTP_TOKEN" || (echo "Set CHOWKIDAR_MCP_HTTP_TOKEN before starting the HTTP transport" >&2; exit 1)
 	cd apps/api && uv run python -m app.mcp.server --transport http
+
+mcp-risk: ; cd apps/api && uv run python -m app.mcp.server
+mcp-risk-http: ; cd apps/api && uv run python -m app.mcp.server --transport http --port 8765
+mcp-evidence: ; cd apps/api && uv run python -m app.mcp.evidence_server
+mcp-evidence-http: ; cd apps/api && uv run python -m app.mcp.evidence_server --transport http --port 8766
 
 # Publish the local MCP endpoint through a Cloudflare quick tunnel (run `make mcp-http` first)
 mcp-tunnel:
