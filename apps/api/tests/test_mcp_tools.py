@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 
 import pytest
-from app.mcp import server
+from app.mcp import evidence_server, server
 from app.mcp.server import api, mcp
 
 
@@ -13,7 +13,6 @@ def test_mcp_exposes_read_only_risk_tools() -> None:
         "dashboard_summary",
         "list_open_risks",
         "get_risk",
-        "search_evidence",
         "list_pending_approvals",
         "supply_chain_graph",
     }
@@ -85,6 +84,40 @@ def test_mcp_http_rejects_unauthenticated_non_loopback_host(monkeypatch) -> None
             ]
         )
     assert calls == []
+
+
+def test_evidence_server_exposes_read_only_tools() -> None:
+    async def _names() -> set[str]:
+        try:
+            tools = await evidence_server.mcp.list_tools()
+            return {tool.name for tool in tools}
+        finally:
+            await api.close()
+
+    assert asyncio.run(_names()) == {
+        "search_evidence",
+        "verify_citation",
+        "get_regulatory_source",
+        "list_active_obligations",
+    }
+
+
+def test_evidence_server_exposes_prompt_and_resource() -> None:
+    prompts = asyncio.run(evidence_server.mcp.list_prompts())
+    resources = asyncio.run(evidence_server.mcp.list_resources())
+    assert [prompt.name for prompt in prompts] == ["citation_audit_prompt"]
+    assert [str(resource.uri) for resource in resources] == [
+        "chowkidar://regulatory-streams"
+    ]
+
+
+def test_evidence_cli_defaults_to_port_8766(monkeypatch) -> None:
+    calls: list[dict] = []
+    monkeypatch.setattr(evidence_server.mcp, "run", lambda **kwargs: calls.append(kwargs))
+    monkeypatch.setattr(evidence_server.mcp, "auth", None)
+    monkeypatch.setenv("CHOWKIDAR_MCP_HTTP_TOKEN", "test-token")
+    evidence_server.main(["--transport", "http"])
+    assert calls == [{"transport": "http", "host": "127.0.0.1", "port": 8766}]
 
 
 def test_mcp_http_rejects_token_with_allow_unauthenticated(monkeypatch) -> None:
