@@ -1,4 +1,4 @@
-.PHONY: setup services-up services-down migrate seed api web dev demo test e2e lint typecheck fmt evals api-types mcp mcp-http mcp-risk mcp-risk-http mcp-evidence mcp-evidence-http mcp-tunnel ollama-pull ollama-pull-all test-local-models docker check reset
+.PHONY: setup services-up services-down migrate seed api web dev demo test e2e lint typecheck fmt evals api-types mcp mcp-http mcp-risk mcp-risk-http mcp-evidence mcp-evidence-http mcp-tunnel ollama-pull ollama-pull-all test-local-models scrape-bulletins docker check reset
 
 setup:
 	pnpm install
@@ -93,6 +93,10 @@ ollama-pull-all:
 # benchmark log to docs/benchmarks/. Needs only python3.
 test-local-models:
 	python3 scripts/smoke_local_models.py --models "$(shell echo $(OLLAMA_SUITE) | tr ' ' ',')"
+
+# Scrape regulatory circulars and compliance bulletins via the web scraper connector
+scrape-bulletins:
+	python3 scripts/scrape_regulatory_bulletins.py --sample
 
 docker:
 	docker build -f apps/api/Dockerfile -t chowkidar-api .

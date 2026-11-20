@@ -278,8 +278,11 @@
       "url": "https://www.bb.org.bd/mediaroom/circulars/circulars.php",
       "cadence": "every 6 hours",
       "status": "healthy",
-      "connector_key": "fixture",
-      "connector_config": {},
+      "connector_key": "web_scraper",
+      "connector_config": {
+        "engine": "dom",
+        "sample_fallback": true
+      },
       "last_synced_hours_ago": 2
     },
     {
@@ -291,8 +294,11 @@
       "url": "https://eur-lex.europa.eu/",
       "cadence": "daily",
       "status": "healthy",
-      "connector_key": "fixture",
-      "connector_config": {},
+      "connector_key": "web_scraper",
+      "connector_config": {
+        "engine": "dom",
+        "sample_fallback": true
+      },
       "last_synced_hours_ago": 20
     },
     {
@@ -304,8 +310,11 @@
       "url": "https://www.dhs.gov/uflpa-entity-list",
       "cadence": "daily",
       "status": "healthy",
-      "connector_key": "fixture",
-      "connector_config": {},
+      "connector_key": "web_scraper",
+      "connector_config": {
+        "engine": "dom",
+        "sample_fallback": true
+      },
       "last_synced_hours_ago": 20
     },
     {
