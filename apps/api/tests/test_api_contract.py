@@ -9,9 +9,16 @@ from app.main import app
 async def test_healthz() -> None:
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-        response = await client.get("/healthz")
-    assert response.status_code == 200
-    assert response.json()["status"] in {"ok", "degraded"}
+        get_response = await client.get("/healthz")
+        head_response = await client.head("/healthz")
+
+    assert get_response.status_code == 200
+    assert get_response.json()["status"] in {"ok", "degraded"}
+
+    assert head_response.status_code == 200
+    assert head_response.headers.get("content-type", "").startswith("application/json")
+    # RFC 9110 / HTTP specification: HEAD response must not carry a message body
+    assert head_response.content == b""
 
 
 @pytest.mark.asyncio

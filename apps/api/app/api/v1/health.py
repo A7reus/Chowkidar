@@ -15,6 +15,7 @@ router = APIRouter(tags=["health"])
 
 
 @router.get("/healthz", response_model=HealthOut)
+@router.head("/healthz", include_in_schema=False)
 async def healthz() -> HealthOut:
     settings = get_settings()
     try:
