@@ -141,6 +141,10 @@ being tried and failing.
 | `GEMINI_PRO_MODEL`                | no                   | Default `gemini/gemini-3.5-flash`             |
 | `GROQ_MODEL`                      | no                   | Default `groq/openai/gpt-oss-120b`            |
 | `OLLAMA_BASE_URL`, `OLLAMA_MODEL` | no                   | Local runtime endpoint and model              |
+| `OLLAMA_EXTRACTION_MODEL`         | no                   | Local model for extraction; empty uses `OLLAMA_MODEL` |
+| `OLLAMA_REASONING_MODEL`          | no                   | Local model for verification/reports; empty uses `OLLAMA_MODEL` |
+| `OLLAMA_TRIAGE_MODEL`             | no                   | Local model for rationale/classification; empty uses `OLLAMA_MODEL` |
+| `OLLAMA_MODEL_SUITE`              | no                   | Comma-separated local suite shown in `/api/v1/meta` and smoke-tested |
 | `OLLAMA_ENABLED`                  | no                   | `true` adds Ollama to the chain; default `false` |
 | `LLM_PREFER_LOCAL`                | no                   | `true` tries Ollama first; configured cloud providers remain fallback |
 | `LLM_LOCAL_ONLY`                  | no                   | `true` allows only Ollama and requires `OLLAMA_ENABLED=true` |
@@ -190,6 +194,40 @@ OLLAMA_MODEL=ollama/qwen2.5:7b
 `/api/v1/meta` reports `llm_local_enabled`, `llm_prefer_local`, and
 `llm_local_only`. The local smoke used cached `qwen2.5:3b`, not the default
 `qwen2.5:7b`; only claim a model/size that a pipeline run actually used.
+
+### Multi-model local suite
+
+Each agent role can use its own local model. Unset roles fall back to
+`OLLAMA_MODEL`, so a single-model setup is unchanged. When a local model fails
+(for example, it was not pulled), only that model cools down and the call moves
+to the next model in the suite before any cloud provider.
+
+```bash
+make ollama-pull-all           # qwen2.5:3b, llama3.2:3b, deepseek-r1:1.5b, gemma2:2b (~5 GB)
+make test-local-models         # needs `ollama serve`; writes docs/benchmarks/local_models_<date>.md
+```
+
+```dotenv
+LLM_MODE=hybrid
+OLLAMA_ENABLED=true
+LLM_LOCAL_ONLY=true
+OLLAMA_MODEL=ollama/qwen2.5:3b
+OLLAMA_EXTRACTION_MODEL=ollama/llama3.2:3b
+OLLAMA_REASONING_MODEL=ollama/deepseek-r1:1.5b
+OLLAMA_TRIAGE_MODEL=ollama/gemma2:2b
+```
+
+| Agent purpose | Local role | Suite model |
+|---|---|---|
+| `extraction` | extraction | `llama3.2:3b` (structured JSON) |
+| `verification`, `report` | reasoning | `deepseek-r1:1.5b` (`<think>` blocks are stripped before JSON parsing; length kept in `metadata.reasoning_chars`) |
+| `rationale`, `classification` | triage | `gemma2:2b` |
+| default / fallback | - | `qwen2.5:3b` |
+
+`/api/v1/meta` also reports `llm_local_models` (the configured suite) and
+`llm_local_routing` (role to model). These show configuration only. A model
+counts as run only when `make test-local-models` passed for it and the log in
+`docs/benchmarks/` is committed.
 
 Model routing is prefix-based, so a `groq/...` value uses `GROQ_API_KEY` even
 when it is assigned to a `GEMINI_*` variable. The model's output still passes

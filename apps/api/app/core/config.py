@@ -25,6 +25,14 @@ def _project_root() -> Path:
 ROOT_DIR = _project_root()
 
 
+def _ollama_name(model: str) -> str:
+    """Normalise a local model id to LiteLLM's ``ollama/<tag>`` form."""
+    model = model.strip()
+    if not model or model.startswith("ollama/") or model.startswith("ollama_chat/"):
+        return model
+    return f"ollama/{model}"
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=(str(ROOT_DIR / ".env"), ".env"),
@@ -74,6 +82,16 @@ class Settings(BaseSettings):
     groq_model: str = "groq/openai/gpt-oss-120b"
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "ollama/qwen2.5:7b"
+    # Optional per-role local models. Empty means "use OLLAMA_MODEL" so a
+    # single-model setup keeps working unchanged.
+    ollama_extraction_model: str = ""
+    ollama_reasoning_model: str = ""
+    ollama_triage_model: str = ""
+    # The local models this build is wired and smoke-tested against
+    # (comma-separated). Used by /api/v1/meta and scripts/smoke_local_models.py.
+    ollama_model_suite: str = (
+        "ollama/qwen2.5:3b,ollama/llama3.2:3b,ollama/deepseek-r1:1.5b,ollama/gemma2:2b"
+    )
     ollama_enabled: bool = False
     llm_prefer_local: bool = False
     llm_local_only: bool = False
@@ -141,9 +159,7 @@ class Settings(BaseSettings):
             raise ValueError("EMBEDDING_MODE must be 'mock' or 'live'")
         if self.storage_backend not in {"local", "database", "supabase"}:
             raise ValueError("STORAGE_BACKEND must be local, database, or supabase")
-        if self.auth_mode == "supabase" and (
-            not self.supabase_url or not self.supabase_anon_key
-        ):
+        if self.auth_mode == "supabase" and (not self.supabase_url or not self.supabase_anon_key):
             raise ValueError(
                 "SUPABASE_URL and SUPABASE_ANON_KEY are required when AUTH_MODE=supabase"
             )
@@ -163,6 +179,20 @@ class Settings(BaseSettings):
     @property
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+
+    @property
+    def ollama_model_suite_list(self) -> list[str]:
+        return [_ollama_name(m) for m in self.ollama_model_suite.split(",") if m.strip()]
+
+    @property
+    def ollama_role_models(self) -> dict[str, str]:
+        """Local model per agent role; unset roles fall back to OLLAMA_MODEL."""
+        default = _ollama_name(self.ollama_model)
+        return {
+            "extraction": _ollama_name(self.ollama_extraction_model) or default,
+            "reasoning": _ollama_name(self.ollama_reasoning_model) or default,
+            "triage": _ollama_name(self.ollama_triage_model) or default,
+        }
 
     @property
     def demo_enabled(self) -> bool:

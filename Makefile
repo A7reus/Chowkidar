@@ -1,4 +1,4 @@
-.PHONY: setup services-up services-down migrate seed api web dev demo test e2e lint typecheck fmt evals api-types mcp mcp-http mcp-tunnel ollama-pull docker check reset
+.PHONY: setup services-up services-down migrate seed api web dev demo test e2e lint typecheck fmt evals api-types mcp mcp-http mcp-tunnel ollama-pull ollama-pull-all test-local-models docker check reset
 
 setup:
 	pnpm install
@@ -77,6 +77,17 @@ mcp-tunnel:
 OLLAMA_PULL_MODEL ?= qwen2.5:7b
 ollama-pull:
 	ollama pull $(OLLAMA_PULL_MODEL)
+
+# The four-model local suite (~5 GB total): extraction, structured JSON,
+# reasoning/verification and triage. See docs/ENVIRONMENT.md.
+OLLAMA_SUITE ?= qwen2.5:3b llama3.2:3b deepseek-r1:1.5b gemma2:2b
+ollama-pull-all:
+	@for model in $(OLLAMA_SUITE); do ollama pull $$model || exit 1; done
+
+# Smoke-test every suite model against a running `ollama serve` and write a
+# benchmark log to docs/benchmarks/. Needs only python3.
+test-local-models:
+	python3 scripts/smoke_local_models.py --models "$(shell echo $(OLLAMA_SUITE) | tr ' ' ',')"
 
 docker:
 	docker build -f apps/api/Dockerfile -t chowkidar-api .

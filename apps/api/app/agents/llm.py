@@ -26,6 +26,40 @@ class LLMResult:
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
+# Agent purpose -> local model role. Reasoning models (DeepSeek-R1) do the
+# chain-of-thought verification; small instruction models do triage.
+LOCAL_ROLE_FOR_PURPOSE = {
+    "extraction": "extraction",
+    "verification": "reasoning",
+    "report": "reasoning",
+    "rationale": "triage",
+    "classification": "triage",
+    "triage": "triage",
+}
+
+_THINK_RE = re.compile(r"<think>(.*?)</think>", flags=re.DOTALL | re.IGNORECASE)
+
+
+def is_local_model(model: str) -> bool:
+    return model.startswith(("ollama/", "ollama_chat/"))
+
+
+def split_reasoning(text: str) -> tuple[str, str]:
+    """Separate DeepSeek-R1 style ``<think>`` blocks from the answer.
+
+    Returns ``(answer, reasoning)``. An unterminated ``<think>`` (the model ran
+    out of tokens mid-thought) leaves no answer.
+    """
+    reasoning = "\n".join(part.strip() for part in _THINK_RE.findall(text))
+    answer = _THINK_RE.sub("", text)
+    lowered = answer.lower()
+    if "<think>" in lowered:
+        start = lowered.index("<think>")
+        reasoning = "\n".join(filter(None, [reasoning, answer[start + 7 :].strip()]))
+        answer = answer[:start]
+    return answer.strip(), reasoning
+
+
 def _strip_json_fences(text: str) -> str:
     cleaned = text.strip()
     cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned, flags=re.IGNORECASE)
@@ -46,21 +80,36 @@ class LLMClient:
     def _provider(model: str) -> str:
         return model.split("/", 1)[0]
 
+    @classmethod
+    def _cooldown_key(cls, model: str) -> str:
+        # Local models cool down individually: a model that is not pulled must
+        # not block the other models served by the same Ollama runtime.
+        return model if is_local_model(model) else cls._provider(model)
+
     def _is_cooling(self, model: str) -> bool:
-        until = self._cooldown_until.get(self._provider(model))
+        until = self._cooldown_until.get(self._cooldown_key(model))
         return until is not None and time.monotonic() < until
 
     def _start_cooldown(self, model: str) -> None:
-        self._cooldown_until[self._provider(model)] = (
+        self._cooldown_until[self._cooldown_key(model)] = (
             time.monotonic() + self.settings.llm_provider_cooldown_seconds
         )
 
     def _clear_cooldown(self, model: str) -> None:
-        self._cooldown_until.pop(self._provider(model), None)
+        self._cooldown_until.pop(self._cooldown_key(model), None)
+
+    def local_model_for_purpose(self, purpose: str) -> str:
+        role = LOCAL_ROLE_FOR_PURPOSE.get(purpose, "extraction")
+        return self.settings.ollama_role_models[role]
+
+    def local_models(self) -> list[str]:
+        """Distinct local models in routing order: default first, then per-role."""
+        models = [self.settings.ollama_model, *self.settings.ollama_role_models.values()]
+        return list(dict.fromkeys(m for m in models if m))
 
     def is_configured(self, model: str) -> bool:
         """A provider is only worth trying when it has a key or is a local runtime."""
-        if model.startswith("ollama/"):
+        if is_local_model(model):
             return self.settings.ollama_enabled
         if self.settings.llm_local_only:
             return False
@@ -70,7 +119,7 @@ class LLMClient:
         if self.settings.llm_local_only or (
             self.settings.llm_prefer_local and self.settings.ollama_enabled
         ):
-            return self.settings.ollama_model
+            return self.local_model_for_purpose(purpose)
         if purpose in {"classification", "triage"}:
             return self.settings.groq_model
         if purpose in {"verification", "report"}:
@@ -78,11 +127,13 @@ class LLMClient:
         return self.settings.gemini_flash_model
 
     def fallback_models(self, primary: str) -> list[str]:
-        models = [
-            self.settings.gemini_flash_model,
-            self.settings.groq_model,
-            self.settings.ollama_model,
-        ]
+        cloud = [self.settings.gemini_flash_model, self.settings.groq_model]
+        # Local-first routing tries the rest of the local suite before cloud.
+        models = (
+            [*self.local_models(), *cloud]
+            if is_local_model(primary)
+            else [*cloud, *self.local_models()]
+        )
         return [
             model
             for model in dict.fromkeys(models)
@@ -139,11 +190,15 @@ class LLMClient:
                 api_key = self.api_key_for(model)
                 if api_key:
                     kwargs["api_key"] = api_key
-                if model.startswith("ollama/"):
+                if is_local_model(model):
                     kwargs["api_base"] = self.settings.ollama_base_url
                 response = await acompletion(**kwargs)
                 latency_ms = int((time.perf_counter() - started) * 1000)
-                content = response.choices[0].message.content or ""  # pyright: ignore[reportAttributeAccessIssue]
+                message = response.choices[0].message  # pyright: ignore[reportAttributeAccessIssue]
+                content, reasoning = split_reasoning(message.content or "")
+                provider_reasoning = getattr(message, "reasoning_content", None)
+                if isinstance(provider_reasoning, str) and provider_reasoning.strip():
+                    reasoning = "\n".join(filter(None, [provider_reasoning.strip(), reasoning]))
                 usage = getattr(response, "usage", None)
                 self._clear_cooldown(model)
                 return LLMResult(
@@ -154,6 +209,7 @@ class LLMClient:
                     prompt_tokens=getattr(usage, "prompt_tokens", 0) or 0,
                     completion_tokens=getattr(usage, "completion_tokens", 0) or 0,
                     fallback_used=model != primary,
+                    metadata={"reasoning_chars": len(reasoning)} if reasoning else {},
                 )
             except Exception as exc:
                 self._start_cooldown(model)
