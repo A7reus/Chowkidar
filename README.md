@@ -61,16 +61,16 @@ More views: [signals](docs/assets/02-signals.png) · [search](docs/assets/05-sea
 | Reports in PDF, JSON, and Markdown | Built |
 | Supply-chain graph and node inspector | Built |
 | Evaluation dashboard with five metric gates | Built, 13/13 golden cases |
-| Read-only MCP server | Built: stdio + Streamable HTTP/SSE; HTTP requires a bearer token by default; a temporary Cloudflare quick tunnel was verified on 2026-10-31; not in the product path |
-| Embedded DuckDB analytical warehouse | Built and locally tested: in-process snapshot of risks, signals, suppliers and the audit ledger; three OLAP preset views; sandboxed admin SQL; Parquet (ZSTD) and CSV export. Not yet hosted-verified; plain Parquet files, not Delta/Iceberg tables |
+| Dual read-only MCP servers | Built: decoupled `chowkidar-risk` (:8765) and `chowkidar-evidence` (:8766) over stdio + Streamable HTTP/SSE; 10 custom inspection tools; HTTP requires a bearer token by default |
+| Embedded DuckDB analytical warehouse | Built and locally tested: in-process snapshot of risks, signals, suppliers and the audit ledger; three OLAP preset views; sandboxed admin SQL; Parquet (ZSTD) and CSV export. Plain Parquet files, not Delta/Iceberg tables |
 | FastAPI REST API + OpenAPI schema | Built |
 | English + Bengali UI chrome | Built |
 | Demo auth with four roles | Built; local only in `AUTH_MODE=dev` + `DEMO_MODE=true` |
 | Supabase Auth production path | Live: password/refresh/logout proxy, JWKS verification, local role mapping, production login UI; four pilot accounts provisioned and hosted QA passed |
 | Durable report storage | Built: local, Postgres, and private Supabase Storage backends; Postgres is live on the hosted API and survived a redeploy |
-| Live GDELT + US Federal Register connectors | Built, deployed, and hosted-verified for Federal Register; hybrid fallback labels the run honestly |
+| Live connectors & web scrapers | Built: live GDELT + US Federal Register REST connectors, plus headless Playwright & DOM regulatory circular scraper (`apps/api/app/connectors/web_scraper.py`, `scripts/scrape_regulatory_bulletins.py`); hybrid fallback labels the run honestly |
 | Hybrid LLM mode | Built, deployed, and hosted-verified: `llm_live_ready=true`; a hosted `mode=live` run produced a model-generated rationale with confidence `0.96`, and deterministic fallback remains available |
-| Local Ollama routing | Built and locally smoke-tested with `qwen2.5:3b`; `LLM_PREFER_LOCAL` is Ollama-first with cloud fallback, `LLM_LOCAL_ONLY` is the hard no-cloud path; not hosted and no quality/latency claim |
+| Multi-model local Ollama suite | Built and locally benchmarked: 4-model suite (`qwen2.5:3b`, `llama3.2:3b`, `deepseek-r1:1.5b`, `gemma2:2b`) with role-based routing (extraction, reasoning, triage) and verified benchmark log at `docs/benchmarks/local_models_20261120_0751.md` (4/4 passed) |
 | In-process scheduled ingestion | Built (APScheduler), deployed, and verified on Render: first cycle fired on 2026-10-26 (`d1f285f50e67`), GDELT `fixture_fallback` + Federal Register `live`, next run `10:29:36Z`; disabled in the local demo |
 | Cloud deployment | Live production pilot: Render API + Netlify web primary, Vercel secondary fallback; see [`docs/CLOUD_DEPLOYMENT_STATUS.md`](docs/CLOUD_DEPLOYMENT_STATUS.md) |
 
@@ -161,18 +161,22 @@ The default demo is fixture-first and deterministic: `LLM_MODE=mock`, no externa
 ### Useful commands
 
 ```bash
-make test          # pytest + Vitest
-make e2e           # Playwright (API and web must be running)
-make lint          # Ruff + ESLint
-make typecheck     # Pyright + tsc
-make check         # lint + typecheck + unit tests
-make evals         # golden-set evaluation
-make mcp           # read-only MCP server over stdio
-make mcp-http      # Streamable HTTP on :8765/mcp; requires CHOWKIDAR_MCP_HTTP_TOKEN
-make mcp-tunnel    # optional Cloudflare quick tunnel for the local MCP endpoint (verified once; ephemeral)
-make ollama-pull   # optional local model; OLLAMA_PULL_MODEL=qwen2.5:3b for the smoke-tested size
-make docker        # build the API container from the repo root
-make api-types     # regenerate OpenAPI types (API must be running)
+make test              # pytest (186 passed) + Vitest (8 passed)
+make e2e               # Playwright (API and web must be running)
+make lint              # Ruff + ESLint
+make typecheck         # Pyright + tsc
+make check             # lint + typecheck + unit tests
+make evals             # golden-set evaluation (13/13 passed)
+make mcp-risk          # chowkidar-risk MCP server over stdio
+make mcp-risk-http     # Streamable HTTP on :8765/mcp; requires CHOWKIDAR_MCP_HTTP_TOKEN
+make mcp-evidence      # chowkidar-evidence MCP server over stdio
+make mcp-evidence-http # Streamable HTTP on :8766/mcp
+make mcp-tunnel        # optional Cloudflare quick tunnel for the local MCP endpoint (verified once; ephemeral)
+make ollama-pull-all   # pull the 4-model local suite (qwen2.5:3b, llama3.2:3b, deepseek-r1:1.5b, gemma2:2b)
+make test-local-models # smoke-test and benchmark the 4 local models against ollama serve
+make scrape-bulletins  # scrape regulatory circulars and compliance bulletins via web scraper
+make docker            # build the API container from the repo root
+make api-types         # regenerate OpenAPI types (API must be running)
 ```
 
 Reseed the demo after mutation testing:
@@ -208,15 +212,15 @@ cd apps/api && uv run python -m app.db.seed
 
 ### Current limitations
 
-- **Two live connectors exist (GDELT + US Federal Register); three streams remain fixture-backed.** GDELT is externally rate-limited and may fall back to fixtures with a visible `fixture_fallback` label. Render runs `DATA_MODE=hybrid`; Federal Register live sync and dedupe are hosted-verified. Hosted live LLM inference is verified (`llm_live_ready=true` and a hosted `mode=live` pipeline run with a model-generated rationale); deterministic fallback remains available when providers fail. The provider keys live only in Render environment variables and the gitignored local `.env`; they are never committed.
+- **Live connectors and scrapers exist (GDELT, US Federal Register, and regulatory web scraper).** GDELT is externally rate-limited and may fall back to fixtures with a visible `fixture_fallback` label. Render runs `DATA_MODE=hybrid`; Federal Register live sync and dedupe are hosted-verified. A dedicated regulatory circular scraper (`apps/api/app/connectors/web_scraper.py`) parses HTML circular tables and notice boards (e.g. Bangladesh Bank, EU Trade) via DOM and Playwright. Hosted live LLM inference is verified (`llm_live_ready=true` and a hosted `mode=live` pipeline run with a model-generated rationale); deterministic fallback remains available when providers fail. The provider keys live only in Render environment variables and the gitignored local `.env`; they are never committed.
 - Scheduled ingestion runs via the in-process APScheduler job on Render (`ENABLE_SCHEDULER=true`, `scheduler_running=true`). The job was initially left paused by an explicit `next_run_time=None`; the arming fix was verified at revision `94c2a19f91c4`, and the first scheduled cycle then fired at revision `d1f285f50e67`: GDELT `last_synced_at=2026-10-26T09:29:36Z` (`fixture_fallback`, 0 new), Federal Register `09:30:00Z` (`live`, 0 new due to dedupe), with `scheduler_next_run_at` advancing to `10:29:36Z`. Render Free spin-down still pauses the in-process scheduler; production needs an always-on instance or an external scheduler. n8n is optional and not the pilot path.
 - No legal/compliance advisor; the product is deliberately positioned as decision support.
 - The **live service is a production pilot**, not a demo: `AUTH_MODE=supabase`, `DEMO_MODE=false`, four provisioned accounts, and demo login disabled. It is still a single-workspace pilot, not a commercial multi-tenant service.
 - Reports use the durable Postgres backend on the hosted API (`STORAGE_BACKEND=database`), with private Supabase Storage as an optional object-store adapter. Hosted reports survived an API redeploy with matching checksums; local `/tmp` reports remain only for offline demos.
 - Rate limits are process-local (suitable for the single Render instance); browser tokens are stored in local storage rather than HttpOnly cookies.
 - Hybrid LLM mode is implemented, deployed, and hosted-verified: Render reports `llm_live_ready=true`, and a hosted `mode=live` pipeline run on 2026-10-27 produced a model-generated, citation-grounded rationale with confidence `0.96` and 0 errors. Deterministic fallback remains available when providers fail. Provider keys live only in Render environment variables and the gitignored local `.env`; they are never committed. Provider reliability is not an SLA; Gemini 3.8 Flash timed out and Gemini Pro Latest had zero free-tier quota, so the defaults use Gemini 3.5 Flash.
-- **Local Ollama is a local smoke path, not a hosted capability.** `OLLAMA_ENABLED=true` adds Ollama to the fallback chain; `LLM_PREFER_LOCAL=true` tries it first but still falls back to configured cloud providers; `LLM_LOCAL_ONLY=true` hard-disables cloud providers and requires Ollama. A local run used cached `qwen2.5:3b` (0 errors, `repair_attempts=1`, verification `needs_review`). The default `qwen2.5:7b` was not pulled, no local model runs on Render, and no quality/latency claim is made.
-- **MCP is read-only and outside the product path.** The server exposes six tools, one prompt, and one resource over stdio or Streamable HTTP/SSE. HTTP requires `CHOWKIDAR_MCP_HTTP_TOKEN` by default; `--allow-unauthenticated` is loopback-only. No external MCP server is integrated, and the pipeline does not call MCP. A temporary Cloudflare quick tunnel was verified on 2026-10-31 (`401` without a token, `200` with it, six tools listed); the URL was ephemeral and is closed. There is no persistent public MCP endpoint.
+- **Local Ollama runs a 4-model suite locally, not on hosted infrastructure.** `OLLAMA_ENABLED=true` adds Ollama to the fallback chain; `LLM_PREFER_LOCAL=true` tries it first but still falls back to configured cloud providers; `LLM_LOCAL_ONLY=true` hard-disables cloud providers and requires Ollama. A 4-model suite (`qwen2.5:3b`, `llama3.2:3b`, `deepseek-r1:1.5b`, `gemma2:2b`) with role routing (extraction, reasoning, triage) was benchmarked with 4/4 passing at `docs/benchmarks/local_models_20261120_0751.md`. No local model runs on Render.
+- **MCP is read-only and decoupled into two servers outside the product path.** The suite provides `chowkidar-risk` (:8765, 5 tools) and `chowkidar-evidence` (:8766, 5 tools including Graph RAG) over stdio or Streamable HTTP/SSE. HTTP requires `CHOWKIDAR_MCP_HTTP_TOKEN` by default; `--allow-unauthenticated` is loopback-only. No external MCP server is integrated, and the pipeline does not call MCP. A temporary Cloudflare quick tunnel was verified on 2026-10-31 (`401` without a token, `200` with it, tools listed); the URL was ephemeral and is closed. There is no persistent public MCP endpoint.
 - **Chunking is structure-aware, not semantic.** New chunks start at recognized legal headings (`Article`, `Section`, `Chapter`, `Part`, `Annex`, `Schedule`, `Rule`, `Title`, `§`) and store a section path. Long sections are sentence-split and can still split mid-article; mock mode uses hash embeddings. No late interaction.
 - **Graph RAG uses the relational graph, not an LLM-extracted one.** Entities are resolved by name aliases and IDF-weighted keyword overlap, and traversal runs over Postgres foreign keys in memory. Obligation-to-policy links have no foreign key, so they are inferred from shared keywords and flagged `inferred` in every response. Neo4j is not used.
 - Optional BGE-M3 embeddings, Docling, RAGAS, and Phoenix are not required for the demo path.
@@ -264,29 +268,34 @@ The Search page has a **Graph RAG** switch (on by default) that shows linked ent
 
 ## MCP (optional)
 
-Chowkidar exposes a **read-only** FastMCP server so other agents can inspect risks, evidence, approvals, and the supply-chain graph without mutating state. stdio is the default; Streamable HTTP/SSE is available for URL-based MCP hosts. HTTP fails closed unless `CHOWKIDAR_MCP_HTTP_TOKEN` is set; `--allow-unauthenticated` is restricted to loopback.
+Chowkidar exposes **two dedicated read-only** FastMCP servers so other agents can inspect risks, evidence, approvals, and the supply-chain graph without mutating state. stdio is the default; Streamable HTTP/SSE is available for URL-based MCP hosts. HTTP fails closed unless `CHOWKIDAR_MCP_HTTP_TOKEN` is set; `--allow-unauthenticated` is restricted to loopback.
 
-```bash
-make mcp                                      # stdio
-CHOWKIDAR_MCP_HTTP_TOKEN=... make mcp-http    # http://127.0.0.1:8765/mcp
-make mcp-tunnel                               # optional Cloudflare quick tunnel (verified once; ephemeral)
-```
+1. **`chowkidar-risk`** (`app.mcp.server`, port 8765):
+   - Tools: `dashboard_summary`, `list_open_risks`, `get_risk`, `list_pending_approvals`, `supply_chain_graph`
+   - Command: `make mcp-risk` (stdio) or `CHOWKIDAR_MCP_HTTP_TOKEN=... make mcp-risk-http` (:8765)
+2. **`chowkidar-evidence`** (`app.mcp.evidence_server`, port 8766):
+   - Tools: `search_evidence`, `search_evidence_with_graph` (Graph RAG), `verify_citation`, `get_regulatory_source`, `list_active_obligations`
+   - Command: `make mcp-evidence` (stdio) or `make mcp-evidence-http` (:8766)
 
-Example client config:
+Example client config for Claude Desktop / compatible client:
 
 ```json
 {
   "mcpServers": {
-    "chowkidar": {
+    "chowkidar-risk": {
       "command": "uv",
       "args": ["run", "--project", "apps/api", "python", "-m", "app.mcp.server"],
+      "env": { "CHOWKIDAR_API_URL": "http://127.0.0.1:8000" }
+    },
+    "chowkidar-evidence": {
+      "command": "uv",
+      "args": ["run", "--project", "apps/api", "python", "-m", "app.mcp.evidence_server"],
       "env": { "CHOWKIDAR_API_URL": "http://127.0.0.1:8000" }
     }
   }
 }
 ```
 
-Tools: `dashboard_summary`, `list_open_risks`, `get_risk`, `search_evidence`, `list_pending_approvals`, `supply_chain_graph`.  
 See [`docs/MCP.md`](docs/MCP.md).
 
 ---
@@ -343,4 +352,4 @@ Repository: https://github.com/A7reus/Chowkidar
 
 - **Live production pilot:** <https://ch0wkidar.netlify.app/> (Netlify primary; Supabase email/password; production browser QA passed 2/2). Secondary fallback: <https://chowkidar-wheat.vercel.app/> (Vercel DNS may vary on some networks).
 - **API:** <https://chowkidar-api.onrender.com/>
-- **Video:** pending recording.
+- **Video:** 2:45 walkthrough recorded locally (`docs/assets/demo-walkthrough.mp4`); YouTube upload pending (see `docs/DEMO_VIDEO.md`).

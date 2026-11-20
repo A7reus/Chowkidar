@@ -86,8 +86,8 @@ The Alembic baseline enables `vector` and creates an HNSW index for evidence emb
 
 Primary demo streams:
 
-1. **Bangladesh Bank** — foreign-exchange and export-proceeds circulars. Fixture-backed.
-2. **EU regulatory** — CSDDD / due-diligence signals. Fixture-backed.
+1. **Bangladesh Bank** — foreign-exchange and export-proceeds circulars. Ingested via the regulatory web scraper connector (`apps/api/app/connectors/web_scraper.py`, DOM table & Playwright) with fixture fallback.
+2. **EU regulatory** — CSDDD / due-diligence signals. Fixture-backed or web scraper.
 3. **UFLPA / DHS** — forced-labour entity and traceability signals. Fixture-backed.
 4. **GDELT** — global operational news for corroboration and supplier events. Live connector; rate-limited, hybrid fallback.
 5. **US Federal Register** — trade and supply-chain rules. Live connector.
@@ -251,9 +251,10 @@ Base: `/api/v1`
 - `GET /approvals`, `GET /approvals/pending-count`, `POST /approvals/{id}/decision`
 - `GET /audit`, `GET /audit/verify`
 - `GET /sources`, `POST /sources/{id}/sync`
-- `GET /search`
+- `GET /search`, `GET /search/graph`
 - `GET /graph`
 - `GET /suppliers`
+- `GET /warehouse/summary`, `POST /warehouse/sync`, `POST /warehouse/query`, `POST /warehouse/export`, `GET /warehouse/exports/{file}`
 - `POST /pipeline/run`, `GET /pipeline/runs`
 - `GET /reports`, `POST /reports`, `GET /reports/{id}`, `GET /reports/{id}/download`, `GET /reports/{id}/file`
 - `GET /evals/summary`, `POST /evals/run`
@@ -261,9 +262,13 @@ Base: `/api/v1`
 
 OpenAPI JSON: `/openapi.json`. The web app’s schema types are generated from it.
 
-### MCP server
+### MCP servers
 
-`apps/api/app/mcp/server.py` exposes six read-only tools, one prompt, and one resource over stdio (default) or Streamable HTTP/SSE (`--transport http` or `sse`). HTTP/SSE fail closed: `CHOWKIDAR_MCP_HTTP_TOKEN` is required, and `--allow-unauthenticated` is restricted to a loopback host. `make mcp-http` refuses to start without a token; `make mcp-tunnel` was executed once on 2026-10-31 and verified over a temporary Cloudflare quick tunnel (`401` without a token, `200` with it, six tools listed). The quick-tunnel URL was ephemeral and is closed; the hosted demo does not expose MCP. The MCP server is not in the pipeline path and cannot approve or mutate anything.
+Chowkidar exposes **two dedicated read-only** FastMCP servers:
+1. `chowkidar-risk` (`apps/api/app/mcp/server.py`, port 8765): 5 tools (`dashboard_summary`, `list_open_risks`, `get_risk`, `list_pending_approvals`, `supply_chain_graph`), 1 prompt, 1 resource.
+2. `chowkidar-evidence` (`apps/api/app/mcp/evidence_server.py`, port 8766): 5 tools (`search_evidence`, `search_evidence_with_graph`, `verify_citation`, `get_regulatory_source`, `list_active_obligations`), 1 prompt, 1 resource.
+
+Both operate over stdio (default) or Streamable HTTP/SSE (`--transport http` or `sse`). HTTP/SSE fail closed: `CHOWKIDAR_MCP_HTTP_TOKEN` is required, and `--allow-unauthenticated` is restricted to a loopback host. `make mcp-risk-http` refuses to start without a token; `make mcp-tunnel` was executed once on 2026-10-31 and verified over a temporary Cloudflare quick tunnel. The quick-tunnel URL was ephemeral and is closed; the hosted demo does not expose MCP. The MCP servers are not in the pipeline path and cannot approve or mutate anything.
 
 ---
 

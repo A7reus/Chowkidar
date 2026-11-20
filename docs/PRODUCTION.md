@@ -56,12 +56,12 @@ operations, legal review, or universal live source coverage).
 
 ### Deliberate limitations
 
-- **Two live connectors are implemented and running; three streams remain
-  fixture-backed.** `GDELT` and the `US Federal Register` run through real
-  connectors under `DATA_MODE=hybrid`. Bangladesh Bank, EUR-Lex, and UFLPA still
-  replay fixtures. GDELT is externally rate-limited and may fall back to
-  fixtures with a visible `fixture_fallback` label. Federal Register live sync
-  and dedupe are hosted-verified.
+- **Live connectors and scrapers are implemented and running; fixture streams remain available.**
+  `GDELT` and the `US Federal Register` run through real REST connectors under `DATA_MODE=hybrid`,
+  and `web_scraper` provides DOM table/card parsing and Playwright automation for regulatory
+  circulars (e.g. Bangladesh Bank). EUR-Lex and UFLPA replay fixtures. GDELT is externally
+  rate-limited and may fall back to fixtures with a visible `fixture_fallback` label. Federal
+  Register live sync and dedupe are hosted-verified.
 - **Scheduled ingestion is implemented, deployed, and has fired once.** The
   in-process APScheduler job runs
   when `ENABLE_SCHEDULER=true`; `/healthz` reports `scheduler_running=true`, but

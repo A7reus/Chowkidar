@@ -90,10 +90,14 @@ The login page uses one-click role cards when `AUTH_MODE=dev` and
 | `make api-types` | Regenerate the web OpenAPI types |
 | `make docker` | Build the API image |
 | `make reset` | Destroy local volumes and rebuild the database |
-| `make mcp` | Run the read-only MCP server over stdio |
-| `make mcp-http` | Run MCP over Streamable HTTP; requires `CHOWKIDAR_MCP_HTTP_TOKEN` |
+| `make mcp-risk` | Run the `chowkidar-risk` MCP server over stdio (:8765) |
+| `make mcp-risk-http` | Run `chowkidar-risk` over Streamable HTTP; requires `CHOWKIDAR_MCP_HTTP_TOKEN` |
+| `make mcp-evidence` | Run the `chowkidar-evidence` MCP server over stdio (:8766) |
+| `make mcp-evidence-http` | Run `chowkidar-evidence` over Streamable HTTP |
 | `make mcp-tunnel` | Optional Cloudflare quick tunnel for the local MCP endpoint (not used for the hosted demo) |
-| `make ollama-pull` | Pull a local Ollama model; `OLLAMA_PULL_MODEL=qwen2.5:3b` for the smoke-tested size |
+| `make ollama-pull-all` | Pull the 4-model local suite (`qwen2.5:3b`, `llama3.2:3b`, `deepseek-r1:1.5b`, `gemma2:2b`) |
+| `make test-local-models` | Smoke-test and benchmark the 4 local models against `ollama serve` |
+| `make scrape-bulletins` | Scrape regulatory circulars and compliance bulletins via web scraper |
 
 ---
 

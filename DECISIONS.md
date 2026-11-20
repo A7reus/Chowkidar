@@ -57,6 +57,11 @@
 | 2026-10-26 | Use a **placeholder** for the demo video | Video production is out of scope for this work and no recording exists; never claim a video that is not real | Accepted |
 | 2026-10-26 | Prepare and fill the official form with **placeholders** for unknown or unfinished data, but do not submit | User approved filling; submission still requires separate explicit approval. Portal access was not available in this session | Accepted |
 | 2026-10-30 | **Preliminary deadline extended to 2026-11-20** | Organizer extension confirmed by the user; use the additional time for P1 remediation and submission completion. Exact cutoff time to be confirmed in the portal | Accepted |
+| 2026-11-20 | **Add embedded DuckDB analytical warehouse (PR #3)** | In-process columnar snapshotting, 3 OLAP views (`risk_distribution`, `audit_integrity`, `supplier_exposure`), sandboxed SQL, and Parquet exports to unlock warehouse capabilities | Accepted |
+| 2026-11-20 | **Add 4-model local LLM suite (PR #2)** | Pull and benchmark `qwen2.5:3b`, `llama3.2:3b`, `deepseek-r1:1.5b`, `gemma2:2b` with role-based routing (extraction, reasoning, triage) and benchmark log | Accepted |
+| 2026-11-20 | **Split MCP into dedicated risk and evidence servers (PR #4)** | Decouple single server into `chowkidar-risk` (:8765, 5 tools) and `chowkidar-evidence` (:8766, 5 tools) to enhance modular inspection | Accepted |
+| 2026-11-20 | **Add Graph RAG multi-hop entity traversal (PR #5)** | Fuse hybrid vector/keyword search with 1-3 hop supply chain knowledge graph walk (`/api/v1/search/graph`), Search UI toggle, and MCP tool | Accepted |
+| 2026-11-20 | **Add Playwright & DOM regulatory circular web scraper (PR #6)** | Dedicated scraper (`apps/api/app/connectors/web_scraper.py`, `scripts/scrape_regulatory_bulletins.py`) with DOM parsing and Playwright for Bangladesh Bank circulars | Accepted |
 
 ### 2.1 Approved stack decisions (batches 1–3)
 

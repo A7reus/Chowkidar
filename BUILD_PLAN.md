@@ -1,9 +1,10 @@
 # Chowkidar — 8-Day Build Plan
 
-> **Historical document (2026-10-26):** This is the original build plan, not the
-> current status. Some planned items were not built: admin invite/role-change UI,
-> local Ollama inference in the demo path, graph RAG, external MCP clients, and
-> active n8n automation. The working pilot is described in [`README.md`](README.md);
+> **Historical document (2026-10-26, updated 2026-11-20):** This is the original build plan.
+> Several originally deferred items have now been implemented and verified (Graph RAG with multi-hop
+> traversal, multi-model local Ollama inference suite, DuckDB analytical warehouse, dual FastMCP
+> servers, and a Playwright/DOM regulatory web scraper). Items remaining unbuilt: admin invite/role-change UI,
+> external MCP clients, and active n8n automation. The working pilot is described in [`README.md`](README.md);
 > the honest capability boundary is [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md);
 > the remediation tracker is [`docs/GAP_ANALYSIS.md`](docs/GAP_ANALYSIS.md).
 >

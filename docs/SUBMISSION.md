@@ -16,9 +16,10 @@
 
 **Tagline:** *See the risk. Approve the fix.*
 
-**Current data reality:** five labelled streams. GDELT and the US Federal Register
-have real live connectors with dedupe and a deployed scheduler; Bangladesh Bank,
-EUR-Lex, and UFLPA are fixture-backed. A rate-limited GDELT run is labelled
+**Current data reality:** five labelled streams. GDELT, the US Federal Register,
+and the regulatory circular web scraper have real connectors with dedupe and a deployed scheduler;
+Bangladesh Bank circulars can be synced live via the `web_scraper` connector (DOM + Playwright) or replayed
+via fixtures. EUR-Lex and UFLPA are fixture-backed. A rate-limited GDELT run is labelled
 `fixture_fallback`, never reported as a healthy live sync. Render runs
 `DATA_MODE=hybrid`, and Federal Register live sync is hosted-verified. The
 scheduler arming fix was verified at revision `94c2a19f91c4`, and the first
@@ -42,6 +43,11 @@ the form.
 | Automated remediation | Risk detail shows proposed actions, owners, due dates, priorities |
 | Human-in-the-loop approval | `/approvals`; approver/admin decision with rationale |
 | Evidence and citations | Risk detail evidence quote + source URL; `/search` cited chunks |
+| Knowledge Graph / Graph RAG | `/api/v1/search/graph` and Search UI Graph RAG toggle: 1-3 hop supply chain entity traversal fused with hybrid retrieval |
+| Data warehouse & OLAP | `/api/v1/warehouse/summary`, `/query`, and `/export`: in-process DuckDB columnar snapshots, 3 OLAP views, and Parquet exports |
+| Local multi-model inference | 4-model local suite (`qwen2.5:3b`, `llama3.2:3b`, `deepseek-r1:1.5b`, `gemma2:2b`) with role routing and benchmark log at `docs/benchmarks/local_models_20261120_0751.md` (4/4 passed) |
+| Dual read-only MCP servers | Decoupled `chowkidar-risk` (:8765, 5 tools) and `chowkidar-evidence` (:8766, 5 tools) FastMCP servers over stdio and Streamable HTTP |
+| Regulatory circular web scraper | `apps/api/app/connectors/web_scraper.py`, `scripts/scrape_regulatory_bulletins.py`, `make scrape-bulletins` (DOM table/card parsing and Playwright) |
 | Data lineage | Risk detail "Data lineage" panel: source → signal → obligation → risk → evidence/actions/approvals, with trace ID and audit links |
 | Auditability | `/audit` hash-chain verification (admin) |
 | Quality evaluation | `/evals`, 13/13 golden cases, five metrics |
@@ -326,11 +332,11 @@ OpenCode (AI coding agent), Python 3.14 with `uv`, FastAPI, SQLAlchemy 2, Alembi
 | Data Sources & Governance | Five labelled streams: US Federal Register and GDELT live, Bangladesh Bank/EUR-Lex/DHS-UFLPA fixture-backed. Signals are normalized with source, jurisdiction, date, URL, raw text, and mode; dedupe uses `(source_id, external_id)`. Postgres stores signals and pgvector chunks; raw text is retained for evidence. Licensing, fixture provenance, and freshness expectations are disclosed; no formal terms review or enforced SLO. | Implemented with disclosed limits |
 | Privacy and Compliance | The pilot has no real customer data. Hosted auth uses Supabase email/password with local role mapping; reports are stored in Postgres, with private Supabase Storage as an optional adapter. Rate limits are process-local. There is no SOC 2, GDPR certification, legal review, or multi-tenant isolation claim. | Pilot boundary |
 | Lineage and Observability | The risk detail page shows a source → signal → obligation → risk → evidence/actions/approvals → reports/audit lineage view backed by `GET /api/v1/risks/{id}/lineage`. Each pipeline-created risk persists its agent-run `trace_id` in risk metadata; seeded risks use the fixture run trace. Every risk links to its source URL, verbatim quote, and evidence chunk. Agent runs record workflow, mode, prompt version, routing, repair attempts, and verification outcomes; source records expose last sync mode, count, and sanitized error. Material mutations append hash-chained audit events. Hosted Sentry/Phoenix/OpenLineage tracing is not enabled. | Implemented with disclosed gaps |
-| MCP Usage | A read-only FastMCP server exposes six tools, one prompt, and one resource for inspecting risks, evidence, approvals, and the supply-chain graph over stdio or Streamable HTTP/SSE. HTTP/SSE fail closed: `CHOWKIDAR_MCP_HTTP_TOKEN` is required, and `--allow-unauthenticated` is loopback-only. No external MCP server is integrated into the product path, and the pipeline does not call MCP. | Built, not used in product path |
-| Outbound APIs & Integrations | Public OpenAPI docs and a read-only FastMCP stdio/HTTP server; no outbound webhooks, no external MCP server, and no third-party write integration. Supabase is the auth/database provider; Render and Netlify are hosting. | Implemented subset |
+| MCP Usage | Two dedicated read-only FastMCP servers (`chowkidar-risk` on :8765 and `chowkidar-evidence` on :8766) expose 10 tools, two prompts, and two resources for inspecting risks, evidence, Graph RAG traversal, approvals, and the supply-chain graph over stdio or Streamable HTTP/SSE. HTTP/SSE fail closed: `CHOWKIDAR_MCP_HTTP_TOKEN` is required, and `--allow-unauthenticated` is loopback-only. No external MCP server is integrated into the product path, and the pipeline does not call MCP. | Built, not used in product path |
+| Outbound APIs & Integrations | Public OpenAPI docs and read-only FastMCP stdio/HTTP servers; no outbound webhooks, no external MCP server, and no third-party write integration. Supabase is the auth/database provider; Render and Netlify are hosting. | Implemented subset |
 | Agent Frameworks | LangGraph is the only agent framework used. CrewAI, AutoGen, OpenAI Swarm, and similar frameworks are not used. | Implemented |
 | AI Models Used | Gemini 3.5 Flash through LiteLLM for extraction and rationale; Groq `gpt-oss-120b` as the fallback provider; an optional Ollama path; and a deterministic mock path for reproducible runs. Hosted live inference is verified (`llm_live_ready=true`; a hosted `mode=live` run produced a model-generated rationale with confidence `0.96`), with deterministic fallback when a provider fails. | Implemented and hosted-verified |
-| Local / Open-Source LLMs | The Ollama adapter is implemented and was smoke-tested locally with cached `qwen2.5:3b`: the pipeline completed with 0 errors, `repair_attempts=1`, and verification `needs_review`. `LLM_PREFER_LOCAL` is Ollama-first with cloud fallback; `LLM_LOCAL_ONLY=true` is the hard no-cloud path. The default `qwen2.5:7b` was not pulled, no local model runs on the hosted pilot, and no quality or latency claim is made. BGE-M3 embeddings and Docling are optional and not on the hosted path. | Implemented locally; not hosted |
+| Local / Open-Source LLMs | The Ollama adapter supports a 4-model local suite (`qwen2.5:3b`, `llama3.2:3b`, `deepseek-r1:1.5b`, `gemma2:2b`) with role routing (extraction, reasoning, triage), smoke-tested and benchmarked with 4/4 passing at `docs/benchmarks/local_models_20261120_0751.md`. `LLM_PREFER_LOCAL` is Ollama-first with cloud fallback; `LLM_LOCAL_ONLY=true` is the hard no-cloud path. No local model runs on the hosted pilot. BGE-M3 embeddings and Docling are optional and not on the hosted path. | Implemented locally; not hosted |
 | Frontend AI Tools | None. The web UI was built directly with Next.js, TypeScript, Tailwind CSS, and shadcn-style components; no Lovable, v0, Bolt.new, Cursor, or canvas tool was used. | Honest zero |
 | Workflow Automation Tools | LangGraph and the in-process APScheduler are used for the agent workflow and scheduled ingestion. n8n, Zapier, Make, Airflow, Temporal, Dagster, Prefect, and Windmill are not used. | Implemented subset |
 | Cost & Performance | Runs on free tiers: Render API (512 MB, sleeps after idle), Supabase Free Postgres/Auth, Netlify/Vercel Hobby, and Gemini/Groq free tiers. Live pipeline is bounded to 6 signals; scheduler interval is 60 minutes; LLM timeout is 25s with a 90s provider cooldown. No cost dashboard, latency SLO, or production capacity claim. | Pilot boundary |

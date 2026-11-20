@@ -105,8 +105,14 @@ unless noted.
 | `POST` | `/api/v1/pipeline/run` | analyst/admin | Run LangGraph pipeline; rate-limited |
 | `GET` | `/api/v1/pipeline/runs` | analyst/admin | Recent runs |
 | `GET` | `/api/v1/search?q=` | any | Hybrid cited evidence search |
+| `GET` | `/api/v1/search/graph?q=` | any | Graph RAG search: hybrid retrieval + 1-3 hop supply chain knowledge graph traversal |
 | `GET` | `/api/v1/graph` | any | Supply-chain graph nodes/edges |
 | `GET` | `/api/v1/suppliers` | any | Supplier list |
+| `GET` | `/api/v1/warehouse/summary` | any | DuckDB warehouse tables, row counts, and status |
+| `POST` | `/api/v1/warehouse/sync` | analyst/admin | Refresh in-process DuckDB snapshot from Postgres |
+| `POST` | `/api/v1/warehouse/query` | analyst/admin | Execute preset OLAP view or sandboxed read-only SQL |
+| `POST` | `/api/v1/warehouse/export` | analyst/admin | Export warehouse table as Parquet (ZSTD) or CSV |
+| `GET` | `/api/v1/warehouse/exports/{file}` | analyst/admin | Download exported warehouse dataset |
 | `GET` | `/api/v1/evals/summary` | analyst/admin | Latest eval metrics |
 | `POST` | `/api/v1/evals/run` | analyst/admin | Re-run golden set; rate-limited |
 | `GET` | `/api/v1/reports` | any | Report metadata |

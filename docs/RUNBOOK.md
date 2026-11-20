@@ -40,7 +40,7 @@ produced a model-generated rationale with confidence `0.96`, 0 errors, and 1
 verified risk. A provider failure can still fall back deterministically; check
 the pipeline `errors` array and risk metadata before claiming a live call. The
 keys are set in Render and the local `.env`; never copy them into docs or
-commits. `live_connectors` should contain `gdelt` and `federal_register`.
+commits. `live_connectors` should contain `gdelt`, `federal_register`, and `web_scraper`.
 
 `scheduler_next_run_at=null` means the scheduler job is paused, absent, or the
 API is running a build from before the arming fix. A non-null timestamp proves

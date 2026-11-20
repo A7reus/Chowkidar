@@ -253,10 +253,7 @@ fallback remains available when a provider fails.
 | `hybrid` | Try the live connector; on failure, replay the fixture and label the run `fixture_fallback` with `status=degraded`. |
 | `live` | Try the live connector; on failure, record `live_failed` and return `502`. |
 
-Live connectors are implemented for `gdelt` and `federal_register`. Bangladesh
-Bank, EUR-Lex, and UFLPA remain fixture-backed. The GDELT public endpoint is
-rate-limited to roughly one request every five seconds and may return `429` with
-an HTML body; the connector retries once, then hybrid mode falls back.
+Live connectors and scrapers are implemented for `gdelt`, `federal_register`, and `web_scraper` (DOM table/card parsing and Playwright headless browser). Bangladesh Bank circulars can be synced live via the `web_scraper` connector or replayed via fixtures. EUR-Lex and UFLPA remain fixture-backed. The GDELT public endpoint is rate-limited to roughly one request every five seconds and may return `429` with an HTML body; the connector retries once, then hybrid mode falls back.
 
 | Variable | Default | Purpose |
 |---|---|---|
@@ -290,8 +287,9 @@ None of these are needed for the demo:
 | `PHOENIX_ENABLED`, `PHOENIX_COLLECTOR_ENDPOINT` | Optional tracing; dependencies are not installed by default |
 | `EMBEDDING_MODE`, `EMBEDDING_DIM`, `EMBEDDING_MODEL`, `RERANKER_MODEL` | Mock embeddings by default; live embedding dependencies are not installed |
 | `LOCAL_STORAGE_DIR`, `REPORT_STORAGE_DIR`, `UPLOAD_STORAGE_DIR` | Optional paths; `REPORT_STORAGE_DIR` is used only by `STORAGE_BACKEND=local` |
-| `CHOWKIDAR_API_URL`, `CHOWKIDAR_DEMO_ROLE`, `CHOWKIDAR_MCP_TOKEN` | Read-only MCP server only |
-| `CHOWKIDAR_MCP_HTTP_TOKEN`, `CHOWKIDAR_MCP_HOST`, `CHOWKIDAR_MCP_PORT` | HTTP/SSE MCP transport; the token is required by default |
+| `WAREHOUSE_PATH`, `WAREHOUSE_EXPORT_DIR`, `WAREHOUSE_SYNC_TTL_SECONDS`, `WAREHOUSE_MAX_ROWS`, `WAREHOUSE_QUERY_TIMEOUT_SECONDS` | In-process DuckDB analytical warehouse configuration; defaults to in-memory |
+| `CHOWKIDAR_API_URL`, `CHOWKIDAR_DEMO_ROLE`, `CHOWKIDAR_MCP_TOKEN` | Read-only MCP servers (`chowkidar-risk` and `chowkidar-evidence`) |
+| `CHOWKIDAR_MCP_HTTP_TOKEN`, `CHOWKIDAR_MCP_HOST`, `CHOWKIDAR_MCP_PORT` | HTTP/SSE MCP transport (port 8765 for risk, port 8766 for evidence); token required by default |
 
 ## Quick check
 

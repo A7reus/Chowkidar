@@ -75,10 +75,11 @@ calibrate the claims.
 
 ## 2. Data and connectors
 
-- **Two live connectors exist; three streams remain fixture-backed.**
-  `GDELT` and the `US Federal Register` have real key-free connectors with
-  normalization, dedupe by `(source_id, external_id)`, structure-aware evidence
-  chunking, and honest mode labels. Bangladesh Bank, EUR-Lex, and DHS/UFLPA still replay
+- **Live connectors and scrapers are implemented alongside fixtures.**
+  `GDELT` and the `US Federal Register` have real key-free REST connectors, and `web_scraper`
+  provides DOM table/card parsing and Playwright headless Chromium automation for regulatory
+  bulletins (such as Bangladesh Bank circulars), with dedupe by `(source_id, external_id)`,
+  structure-aware evidence chunking, and honest mode labels. EUR-Lex and DHS/UFLPA still replay
   fixture data. The catalog in [`DATA_SOURCES.md`](DATA_SOURCES.md) distinguishes
   wired connectors from design targets.
 - **Hybrid mode is implemented, but GDELT is externally rate-limited.** The
@@ -132,28 +133,34 @@ calibrate the claims.
   Gemini Pro Latest had zero free-tier quota; the defaults now use Gemini 3.5
   Flash. A 90-second per-provider cooldown prevents repeated timeouts. This is
   not a production SLA.
-- **Local Ollama is implemented but only smoke-tested.** `OLLAMA_ENABLED=true`
-  adds Ollama to the fallback chain; `LLM_PREFER_LOCAL=true` tries it first but
-  still falls back to configured cloud providers; `LLM_LOCAL_ONLY=true`
-  hard-disables cloud providers and requires Ollama. A local run with cached
-  `qwen2.5:3b` completed the pipeline with 0 errors, `repair_attempts=1`, and
-  verification `needs_review`. The default `qwen2.5:7b` was not pulled, no local
-  model runs on Render, and no quality or latency claim is made.
-- **MCP is read-only and outside the product path.** Six tools, one prompt, and
-  one resource are available over stdio or Streamable HTTP/SSE. HTTP requires
+- **Local Ollama runs a 4-model suite locally, not on hosted infrastructure.**
+  `OLLAMA_ENABLED=true` adds Ollama to the fallback chain; `LLM_PREFER_LOCAL=true`
+  tries it first; `LLM_LOCAL_ONLY=true` hard-disables cloud providers. A 4-model
+  suite (`qwen2.5:3b`, `llama3.2:3b`, `deepseek-r1:1.5b`, `gemma2:2b`) with role-based
+  routing (extraction, reasoning, triage) was benchmarked with 4/4 passing at
+  [`docs/benchmarks/local_models_20261120_0751.md`](benchmarks/local_models_20261120_0751.md).
+  No local model runs on Render, and latency/quality benchmarks are machine-specific.
+- **MCP is read-only and split into two servers outside the product path.**
+  Ten tools, two prompts, and two resources are available across `chowkidar-risk` (:8765)
+  and `chowkidar-evidence` (:8766) over stdio or Streamable HTTP/SSE. HTTP requires
   `CHOWKIDAR_MCP_HTTP_TOKEN` by default; `--allow-unauthenticated` is
   loopback-only. No external MCP server is integrated, and the pipeline does not
   call MCP. A Cloudflare quick tunnel was executed and verified once on
-  2026-10-31 (`401` without a token, `200` with it, six tools listed), but the
+  2026-10-31 (`401` without a token, `200` with it, tools listed), but the
   URL was ephemeral and is closed. There is no persistent public MCP endpoint,
   and the hosted pilot does not expose MCP.
-- **Chunking is structure-aware, not semantic.** The chunker is deployed in
+- **Chunking is structure-aware; Graph RAG is relational.** The chunker is deployed in
   revision `322bc2456868`; existing hosted evidence was not reseeded. New chunks
   start at recognized legal headings (`Article`, `Section`, `Chapter`, `Part`,
-  `Annex`, `Schedule`, `Rule`, `Title`, `§`) and store a section path. Long
-  sections are sentence-split with overlap and can still split within one
-  article. Mock mode uses hash embeddings; there is no late interaction or graph
-  RAG.
+  `Annex`, `Schedule`, `Rule`, `Title`, `§`) and store a section path. Graph RAG
+  is implemented via `apps/api/app/rag/graph_rag.py` fusing hybrid retrieval with
+  1-3 hop supply chain graph traversal (`/api/v1/search/graph`). The graph walks
+  Postgres entities and foreign keys; obligation-to-policy links are inferred from
+  shared keywords and flagged `inferred`. Neo4j is not used in the default path.
+- **Embedded DuckDB warehouse is an in-process analytical snapshot.**
+  `apps/api/app/db/warehouse.py` snapshots operational tables into columnar views
+  with sandboxed SQL and ZSTD-compressed Parquet exports. It produces plain Parquet
+  files, not transactional Delta Lake or Apache Iceberg tables.
 - **The bounded repair loop is deterministic and narrow.** It re-retrieves a
   verbatim quote and a citation once; it does not rewrite the risk, change the
   score, or call another model. One local smoke run still left a risk in

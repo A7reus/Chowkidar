@@ -18,14 +18,15 @@ Chowkidar needs **at least two distinct external data streams** plus internal co
 | Risk signals | GDELT news, OpenSanctions, UFLPA entity list | Detect supplier/counterparty risk and trigger due diligence |
 | Internal documents | Supplier list, policies, contracts, audit reports | Provide the company context for mapping and remediation |
 
-**What is actually wired:** five distinct streams. Bangladesh Bank, EUR-Lex, and UFLPA/DHS are fixture-backed. GDELT and the US Federal Register have real live connectors in `apps/api/app/connectors/`, with normalization, dedupe by `(source_id, external_id)`, evidence chunking, and honest mode labels. The seed contains 13 signals across the five streams. The catalog below distinguishes implemented connectors from design targets; it is not a claim that every listed API is called.
+**What is actually wired:** five distinct streams. GDELT, the US Federal Register, and web-scraped regulatory circulars have real connectors in `apps/api/app/connectors/`, with normalization, dedupe by `(source_id, external_id)`, evidence chunking, and honest mode labels. Bangladesh Bank circulars can be synced live via the `web_scraper` connector (DOM + Playwright) or replayed via fixtures. EUR-Lex and UFLPA/DHS have fixture backups. The seed contains 13 signals across the five streams. The catalog below distinguishes implemented connectors from design targets; it is not a claim that every listed API is called.
 
-**Live connector contract**
+**Live connector & scraper contract**
 
-| Connector | Endpoint | Key | Normalized fields | Known limits |
+| Connector | Endpoint / Source | Key | Normalized fields | Known limits |
 |---|---|---|---|---|
 | `federal_register` | `https://www.federalregister.gov/api/v1/documents.json` | none | document number, title, abstract, publication date, URL, agencies | Filters by trade/supply-chain terms; 8 relevant rules in a local run |
 | `gdelt` | `https://api.gdeltproject.org/api/v2/doc/doc` | none | article URL, title, seen date, domain, source country, language | Public rate limit ~1 request / 5 s; returns `429` and rate-limit HTML; hybrid mode falls back to fixtures |
+| `web_scraper` | Bangladesh Bank circulars / HTML portals | none | external_id, title, summary, raw_text, url, jurisdiction, severity, date, circular_no | DOM HTML table/card parser (`beautifulsoup4`) with optional Playwright headless Chromium; CLI: `scripts/scrape_regulatory_bulletins.py` (`make scrape-bulletins`) |
 
 **Ingestion modes**
 

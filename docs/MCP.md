@@ -1,8 +1,9 @@
-# Chowkidar MCP server
+# Chowkidar MCP servers
 
-Chowkidar exposes a **read-only** [FastMCP](https://gofastmcp.com/) server. It lets another agent inspect the risk register, evidence, pending approvals, and supply-chain graph without mutating state or bypassing human approval.
+Chowkidar exposes **two dedicated read-only** [FastMCP](https://gofastmcp.com/) servers. They let another agent inspect the risk register, evidence, pending approvals, and supply-chain graph without mutating state or bypassing human approval:
 
-**Source:** `apps/api/app/mcp/server.py`
+1. **`chowkidar-risk`** (`apps/api/app/mcp/server.py`, port 8765) — Operational risk posture, risk register, approval queue, and supply chain network graph.
+2. **`chowkidar-evidence`** (`apps/api/app/mcp/evidence_server.py`, port 8766) — Hybrid evidence search, multi-hop Graph RAG traversal, verbatim citation verification, and regulatory stream health.
 
 **Transports:** stdio (default) and Streamable HTTP (`--transport http`, SSE also available)
 
@@ -150,16 +151,17 @@ tunnel as a live demo URL.
 
 ## Tools
 
+### 1. `chowkidar-risk` Tools (`app.mcp.server`, port 8765)
+
 | Tool | Arguments | Returns |
 |---|---|---|
 | `dashboard_summary` | — | Company posture, counts, top risks, source health |
 | `list_open_risks` | `priority?`, `limit?` | Open risks sorted by score, with counts by priority |
 | `get_risk` | `risk_id` | Risk, score breakdown, evidence, actions, approvals |
-| `search_evidence` | `query`, `limit?` | Cited source chunks from hybrid retrieval |
 | `list_pending_approvals` | — | Human decisions waiting in the queue |
 | `supply_chain_graph` | — | Nodes, edges, and counts by kind |
 
-The evidence server (`python -m app.mcp.evidence_server`, port 8766 over HTTP) adds:
+### 2. `chowkidar-evidence` Tools (`app.mcp.evidence_server`, port 8766)
 
 | Tool | Arguments | Returns |
 |---|---|---|

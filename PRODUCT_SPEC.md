@@ -1,9 +1,9 @@
 # Chowkidar — Product Specification
 
-> **Historical document (2026-10-26):** This is the product specification as
-> planned on 2026-10-23. Features marked as planned below — admin invitation and
-> role-change UI, local model execution in the demo path, graph RAG, and some
-> multi-agent behavior — are **not implemented**. The shipped pilot is narrower.
+> **Historical document (2026-10-26, updated 2026-11-20):** This is the product specification as
+> planned on 2026-10-23. Several key capabilities (Graph RAG multi-hop traversal, 4-model local
+> Ollama routing suite, DuckDB warehouse, dual FastMCP servers, and Playwright regulatory scraping)
+> were implemented and verified on 2026-11-20. Admin invitation and role-change UI remain not built.
 > Read [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) for the capability boundary,
 > [`README.md`](README.md) for what is built, and
 > [`docs/GAP_ANALYSIS.md`](docs/GAP_ANALYSIS.md) for remaining gaps.

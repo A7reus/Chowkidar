@@ -176,6 +176,11 @@ The deterministic mock path (`app/agents/mock.py`) is the default for the demo a
 | 2026-10-31 | `main` at `2e95cd2`; hosted runtime | Commit and push P1-5/P1-6; verify CI and the Render auto-deploy | Confirm the new endpoint and UI are live | Operator + QA |
 | 2026-10-31 | `docs/assets/demo-walkthrough.mp4`, `docs/assets/demo-walkthrough-thumbnail.png`, `docs/DEMO_VIDEO.md`, `README.md`, `docs/SUBMISSION.md` | Record a 2:45 captioned local walkthrough and prepare the YouTube upload package | Provide a real video artifact without inventing a YouTube URL | AI agent + QA |
 | 2026-10-31 | Local MCP HTTP server + Cloudflare quick tunnel | Execute and verify the optional tunnel: public HTTPS URL returned `401` without a token, `200` with it, and six tools on `tools/list`; shut the tunnel down | Verify P1-10 truthfully as a one-time local publishing test, not a persistent endpoint | AI agent + QA |
+| 2026-11-20 | `apps/api/app/db/warehouse.py`, `/api/v1/warehouse`, tests | Add embedded DuckDB analytical warehouse: in-process snapshotting, 3 OLAP views (`risk_distribution`, `audit_integrity`, `supplier_exposure`), sandboxed SQL, and ZSTD Parquet export (PR #3) | Provide warehouse analytics without loading the operational Postgres database | AI agent + QA |
+| 2026-11-20 | `apps/api/app/agents/llm.py`, `scripts/smoke_local_models.py`, `docs/benchmarks/` | Add 4-model local LLM suite (`qwen2.5:3b`, `llama3.2:3b`, `deepseek-r1:1.5b`, `gemma2:2b`) with role-based routing (extraction, reasoning, triage) and benchmark log (PR #2) | Expand local model inference to specialized roles with verified 4/4 benchmark | AI agent + QA |
+| 2026-11-20 | `apps/api/app/mcp/{server.py,evidence_server.py}`, Makefile, tests | Decouple MCP into dual dedicated servers: `chowkidar-risk` (:8765, 5 tools) and `chowkidar-evidence` (:8766, 5 tools) (PR #4) | Clean separation of concerns between operational risk posture and evidence retrieval | AI agent + QA |
+| 2026-11-20 | `apps/api/app/rag/graph_rag.py`, `apps/web` Search/Evidence tab, tests | Add Graph RAG: hybrid retrieval fused with 1-3 hop supply chain knowledge graph walk (`/api/v1/search/graph`), Search UI toggle, and MCP tool (PR #5) | Ground evidence in connected supply chain network entities and relationships | AI agent + QA |
+| 2026-11-20 | `apps/api/app/connectors/web_scraper.py`, `scripts/scrape_regulatory_bulletins.py`, Makefile, tests | Add Playwright & DOM regulatory circular bulletin web scraper for Bangladesh Bank and EU notices with severity classification (PR #6) | Close data lifecycle web scraper requirement with headless browser and DOM parsing | AI agent + QA |
 
 ---
 
@@ -185,7 +190,7 @@ The deterministic mock path (`app/agents/mock.py`) is the default for the demo a
 |---|---|---|
 | API lint | `uv run ruff check app tests` | Pass |
 | API types | `uv run pyright` | 0 errors |
-| API tests | `uv run pytest` | 106 passed (current; 75 at initial build) |
+| API tests | `uv run pytest` | 186 passed, 1 skipped (expanded across warehouse, local models, MCP, Graph RAG, and scraper) |
 | Web lint | `pnpm lint` | Pass |
 | Web types | `pnpm typecheck` | Pass |
 | Web unit | `pnpm test` | 8 passed |
