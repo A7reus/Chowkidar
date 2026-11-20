@@ -485,3 +485,57 @@ class EvalSummary(BaseModel):
 
 class MessageResponse(BaseModel):
     message: str
+
+
+WarehouseDatasetLiteral = Literal["risks", "audit_events", "signals", "suppliers"]
+WarehousePresetLiteral = Literal["risk_distribution", "audit_integrity", "supplier_exposure"]
+WarehouseFormatLiteral = Literal["parquet", "csv"]
+
+
+class WarehouseTableOut(BaseModel):
+    name: str
+    row_count: int
+
+
+class WarehouseSummaryOut(BaseModel):
+    status: Literal["ready", "empty"]
+    engine: Literal["duckdb"] = "duckdb"
+    duckdb_version: str
+    storage: str
+    tables: list[WarehouseTableOut]
+    total_rows: int
+    presets: list[WarehousePresetLiteral]
+    last_synced_at: datetime | None
+
+
+class WarehouseQueryIn(BaseModel):
+    view: WarehousePresetLiteral | None = None
+    sql: str | None = Field(default=None, max_length=10_000)
+    refresh: bool = False
+
+
+class WarehouseQueryOut(BaseModel):
+    view: WarehousePresetLiteral | None
+    columns: list[str]
+    rows: list[dict[str, Any]]
+    row_count: int
+    truncated: bool
+    execution_ms: float
+    synced_at: datetime | None
+
+
+class WarehouseExportIn(BaseModel):
+    table: WarehouseDatasetLiteral
+    format: WarehouseFormatLiteral = "parquet"
+    refresh: bool = False
+
+
+class WarehouseExportOut(BaseModel):
+    table: WarehouseDatasetLiteral
+    format: WarehouseFormatLiteral
+    file_name: str
+    path: str
+    row_count: int
+    size_bytes: int
+    exported_at: datetime
+    download_url: str

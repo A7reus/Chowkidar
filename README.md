@@ -61,6 +61,7 @@ More views: [signals](docs/assets/02-signals.png) · [search](docs/assets/05-sea
 | Supply-chain graph and node inspector | Built |
 | Evaluation dashboard with five metric gates | Built, 13/13 golden cases |
 | Read-only MCP server | Built: stdio + Streamable HTTP/SSE; HTTP requires a bearer token by default; a temporary Cloudflare quick tunnel was verified on 2026-10-31; not in the product path |
+| Embedded DuckDB analytical warehouse | Built and locally tested: in-process snapshot of risks, signals, suppliers and the audit ledger; three OLAP preset views; sandboxed admin SQL; Parquet (ZSTD) and CSV export. Not yet hosted-verified; plain Parquet files, not Delta/Iceberg tables |
 | FastAPI REST API + OpenAPI schema | Built |
 | English + Bengali UI chrome | Built |
 | Demo auth with four roles | Built; local only in `AUTH_MODE=dev` + `DEMO_MODE=true` |
@@ -223,6 +224,25 @@ cd apps/api && uv run python -m app.db.seed
 - Cloud deployment is live for the API and web build. Netlify is the primary web origin with production browser QA passed 2/2; Vercel remains a secondary fallback and still has DNS variability on some networks. See [`docs/CLOUD_DEPLOYMENT_STATUS.md`](docs/CLOUD_DEPLOYMENT_STATUS.md).
 
 ---
+
+## Analytical warehouse (DuckDB)
+
+PostgreSQL stays the system of record. `apps/api/app/db/warehouse.py` keeps a columnar snapshot of the analytics tables (`warehouse_risks`, `warehouse_signals`, `warehouse_suppliers`, `warehouse_audit`) in an in-process DuckDB database, so OLAP queries and exports never load the operational database. The snapshot refreshes on demand and whenever it is older than `WAREHOUSE_SYNC_TTL_SECONDS`.
+
+| Endpoint | Role | What it does |
+|---|---|---|
+| `GET /api/v1/warehouse/summary` | any | DuckDB version, tables, row counts, last sync |
+| `POST /api/v1/warehouse/sync` | analyst, admin | Force a snapshot refresh |
+| `POST /api/v1/warehouse/query` | analyst, admin | `{"view": "risk_distribution" \| "audit_integrity" \| "supplier_exposure"}`; admins may send `{"sql": "SELECT ..."}` |
+| `POST /api/v1/warehouse/export` | analyst, admin | `{"table": "risks" \| "audit_events" \| "signals" \| "suppliers", "format": "parquet" \| "csv"}` |
+| `GET /api/v1/warehouse/exports/{file}` | analyst, admin | Download an export |
+
+Ad-hoc SQL runs on a separate in-memory DuckDB copy with file access disabled and its configuration locked. Only a single `SELECT` is accepted, results are capped at `WAREHOUSE_MAX_ROWS`, and queries are cancelled after `WAREHOUSE_QUERY_TIMEOUT_SECONDS`. Set `WAREHOUSE_PATH=./data/warehouse/chowkidar.duckdb` to persist the warehouse between restarts; exports go to `WAREHOUSE_EXPORT_DIR` (git-ignored).
+
+```bash
+curl -s -H 'X-Demo-Role: analyst' -H 'Content-Type: application/json' \
+  -d '{"view":"risk_distribution"}' http://localhost:8000/api/v1/warehouse/query | jq .
+```
 
 ## MCP (optional)
 
