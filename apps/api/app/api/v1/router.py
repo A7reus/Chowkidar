@@ -17,6 +17,7 @@ from app.api.v1 import (
     signals,
     sources,
     suppliers,
+    warehouse,
 )
 
 api_router = APIRouter()
@@ -34,3 +35,4 @@ api_router.include_router(graph.router)
 api_router.include_router(reports.router)
 api_router.include_router(pipeline.router)
 api_router.include_router(evals.router)
+api_router.include_router(warehouse.router)

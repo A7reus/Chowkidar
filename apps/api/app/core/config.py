@@ -107,6 +107,12 @@ class Settings(BaseSettings):
     report_storage_dir: str = "./storage/reports"
     upload_storage_dir: str = "./storage/uploads"
 
+    warehouse_path: str = ":memory:"  # or a file such as ./data/warehouse/chowkidar.duckdb
+    warehouse_export_dir: str = "./data/warehouse/exports"
+    warehouse_sync_ttl_seconds: int = Field(default=300, ge=0)
+    warehouse_max_rows: int = Field(default=1000, ge=1, le=50_000)
+    warehouse_query_timeout_seconds: float = Field(default=5.0, gt=0, le=60)
+
     pipeline_max_signals: int = Field(default=20, ge=1, le=100)
     pipeline_live_max_signals: int = Field(default=6, ge=1, le=30)
     pipeline_max_repair_attempts: int = Field(default=1, ge=0, le=3)
