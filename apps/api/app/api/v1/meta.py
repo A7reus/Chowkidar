@@ -89,6 +89,10 @@ async def meta() -> dict:
         "llm_local_enabled": settings.ollama_enabled,
         "llm_prefer_local": settings.llm_prefer_local,
         "llm_local_only": settings.llm_local_only,
+        # Models this build is wired for; a model only counts as "run" once
+        # scripts/smoke_local_models.py has produced a benchmark log for it.
+        "llm_local_models": settings.ollama_model_suite_list,
+        "llm_local_routing": settings.ollama_role_models,
         "embedding_mode": settings.embedding_mode,
         "auth_mode": settings.auth_mode,
         "data_mode": settings.data_mode,
