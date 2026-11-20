@@ -14,9 +14,10 @@ mcp = FastMCP(
     name="chowkidar-evidence",
     instructions=(
         "Read-only tools for Chowkidar source evidence: search cited source "
-        "chunks, check that a quote appears verbatim in retrieved text, and "
-        "inspect regulatory streams and extracted obligations. Never describe "
-        "a signal as a legal conclusion."
+        "chunks, search with knowledge-graph context (Graph RAG), check that a "
+        "quote appears verbatim in retrieved text, and inspect regulatory "
+        "streams and extracted obligations. Never describe a signal as a legal "
+        "conclusion."
     ),
     version="0.1.0",
 )
@@ -49,6 +50,84 @@ async def search_evidence(query: str, limit: int = 5) -> dict[str, Any]:
                 "signal_id": item.get("signal_id"),
             }
             for item in data.get("results", [])
+        ],
+    }
+
+
+@mcp.tool
+async def search_evidence_with_graph(query: str, limit: int = 5, hops: int = 2) -> dict[str, Any]:
+    """Graph RAG search: cited source chunks plus the connected supply-chain graph.
+
+    Runs hybrid retrieval, resolves suppliers, buyers, obligations, risks and
+    policies named in the query or in the retrieved chunks, and walks 1 to 3
+    hops through the knowledge graph. Returns the chunks, the entities each
+    chunk links to, the traversed nodes and edges, and readable traversal
+    paths. Edges marked ``inferred`` come from keyword overlap, not a stored
+    link. Source text only, never a generated answer.
+    """
+    if len(query.strip()) < 2:
+        raise ValueError("query must contain at least two characters")
+    data = await api.get(
+        "/api/v1/search/graph",
+        params={
+            "q": query.strip()[:300],
+            "limit": max(1, min(limit, 20)),
+            "hops": max(1, min(hops, 3)),
+        },
+    )
+
+    def _chunk(item: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "chunk_id": item.get("chunk_id"),
+            "content": item.get("content"),
+            "citation": item.get("citation_label"),
+            "citation_url": item.get("citation_url"),
+            "score": item.get("score"),
+            "graph_score": item.get("graph_score"),
+            "origin": item.get("origin"),
+            "related_entities": [
+                f"{entity.get('kind')}: {entity.get('label')}"
+                for entity in item.get("related_entities", [])
+            ],
+        }
+
+    subgraph = data.get("subgraph") or {}
+    return {
+        "query": data.get("query"),
+        "mode": data.get("mode"),
+        "hops": data.get("hops"),
+        "traversal_summary": data.get("traversal_summary"),
+        "paths": [path.get("description") for path in data.get("paths", [])],
+        "entities": [
+            {
+                "id": entity.get("node_id"),
+                "kind": entity.get("kind"),
+                "label": entity.get("label"),
+                "matched": entity.get("matched_text"),
+                "source": entity.get("source"),
+            }
+            for entity in data.get("entities", [])
+        ],
+        "results": [_chunk(item) for item in data.get("results", [])],
+        "graph_evidence": [_chunk(item) for item in data.get("graph_evidence", [])],
+        "nodes": [
+            {
+                "id": node.get("id"),
+                "kind": node.get("kind"),
+                "label": node.get("label"),
+                "detail": node.get("detail"),
+                "hop": node.get("hop"),
+            }
+            for node in subgraph.get("nodes", [])
+        ],
+        "edges": [
+            {
+                "source": edge.get("source"),
+                "target": edge.get("target"),
+                "label": edge.get("label"),
+                "inferred": edge.get("inferred", False),
+            }
+            for edge in subgraph.get("edges", [])
         ],
     }
 
@@ -109,9 +188,11 @@ def citation_audit_prompt(claim_text: str) -> str:
     """Build a conservative prompt that checks a claim against cited evidence."""
     return (
         f"Check this claim using Chowkidar tools: {claim_text}\n"
-        "Call search_evidence for the supporting language, then verify_citation "
-        "on any quote you rely on. Report only what the sources support. Do not "
-        "give legal advice or claim compliance."
+        "Call search_evidence for the supporting language, or "
+        "search_evidence_with_graph when the claim names a supplier, buyer, "
+        "obligation or policy, then verify_citation on any quote you rely on. "
+        "Report only what the sources support. Do not give legal advice or "
+        "claim compliance."
     )
 
 

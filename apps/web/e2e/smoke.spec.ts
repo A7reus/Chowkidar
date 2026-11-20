@@ -64,3 +64,17 @@ test("evidence search returns cited source chunks", async ({ page }) => {
   await expect(page.locator("article").first()).toBeVisible();
   await expect(page.getByText(/results for/)).toBeVisible();
 });
+
+test("graph RAG search shows linked entities and traversal paths", async ({ page }) => {
+  await loginAsAnalyst(page);
+  await page.goto("/search?q=SinoFab%20ownership");
+  const context = page.getByTestId("graph-context");
+  await expect(context).toBeVisible();
+  await expect(context.getByText("SinoFab Chemicals Co.").first()).toBeVisible();
+  await expect(context.getByText(/Traversal paths/)).toBeVisible();
+  await expect(page.locator("article").first().getByText("Linked")).toBeVisible();
+
+  await page.getByRole("switch", { name: /Graph RAG/ }).click();
+  await expect(context).toBeHidden();
+  await expect(page.locator("article").first()).toBeVisible();
+});

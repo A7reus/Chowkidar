@@ -96,6 +96,7 @@ def test_evidence_server_exposes_read_only_tools() -> None:
 
     assert asyncio.run(_names()) == {
         "search_evidence",
+        "search_evidence_with_graph",
         "verify_citation",
         "get_regulatory_source",
         "list_active_obligations",

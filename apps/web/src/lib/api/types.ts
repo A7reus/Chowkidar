@@ -41,6 +41,10 @@ export type PipelineRunResponse = Schema["PipelineRunResponse"];
 export type AgentRun = Schema["AgentRunOut"];
 export type SearchResponse = Schema["SearchResponse"];
 export type SearchResult = Schema["SearchResult"];
+export type GraphRAGResponse = Schema["GraphRAGResponse"];
+export type GraphRAGSearchResult = Schema["GraphRAGSearchResult"];
+export type GraphRAGEntity = Schema["GraphRAGEntity"];
+export type GraphRAGNode = Schema["GraphRAGNode"];
 export type Health = Schema["HealthOut"];
 
 export type RiskPriority = "critical" | "high" | "medium" | "low";

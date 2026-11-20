@@ -159,6 +159,16 @@ tunnel as a live demo URL.
 | `list_pending_approvals` | — | Human decisions waiting in the queue |
 | `supply_chain_graph` | — | Nodes, edges, and counts by kind |
 
+The evidence server (`python -m app.mcp.evidence_server`, port 8766 over HTTP) adds:
+
+| Tool | Arguments | Returns |
+|---|---|---|
+| `search_evidence` | `query`, `limit?` | Cited source chunks from hybrid retrieval |
+| `search_evidence_with_graph` | `query`, `limit?`, `hops?` | Graph RAG: cited chunks with linked entities, resolved entities, the traversed subgraph (nodes and edges, inferred edges flagged), readable traversal paths, and evidence reached only through the graph |
+| `verify_citation` | `quote`, `chunk_id?` | Whether the quote appears verbatim in a retrieved chunk |
+| `get_regulatory_source` | `stream_key` | Monitored streams that match |
+| `list_active_obligations` | `limit?` | Obligation nodes from the graph |
+
 ### Prompt
 
 `risk_review_prompt(risk_id)` builds a conservative review prompt that tells the model to:

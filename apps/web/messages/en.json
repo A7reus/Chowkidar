@@ -367,7 +367,21 @@
     "how": "How retrieval works",
     "howBody": "Chunks are embedded and indexed in Postgres with pgvector, combined with full-text search, then ranked. Mock embeddings are the verified path; BGE-M3 and reranking are optional and not on the hosted path.",
     "openSignal": "Open source signal",
-    "searching": "Searching evidence…"
+    "searching": "Searching evidence…",
+    "graphMode": "Graph RAG",
+    "graphModeHint": "Add knowledge-graph context: suppliers, risks, obligations and policies linked to the evidence.",
+    "graphContext": "Graph context",
+    "graphEntities": "Entities in your query",
+    "noQueryEntities": "No supplier, buyer or obligation named directly. Context comes from the evidence links.",
+    "graphPaths": "Traversal paths",
+    "inferredNote": "{count, plural, one {# policy link is} other {# policy links are}} inferred from shared keywords.",
+    "openGraph": "Open graph",
+    "linkedEntities": "Linked",
+    "fusedRelevance": "retrieval + graph relevance",
+    "viaGraph": "Via graph",
+    "graphEvidence": "Reached through the graph",
+    "graphEvidenceHint": "Evidence attached to entities in your query that keyword and vector search did not return.",
+    "graphRankingNote": "With Graph RAG on, a quarter of the score comes from how closely each chunk connects to the entities you named."
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",

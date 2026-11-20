@@ -9,6 +9,8 @@ import {
   Layers3,
   Link2,
   Loader2,
+  Network,
+  Route,
   Search as SearchIcon,
   ShieldCheck,
   Sparkles,
@@ -24,8 +26,13 @@ import { PageHeader } from "@/components/common/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { useSearch } from "@/lib/api/hooks";
-import type { SearchResult } from "@/lib/api/types";
+import { useGraphSearch, useSearch } from "@/lib/api/hooks";
+import type {
+  GraphRAGNode,
+  GraphRAGResponse,
+  GraphRAGSearchResult,
+  SearchResult,
+} from "@/lib/api/types";
 import { cn, titleCase } from "@/lib/utils";
 
 const suggestions = [
@@ -35,7 +42,40 @@ const suggestions = [
   "port strike",
   "factory safety",
   "UFLPA entity list",
+  "SinoFab ownership",
+  "Dhaka Knit risks",
 ];
+
+type EntityKind = GraphRAGNode["kind"];
+
+const entityTone: Record<EntityKind, string> = {
+  company: "border-teal-400/20 bg-teal-400/10 text-teal-300",
+  supplier: "border-slate-400/20 bg-slate-400/10 text-slate-300",
+  buyer: "border-emerald-400/20 bg-emerald-400/10 text-emerald-300",
+  policy: "border-violet-400/20 bg-violet-400/10 text-violet-300",
+  signal: "border-amber-400/20 bg-amber-400/10 text-amber-200",
+  obligation: "border-sky-400/20 bg-sky-400/10 text-sky-300",
+  risk: "border-rose-400/20 bg-rose-400/10 text-rose-300",
+};
+
+function EntityChip({ kind, label }: { kind: EntityKind; label: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex max-w-full items-center gap-1 truncate rounded border px-1.5 py-0.5 text-[8px]",
+        entityTone[kind],
+      )}
+      title={label}
+    >
+      <span className="font-semibold uppercase tracking-wider">{kind}</span>
+      <span className="truncate">{label}</span>
+    </span>
+  );
+}
+
+function isGraphResult(result: SearchResult): result is GraphRAGSearchResult {
+  return "related_entities" in result;
+}
 
 function SearchResultCard({ result, index }: { result: SearchResult; index: number }) {
   const t = useTranslations("search");
@@ -53,6 +93,12 @@ function SearchResultCard({ result, index }: { result: SearchResult; index: numb
             <span className="rounded border border-teal-400/20 bg-teal-400/10 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wider text-teal-300">
               Cited chunk
             </span>
+            {isGraphResult(result) && result.origin === "graph" ? (
+              <span className="flex items-center gap-1 rounded border border-violet-400/20 bg-violet-400/10 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wider text-violet-300">
+                <Network className="size-2.5" />
+                {t("viaGraph")}
+              </span>
+            ) : null}
             <span className="flex items-center gap-1 rounded border border-border bg-white/[0.025] px-1.5 py-0.5 text-[8px] text-muted">
               <Layers3 className="size-2.5" />
               {result.section_path || "Body"}
@@ -75,6 +121,14 @@ function SearchResultCard({ result, index }: { result: SearchResult; index: numb
           >
             {result.content}
           </div>
+          {isGraphResult(result) && result.related_entities.length > 0 ? (
+            <div className="mt-2.5 flex flex-wrap items-center gap-1">
+              <span className="mr-0.5 text-[8px] uppercase tracking-wider text-muted-2">{t("linkedEntities")}</span>
+              {result.related_entities.slice(0, 5).map((entity) => (
+                <EntityChip key={entity.id} kind={entity.kind} label={entity.label} />
+              ))}
+            </div>
+          ) : null}
           {long ? (
             <button
               type="button"
@@ -89,7 +143,9 @@ function SearchResultCard({ result, index }: { result: SearchResult; index: numb
           <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-border-soft pt-2.5">
             <div className="flex min-w-[120px] flex-1 items-center gap-2">
               <Progress value={relevance} className="h-1 max-w-[160px]" indicatorClassName="bg-teal-400" />
-              <span className="text-[8px] text-muted-2">hybrid relevance</span>
+              <span className="text-[8px] text-muted-2">
+                {isGraphResult(result) ? t("fusedRelevance") : "hybrid relevance"}
+              </span>
             </div>
             <a
               href={result.citation_url}
@@ -117,6 +173,68 @@ function SearchResultCard({ result, index }: { result: SearchResult; index: numb
   );
 }
 
+function GraphContextPanel({ data }: { data: GraphRAGResponse }) {
+  const t = useTranslations("search");
+  const queryEntities = data.entities.filter((entity) => entity.source === "query");
+  const inferred = data.subgraph.edges.filter((edge) => edge.inferred).length;
+  return (
+    <div className="panel p-5" data-testid="graph-context">
+      <div className="flex items-center gap-2">
+        <div className="flex size-8 items-center justify-center rounded-lg border border-violet-400/20 bg-violet-400/10 text-violet-300">
+          <Network className="size-3.5" />
+        </div>
+        <h2 className="font-display text-sm font-semibold text-slate-100">{t("graphContext")}</h2>
+        <span className="ml-auto font-mono text-[9px] text-muted-2">
+          {data.subgraph.nodes.length} nodes · {data.subgraph.edges.length} edges · {data.hops} hops
+        </span>
+      </div>
+      <p className="mt-2 text-[10px] leading-relaxed text-muted">{data.traversal_summary.split(" Strongest path:")[0]}</p>
+
+      <p className="mt-4 text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-2">{t("graphEntities")}</p>
+      {queryEntities.length ? (
+        <div className="mt-1.5 flex flex-wrap gap-1">
+          {queryEntities.map((entity) => (
+            <EntityChip key={entity.node_id} kind={entity.kind} label={entity.label} />
+          ))}
+        </div>
+      ) : (
+        <p className="mt-1 text-[9px] leading-relaxed text-muted-2">{t("noQueryEntities")}</p>
+      )}
+
+      {data.paths.length ? (
+        <>
+          <p className="mt-4 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-2">
+            <Route className="size-3" />
+            {t("graphPaths")}
+          </p>
+          <ol className="mt-1.5 space-y-1.5">
+            {data.paths.slice(0, 4).map((path) => (
+              <li
+                key={path.node_ids.join(">")}
+                className="rounded-lg border border-border-soft bg-white/[0.015] p-2 text-[9px] leading-relaxed text-slate-300"
+              >
+                {path.description}
+              </li>
+            ))}
+          </ol>
+        </>
+      ) : null}
+
+      <div className="mt-4 flex items-center justify-between gap-2">
+        <p className="text-[8px] leading-relaxed text-muted-2">
+          {inferred > 0 ? t("inferredNote", { count: inferred }) : null}
+        </p>
+        <Button variant="secondary" size="sm" asChild>
+          <Link href="/graph">
+            <Layers3 />
+            {t("openGraph")}
+          </Link>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function SearchPage() {
   const t = useTranslations("search");
   const searchParams = useSearchParams();
@@ -125,17 +243,36 @@ export default function SearchPage() {
   const [submitted, setSubmitted] = React.useState(
     initialQuery.trim().length >= 2 ? initialQuery : "",
   );
+  const [graphMode, setGraphMode] = React.useState(searchParams.get("graph") !== "0");
 
-  const search = useSearch(submitted);
+  const plainSearch = useSearch(submitted, !graphMode);
+  const graphSearch = useGraphSearch(submitted, graphMode);
+  const search = graphMode ? graphSearch : plainSearch;
   const hasQuery = submitted.trim().length >= 2;
-  const results = search.data?.results ?? [];
+  const results: SearchResult[] = search.data?.results ?? [];
+  const graphData = graphMode ? graphSearch.data : undefined;
+  const graphEvidence = graphData?.graph_evidence ?? [];
+
+  const syncUrl = (query: string, graph: boolean) => {
+    const params = new URLSearchParams();
+    if (query) params.set("q", query);
+    if (!graph) params.set("graph", "0");
+    const suffix = params.toString();
+    window.history.replaceState(null, "", suffix ? `/search?${suffix}` : "/search");
+  };
 
   const execute = (value: string) => {
     const query = value.trim();
     if (query.length < 2) return;
     setInput(query);
     setSubmitted(query);
-    window.history.replaceState(null, "", `/search?q=${encodeURIComponent(query)}`);
+    syncUrl(query, graphMode);
+  };
+
+  const toggleGraph = () => {
+    const next = !graphMode;
+    setGraphMode(next);
+    syncUrl(submitted, next);
   };
 
   const onSubmit = (event: React.FormEvent) => {
@@ -178,6 +315,23 @@ export default function SearchPage() {
           </Button>
         </form>
         <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-muted-2">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={graphMode}
+            onClick={toggleGraph}
+            title={t("graphModeHint")}
+            className={cn(
+              "flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[9px] transition-colors",
+              graphMode
+                ? "border-violet-400/30 bg-violet-400/10 text-violet-200"
+                : "border-border bg-white/[0.02] text-muted hover:text-slate-300",
+            )}
+          >
+            <span className={cn("size-1.5 rounded-full", graphMode ? "bg-violet-300" : "bg-muted-2")} />
+            <Network className="size-3" />
+            {t("graphMode")}
+          </button>
           <Sparkles className="size-3 text-accent/70" />
           <span>{t("hint")}</span>
           <span className="ml-auto hidden items-center gap-1 sm:flex">
@@ -237,21 +391,35 @@ export default function SearchPage() {
                 </p>
                 <span className="ml-auto flex items-center gap-1.5 rounded-full border border-border bg-white/[0.02] px-2 py-0.5 text-[9px] text-muted-2">
                   <span className={cn("size-1.5 rounded-full", search.data?.mode === "live" ? "bg-emerald-400" : "bg-amber-400")} />
-                  {search.data?.mode ?? "mock"} retrieval
+                  {search.data?.mode ?? "mock"} retrieval{graphMode ? " + graph" : ""}
                 </span>
               </div>
               {results.map((result, index) => (
                 <SearchResultCard key={result.chunk_id} result={result} index={index} />
               ))}
+              {graphEvidence.length ? (
+                <>
+                  <div className="flex items-center gap-2 px-1 pt-2">
+                    <Network className="size-3.5 text-violet-300" />
+                    <p className="text-[11px] font-medium text-slate-200">{t("graphEvidence")}</p>
+                  </div>
+                  <p className="-mt-1 px-1 text-[9px] leading-relaxed text-muted-2">{t("graphEvidenceHint")}</p>
+                  {graphEvidence.map((result, index) => (
+                    <SearchResultCard key={result.chunk_id} result={result} index={results.length + index} />
+                  ))}
+                </>
+              ) : null}
               <p className="px-1 text-[9px] leading-relaxed text-muted-2">
                 Ranking is fused across vector similarity and full-text search, then reranked. Scores are
                 relative, not a legal-confidence measure.
+                {graphMode ? ` ${t("graphRankingNote")}` : ""}
               </p>
             </>
           )}
         </div>
 
         <aside className="space-y-3 xl:col-span-4">
+          {graphData && hasQuery ? <GraphContextPanel data={graphData} /> : null}
           <div className="panel p-5">
             <div className="flex items-center gap-2">
               <div className="flex size-8 items-center justify-center rounded-lg border border-sky-400/20 bg-sky-400/10 text-sky-300">
@@ -265,7 +433,8 @@ export default function SearchPage() {
                 ["01", "Chunk", "Signals are parsed into citeable evidence chunks."],
                 ["02", "Embed", "BGE-M3 vectors land in pgvector alongside full-text indexes."],
                 ["03", "Fuse & rerank", "Both rankings are fused, then reranked for relevance."],
-                ["04", "Cite", "Only source text is returned. No answer is synthesized."],
+                ["04", "Traverse", "Graph RAG resolves named suppliers, buyers and obligations, then walks up to 3 hops of the supply-chain graph."],
+                ["05", "Cite", "Only source text is returned. No answer is synthesized."],
               ].map(([step, title, body]) => (
                 <div key={step} className="flex gap-2.5">
                   <span className="flex size-5 shrink-0 items-center justify-center rounded border border-border bg-white/[0.02] font-mono text-[8px] text-muted-2">
