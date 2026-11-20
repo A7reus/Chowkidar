@@ -191,33 +191,6 @@ async def get_risk(risk_id: str) -> dict[str, Any]:
 
 
 @mcp.tool
-async def search_evidence(query: str, limit: int = 5) -> dict[str, Any]:
-    """Search cited source chunks with hybrid retrieval. Returns source text, never a generated answer."""
-    if len(query.strip()) < 2:
-        raise ValueError("query must contain at least two characters")
-    data = await api.get(
-        "/api/v1/search",
-        params={"q": query.strip(), "limit": max(1, min(limit, 20))},
-    )
-    return {
-        "query": data.get("query"),
-        "mode": data.get("mode"),
-        "results": [
-            {
-                "chunk_id": item.get("chunk_id"),
-                "content": item.get("content"),
-                "citation": item.get("citation_label"),
-                "citation_url": item.get("citation_url"),
-                "section_path": item.get("section_path"),
-                "score": item.get("score"),
-                "signal_id": item.get("signal_id"),
-            }
-            for item in data.get("results", [])
-        ],
-    }
-
-
-@mcp.tool
 async def list_pending_approvals() -> dict[str, Any]:
     """List remediation decisions waiting for a human approver."""
     data = await api.get("/api/v1/approvals", params={"status": "pending"})
@@ -259,7 +232,8 @@ def risk_review_prompt(risk_id: str) -> str:
     """Build a conservative evidence-review prompt for a risk record."""
     return (
         f"Review risk {risk_id} using Chowkidar tools. First call get_risk, then "
-        "search_evidence for the exact cited language. Summarize only what the "
+        "search_evidence from the chowkidar-evidence server for the exact cited "
+        "language. Summarize only what the "
         "sources support. Separate facts, potential exposure, and open questions. "
         "Do not give legal advice or claim compliance. End with the human decision "
         "that should be recorded."
