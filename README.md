@@ -51,7 +51,8 @@ More views: [signals](docs/assets/02-signals.png) · [search](docs/assets/05-sea
 | Risk register and risk detail with score breakdown and evidence | Built |
 | LangGraph pipeline: ingest → extract → map → score → remediate → verify → conditional repair → persist | Built |
 | Deterministic weighted risk score + LLM rationale | Built |
-| Structure-aware legal-heading chunking + hybrid retrieval over cited evidence (pgvector + Postgres FTS) | Built and deployed; existing hosted evidence was not reseeded; not semantic or graph RAG |
+| Structure-aware legal-heading chunking + hybrid retrieval over cited evidence (pgvector + Postgres FTS) | Built and deployed; existing hosted evidence was not reseeded; not semantic chunking |
+| Graph RAG: entity resolution + multi-hop traversal of the supplier, risk, obligation, buyer and policy graph, fused with hybrid retrieval (`/api/v1/search/graph`, Search page, evidence MCP tool) | Built; verified locally against the seeded demo data; not yet deployed to the hosted pilot |
 | Evidence verifier and legal-advice guard | Built |
 | Bounded evidence-repair loop with routing metadata | Built |
 | Human approval queue with rationale and audit trail | Built |
@@ -216,7 +217,8 @@ cd apps/api && uv run python -m app.db.seed
 - Hybrid LLM mode is implemented, deployed, and hosted-verified: Render reports `llm_live_ready=true`, and a hosted `mode=live` pipeline run on 2026-10-27 produced a model-generated, citation-grounded rationale with confidence `0.96` and 0 errors. Deterministic fallback remains available when providers fail. Provider keys live only in Render environment variables and the gitignored local `.env`; they are never committed. Provider reliability is not an SLA; Gemini 3.8 Flash timed out and Gemini Pro Latest had zero free-tier quota, so the defaults use Gemini 3.5 Flash.
 - **Local Ollama is a local smoke path, not a hosted capability.** `OLLAMA_ENABLED=true` adds Ollama to the fallback chain; `LLM_PREFER_LOCAL=true` tries it first but still falls back to configured cloud providers; `LLM_LOCAL_ONLY=true` hard-disables cloud providers and requires Ollama. A local run used cached `qwen2.5:3b` (0 errors, `repair_attempts=1`, verification `needs_review`). The default `qwen2.5:7b` was not pulled, no local model runs on Render, and no quality/latency claim is made.
 - **MCP is read-only and outside the product path.** The server exposes six tools, one prompt, and one resource over stdio or Streamable HTTP/SSE. HTTP requires `CHOWKIDAR_MCP_HTTP_TOKEN` by default; `--allow-unauthenticated` is loopback-only. No external MCP server is integrated, and the pipeline does not call MCP. A temporary Cloudflare quick tunnel was verified on 2026-10-31 (`401` without a token, `200` with it, six tools listed); the URL was ephemeral and is closed. There is no persistent public MCP endpoint.
-- **Chunking is structure-aware, not semantic.** New chunks start at recognized legal headings (`Article`, `Section`, `Chapter`, `Part`, `Annex`, `Schedule`, `Rule`, `Title`, `§`) and store a section path. Long sections are sentence-split and can still split mid-article; mock mode uses hash embeddings. No late interaction or graph RAG.
+- **Chunking is structure-aware, not semantic.** New chunks start at recognized legal headings (`Article`, `Section`, `Chapter`, `Part`, `Annex`, `Schedule`, `Rule`, `Title`, `§`) and store a section path. Long sections are sentence-split and can still split mid-article; mock mode uses hash embeddings. No late interaction.
+- **Graph RAG uses the relational graph, not an LLM-extracted one.** Entities are resolved by name aliases and IDF-weighted keyword overlap, and traversal runs over Postgres foreign keys in memory. Obligation-to-policy links have no foreign key, so they are inferred from shared keywords and flagged `inferred` in every response. Neo4j is not used.
 - Optional BGE-M3 embeddings, Docling, RAGAS, and Phoenix are not required for the demo path.
 - No customer interviews, LOIs, design partners, or revenue. The validation kit is at [`docs/VALIDATION.md`](docs/VALIDATION.md) and the evidence log is honestly at zero.
 - No Figma file; [`docs/DESIGN.md`](docs/DESIGN.md) is the design artifact. A 2:45 captioned local walkthrough exists at [`docs/assets/demo-walkthrough.mp4`](docs/assets/demo-walkthrough.mp4); YouTube upload is pending, so the form packet keeps a placeholder.
@@ -243,6 +245,22 @@ Ad-hoc SQL runs on a separate in-memory DuckDB copy with file access disabled an
 curl -s -H 'X-Demo-Role: analyst' -H 'Content-Type: application/json' \
   -d '{"view":"risk_distribution"}' http://localhost:8000/api/v1/warehouse/query | jq .
 ```
+
+## Graph RAG
+
+`GET /api/v1/search/graph?q=...&hops=2` (or `GET /api/v1/search?q=...&graph_augmented=true`) runs the normal hybrid retrieval, then adds the knowledge graph around it ([`apps/api/app/rag/graph_rag.py`](apps/api/app/rag/graph_rag.py)):
+
+1. **Hybrid retrieval.** The same pgvector + full-text search, RRF and rerank as `/api/v1/search`.
+2. **Entity resolution.** Suppliers, buyers, the company and policies are matched by name alias ("SinoFab", "Dhaka Knit"); obligations, risks and signals by IDF-weighted keyword overlap; jurisdictions from terms such as "UFLPA" or "Gazipur". Each retrieved chunk is also linked to the graph through its source signal and any risk that cites it.
+3. **Multi-hop traversal.** A breadth-first walk of 1 to 3 hops over supplier → risk → obligation → signal → buyer → policy edges, including tier-chain (`parent_supplier_id`) links. The company node is a hub, so it is reached but never expanded. Relevance halves with each hop and the subgraph is capped at 40 nodes.
+4. **Fusion.** Chunks are re-ranked with 25% of the score from how closely they connect to the entities named in the query. Each chunk lists its linked entities, evidence reachable only through the graph is returned separately as `graph_evidence`, and readable `paths` explain the traversal.
+
+```bash
+curl -s -H 'X-Demo-Role: analyst' \
+  'http://localhost:8000/api/v1/search/graph?q=SinoFab+ownership&hops=2' | jq '.traversal_summary, .paths[].description'
+```
+
+The Search page has a **Graph RAG** switch (on by default) that shows linked entities on each chunk, a graph-context panel with traversal paths, and the graph-only evidence. The evidence MCP server exposes the same thing as `search_evidence_with_graph`.
 
 ## MCP (optional)
 

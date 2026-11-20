@@ -481,6 +481,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/search/graph": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search With Graph
+         * @description Graph RAG: hybrid evidence retrieval fused with multi-hop traversal of the
+         *     supplier, risk, obligation and policy graph.
+         */
+        get: operations["search_with_graph_api_v1_search_graph_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/graph": {
         parameters: {
             query?: never;
@@ -629,6 +650,91 @@ export interface paths {
         put?: never;
         /** Run */
         post: operations["run_api_v1_evals_run_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/warehouse/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Summary */
+        get: operations["summary_api_v1_warehouse_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/warehouse/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sync */
+        post: operations["sync_api_v1_warehouse_sync_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/warehouse/query": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Query */
+        post: operations["query_api_v1_warehouse_query_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/warehouse/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Export */
+        post: operations["export_api_v1_warehouse_export_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/warehouse/exports/{file_name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Export */
+        get: operations["download_export_api_v1_warehouse_exports__file_name__get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1015,6 +1121,163 @@ export interface components {
             nodes: components["schemas"]["GraphNode"][];
             /** Edges */
             edges: components["schemas"]["GraphEdge"][];
+        };
+        /** GraphRAGEdge */
+        GraphRAGEdge: {
+            /** Id */
+            id: string;
+            /** Source */
+            source: string;
+            /** Target */
+            target: string;
+            /** Label */
+            label: string;
+            /**
+             * Inferred
+             * @default false
+             */
+            inferred: boolean;
+        };
+        /**
+         * GraphRAGEntity
+         * @description An entity resolved from the query text or from a retrieved chunk.
+         */
+        GraphRAGEntity: {
+            /** Node Id */
+            node_id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "company" | "supplier" | "buyer" | "policy" | "signal" | "obligation" | "risk";
+            /** Label */
+            label: string;
+            /** Matched Text */
+            matched_text: string;
+            /** Score */
+            score: number;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "query" | "evidence";
+            /** Chunk Id */
+            chunk_id?: string | null;
+        };
+        /** GraphRAGEntityRef */
+        GraphRAGEntityRef: {
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "company" | "supplier" | "buyer" | "policy" | "signal" | "obligation" | "risk";
+            /** Label */
+            label: string;
+            /** Relevance */
+            relevance: number;
+        };
+        /** GraphRAGNode */
+        GraphRAGNode: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "company" | "supplier" | "buyer" | "policy" | "signal" | "obligation" | "risk";
+            /** Detail */
+            detail?: string | null;
+            /** Priority */
+            priority?: string | null;
+            /** Hop */
+            hop: number;
+            /** Relevance */
+            relevance: number;
+            /** Seed */
+            seed: boolean;
+            /** Matched By */
+            matched_by: string[];
+        };
+        /** GraphRAGPath */
+        GraphRAGPath: {
+            /** Node Ids */
+            node_ids: string[];
+            /** Description */
+            description: string;
+        };
+        /**
+         * GraphRAGResponse
+         * @description Hybrid retrieval fused with multi-hop supply-chain graph traversal.
+         */
+        GraphRAGResponse: {
+            /** Query */
+            query: string;
+            /** Results */
+            results: components["schemas"]["GraphRAGSearchResult"][];
+            /** Mode */
+            mode: string;
+            /** Graph Evidence */
+            graph_evidence: components["schemas"]["GraphRAGSearchResult"][];
+            /** Entities */
+            entities: components["schemas"]["GraphRAGEntity"][];
+            /** Jurisdictions */
+            jurisdictions: string[];
+            subgraph: components["schemas"]["GraphRAGSubgraph"];
+            /** Paths */
+            paths: components["schemas"]["GraphRAGPath"][];
+            /** Traversal Summary */
+            traversal_summary: string;
+            /** Hops */
+            hops: number;
+        };
+        /**
+         * GraphRAGSearchResult
+         * @description A cited chunk plus the knowledge-graph entities it connects to.
+         */
+        GraphRAGSearchResult: {
+            /**
+             * Chunk Id
+             * Format: uuid
+             */
+            chunk_id: string;
+            /** Content */
+            content: string;
+            /** Citation Label */
+            citation_label: string;
+            /** Citation Url */
+            citation_url: string;
+            /** Section Path */
+            section_path: string;
+            /** Score */
+            score: number;
+            /** Signal Id */
+            signal_id?: string | null;
+            /** Document Id */
+            document_id?: string | null;
+            /** Related Entity Ids */
+            related_entity_ids: string[];
+            /** Related Entities */
+            related_entities: components["schemas"]["GraphRAGEntityRef"][];
+            /** Retrieval Score */
+            retrieval_score: number;
+            /** Graph Score */
+            graph_score: number;
+            /**
+             * Origin
+             * @enum {string}
+             */
+            origin: "retrieval" | "graph";
+        };
+        /** GraphRAGSubgraph */
+        GraphRAGSubgraph: {
+            /** Nodes */
+            nodes: components["schemas"]["GraphRAGNode"][];
+            /** Edges */
+            edges: components["schemas"]["GraphRAGEdge"][];
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -1689,6 +1952,117 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** WarehouseExportIn */
+        WarehouseExportIn: {
+            /**
+             * Table
+             * @enum {string}
+             */
+            table: "risks" | "audit_events" | "signals" | "suppliers";
+            /**
+             * Format
+             * @default parquet
+             * @enum {string}
+             */
+            format: "parquet" | "csv";
+            /**
+             * Refresh
+             * @default false
+             */
+            refresh: boolean;
+        };
+        /** WarehouseExportOut */
+        WarehouseExportOut: {
+            /**
+             * Table
+             * @enum {string}
+             */
+            table: "risks" | "audit_events" | "signals" | "suppliers";
+            /**
+             * Format
+             * @enum {string}
+             */
+            format: "parquet" | "csv";
+            /** File Name */
+            file_name: string;
+            /** Path */
+            path: string;
+            /** Row Count */
+            row_count: number;
+            /** Size Bytes */
+            size_bytes: number;
+            /**
+             * Exported At
+             * Format: date-time
+             */
+            exported_at: string;
+            /** Download Url */
+            download_url: string;
+        };
+        /** WarehouseQueryIn */
+        WarehouseQueryIn: {
+            /** View */
+            view?: ("risk_distribution" | "audit_integrity" | "supplier_exposure") | null;
+            /** Sql */
+            sql?: string | null;
+            /**
+             * Refresh
+             * @default false
+             */
+            refresh: boolean;
+        };
+        /** WarehouseQueryOut */
+        WarehouseQueryOut: {
+            /** View */
+            view: ("risk_distribution" | "audit_integrity" | "supplier_exposure") | null;
+            /** Columns */
+            columns: string[];
+            /** Rows */
+            rows: {
+                [key: string]: unknown;
+            }[];
+            /** Row Count */
+            row_count: number;
+            /** Truncated */
+            truncated: boolean;
+            /** Execution Ms */
+            execution_ms: number;
+            /** Synced At */
+            synced_at: string | null;
+        };
+        /** WarehouseSummaryOut */
+        WarehouseSummaryOut: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ready" | "empty";
+            /**
+             * Engine
+             * @default duckdb
+             * @constant
+             */
+            engine: "duckdb";
+            /** Duckdb Version */
+            duckdb_version: string;
+            /** Storage */
+            storage: string;
+            /** Tables */
+            tables: components["schemas"]["WarehouseTableOut"][];
+            /** Total Rows */
+            total_rows: number;
+            /** Presets */
+            presets: ("risk_distribution" | "audit_integrity" | "supplier_exposure")[];
+            /** Last Synced At */
+            last_synced_at: string | null;
+        };
+        /** WarehouseTableOut */
+        WarehouseTableOut: {
+            /** Name */
+            name: string;
+            /** Row Count */
+            row_count: number;
         };
     };
     responses: never;
@@ -2582,6 +2956,8 @@ export interface operations {
             query: {
                 q: string;
                 limit?: number;
+                /** @description Add knowledge-graph context; same as GET /search/graph. */
+                graph_augmented?: boolean;
             };
             header?: {
                 "X-Demo-Role"?: string | null;
@@ -2597,7 +2973,42 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SearchResponse"];
+                    "application/json": components["schemas"]["GraphRAGResponse"] | components["schemas"]["SearchResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_with_graph_api_v1_search_graph_get: {
+        parameters: {
+            query: {
+                q: string;
+                limit?: number;
+                hops?: number;
+            };
+            header?: {
+                "X-Demo-Role"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GraphRAGResponse"];
                 };
             };
             /** @description Validation Error */
@@ -2922,6 +3333,173 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EvalSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    summary_api_v1_warehouse_summary_get: {
+        parameters: {
+            query?: {
+                refresh?: boolean;
+            };
+            header?: {
+                "X-Demo-Role"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WarehouseSummaryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sync_api_v1_warehouse_sync_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Demo-Role"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WarehouseSummaryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    query_api_v1_warehouse_query_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Demo-Role"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WarehouseQueryIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WarehouseQueryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_api_v1_warehouse_export_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Demo-Role"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WarehouseExportIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WarehouseExportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_export_api_v1_warehouse_exports__file_name__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Demo-Role"?: string | null;
+            };
+            path: {
+                file_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

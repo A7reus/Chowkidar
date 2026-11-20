@@ -453,7 +453,8 @@ This is the short version. The detailed limitations are in `docs/ARCHITECTURE.md
 | n8n workflow | Compose service and scaffolding exist; not part of the demo path | **No** until wired and demonstrated |
 | Fine-tuning / LoRA | Not implemented | **No** |
 | Structure-aware legal-heading chunking | Implemented with section paths and deployed in revision `322bc2456868`; existing hosted evidence was not reseeded; long sections can still split mid-article | Yes, as structure-aware chunking |
-| Contextual RAG, semantic chunking, Graph RAG, late interaction | Not implemented | **No** |
+| Graph RAG / knowledge graph | Entity resolution + 1–3 hop traversal of the relational supplier/risk/obligation/buyer/policy graph, fused with hybrid retrieval; `/api/v1/search/graph`, Search page switch, and `search_evidence_with_graph` MCP tool. Verified locally on seeded data; obligation→policy links are keyword-inferred and flagged | **Yes**, once deployed; disclose that the graph is relational (no Neo4j, no LLM entity extraction) |
+| Contextual RAG, semantic chunking, late interaction | Not implemented | **No** |
 | Supabase Auth hosted login | Enabled on the live API: password/refresh/logout proxy, JWKS verification, local role mapping, four provisioned accounts, demo login disabled; hosted auth and browser QA passed against Netlify (2/2) and Vercel | **Yes, for the single-workspace pilot** |
 | Supabase Storage + database reports | Database storage is active on the hosted API; private bucket adapter exists with Postgres fallback | **Yes for durable reports; Supabase Storage bucket not enabled** |
 | Neo4j graph projection | Not wired; graph UI reads Postgres | **No** |
@@ -488,7 +489,7 @@ These are ranked by score and credibility per unit of work. They do **not** requ
 7. **MCP disclosure and, if feasible, one real external MCP integration.** The built read-only server earns “MCP built” and architecture credit, and now supports stdio plus fail-closed Streamable HTTP/SSE. A Cloudflare quick tunnel was verified once for the local endpoint but is ephemeral. “MCP used” still requires an actual external server in the product path.
 8. **Run and validate Ollama with a small local model.** Done as a local smoke with `qwen2.5:3b`; the default 7B model was not pulled and no local model is hosted.
 9. **Wire one n8n workflow.** Not done; the in-process scheduler is the supported path and n8n is not claimed.
-10. **Add semantic/contextual chunking only if actually implemented.** Structure-aware legal-heading chunking is implemented; semantic/contextual/graph RAG are not. Do not claim them from a checklist.
+10. **Add semantic/contextual chunking only if actually implemented.** Structure-aware legal-heading chunking and Graph RAG are implemented; semantic/contextual RAG are not. Do not claim them from a checklist.
 
 ### Do not do just for checkboxes
 

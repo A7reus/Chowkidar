@@ -15,6 +15,7 @@ import type {
   DashboardSummary,
   EvalSummary,
   GraphData,
+  GraphRAGResponse,
   Health,
   PipelineRunResponse,
   Report,
@@ -67,6 +68,7 @@ export const queryKeys = {
   reports: ["reports"] as const,
   evals: ["evals"] as const,
   search: (q: string) => ["search", q] as const,
+  graphSearch: (q: string) => ["search", "graph", q] as const,
   pipelineRuns: ["pipeline", "runs"] as const,
 };
 
@@ -414,14 +416,28 @@ export function useRunEvals() {
   });
 }
 
-export function useSearch(q: string) {
+export function useSearch(q: string, enabled = true) {
   return useQuery({
     queryKey: queryKeys.search(q),
     queryFn: () =>
       apiFetch<SearchResponse>("/api/v1/search", {
         params: { q, limit: 10 },
       }),
-    enabled: q.trim().length >= 2,
+    enabled: enabled && q.trim().length >= 2,
+    staleTime: 60_000,
+    retry,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useGraphSearch(q: string, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.graphSearch(q),
+    queryFn: () =>
+      apiFetch<GraphRAGResponse>("/api/v1/search/graph", {
+        params: { q, limit: 10, hops: 2 },
+      }),
+    enabled: enabled && q.trim().length >= 2,
     staleTime: 60_000,
     retry,
     refetchOnWindowFocus: false,

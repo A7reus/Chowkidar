@@ -56,6 +56,7 @@ async def test_openapi_exposes_required_workflow_endpoints() -> None:
         "/api/v1/approvals",
         "/api/v1/audit/verify",
         "/api/v1/search",
+        "/api/v1/search/graph",
         "/api/v1/graph",
         "/api/v1/reports",
         "/api/v1/evals/summary",

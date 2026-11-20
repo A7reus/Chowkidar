@@ -407,6 +407,83 @@ class SearchResponse(BaseModel):
     mode: str
 
 
+GraphRAGNodeKind = Literal[
+    "company", "supplier", "buyer", "policy", "signal", "obligation", "risk"
+]
+
+
+class GraphRAGEntityRef(BaseModel):
+    id: str
+    kind: GraphRAGNodeKind
+    label: str
+    relevance: float
+
+
+class GraphRAGSearchResult(SearchResult):
+    """A cited chunk plus the knowledge-graph entities it connects to."""
+
+    related_entity_ids: list[str]
+    related_entities: list[GraphRAGEntityRef]
+    retrieval_score: float
+    graph_score: float
+    origin: Literal["retrieval", "graph"]
+
+
+class GraphRAGEntity(BaseModel):
+    """An entity resolved from the query text or from a retrieved chunk."""
+
+    node_id: str
+    kind: GraphRAGNodeKind
+    label: str
+    matched_text: str
+    score: float
+    source: Literal["query", "evidence"]
+    chunk_id: uuid.UUID | None = None
+
+
+class GraphRAGNode(BaseModel):
+    id: str
+    label: str
+    kind: GraphRAGNodeKind
+    detail: str | None = None
+    priority: str | None = None
+    hop: int
+    relevance: float
+    seed: bool
+    matched_by: list[str]
+
+
+class GraphRAGEdge(BaseModel):
+    id: str
+    source: str
+    target: str
+    label: str
+    inferred: bool = False
+
+
+class GraphRAGSubgraph(BaseModel):
+    nodes: list[GraphRAGNode]
+    edges: list[GraphRAGEdge]
+
+
+class GraphRAGPath(BaseModel):
+    node_ids: list[str]
+    description: str
+
+
+class GraphRAGResponse(SearchResponse):
+    """Hybrid retrieval fused with multi-hop supply-chain graph traversal."""
+
+    results: list[GraphRAGSearchResult]
+    graph_evidence: list[GraphRAGSearchResult]
+    entities: list[GraphRAGEntity]
+    jurisdictions: list[str]
+    subgraph: GraphRAGSubgraph
+    paths: list[GraphRAGPath]
+    traversal_summary: str
+    hops: int
+
+
 class PipelineRunRequest(BaseModel):
     source_ids: list[uuid.UUID] | None = None
     mode: Literal["mock", "live"] = "mock"
